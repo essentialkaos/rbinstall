@@ -47,13 +47,37 @@ CL_BG_GREY="\e[${GREY};7m"
 
 ########################################################################################
 
-# List of supported command line arguments (String)
-SUPPORTED_ARGS="debug yes"
+OS_LINUX="linux"
+OS_SOLARIS="solaris"
+OS_BSD="bsd"
+OS_MACOSX="macosx"
 
-# List of supported short command line arguments (String)
-SHORT_ARGS="D:!debug y:!yes"
+DIST_ARCH="arch"
+DIST_CENTOS="centos"
+DIST_DEBIAN="debian"
+DIST_FEDORA="fedora"
+DIST_GENTOO="gentoo"
+DIST_RHEL="rhel"
+DIST_UBUNTU="ubuntu"
 
 ########################################################################################
+
+# List of supported command line arguments (String)
+SUPPORTED_ARGS="no-deps debug yes"
+
+# List of supported short command line arguments (String)
+SHORT_ARGS="n:!no-deps D:!debug y:!yes"
+
+########################################################################################
+
+# OS name (String)
+os_name=""
+
+# OS arch (String)
+os_arch=""
+
+# OS dist (String)
+os_dist=""
 
 # Flag will be set to true if some required apps is not installed (Boolean)
 requireFailed=""
@@ -72,6 +96,7 @@ script_dir=$(dirname "$0")
 main() {
   pushd $script_dir &> /dev/null
 
+    detectOs
     doInstall
 
   popd &> /dev/null
@@ -86,12 +111,12 @@ doInstall() {
 
   confirmInstall "RBInstall"
 
-  require "go"
+  require "golang"
   require "p7zip"
   require "ca-certificates"
 
   if [[ $requireFailed ]] ; then
-    exit 1
+    show "" && exit 1
   fi
 
   local install_dir="$GOPATH/src/github.com/essentialkaos/rbinstall"
@@ -120,6 +145,8 @@ doInstall() {
   congratulate "RBInstall"
 }
 
+########################################################################################
+
 # Do some install action
 #
 # 1: Description (String)
@@ -147,19 +174,62 @@ action() {
   fi
 }
 
-# Check required app
+# Check required package
 #
-# 1: App binary name (String)
+# 1: Package name (String)
 #
 # Code: No
 # Echo: No
 require() {
-  local app="$1"
+  local package="$1"
 
-  type -p $app &> /dev/null
+  case $os_dist in
+    "$DIST_FEDORA"|"$DIST_CENTOS"|"$DIST_RHEL") requireRPM "$package" ;;
+    "$DIST_UBUNTU"|"$DIST_DEBIAN")              requireDEB "$package" ;;
+    *) 
+        show "Unsupported platform" $RED
+        requireFailed=true
+  esac
+}
+
+# Check required rpm package
+#
+# 1: Package name (String)
+#
+# Code: No
+# Echo: No
+requireRPM() {
+  if [[ $no_deps ]] ; then
+    return
+  fi
+
+  local package="$1"
+
+  rpm -q $package &> /dev/null
 
   if [[ $? -ne 0 ]] ; then
-    show "$app is required please install it before this app install" $BROWN
+    show "This app require package $package please install it first" $BROWN
+    requireFailed=true
+  fi
+}
+
+# Check required deb package
+#
+# 1: Package name (String)
+#
+# Code: No
+# Echo: No
+requireDEB() {
+  if [[ $no_deps ]] ; then
+    return
+  fi
+
+  local package="$1"
+
+  dpkg -s $package &> /dev/null
+
+  if [[ $? -ne 0 ]] ; then
+    show "This app require package $package please install it first" $BROWN
     requireFailed=true
   fi
 }
@@ -227,6 +297,36 @@ readAnswer() {
     return 0
   else
     return 1
+  fi
+}
+
+# Collect system info
+#
+# Code: No
+# Echo: No
+detectOs() {
+  os_name=$(uname -s)
+
+  if [[ "$os_name" == "SunOS" ]] ; then
+    os_name=$OS_SOLARIS
+  elif [[ "$os_name" == "Darwon" ]]; then
+    os_name=$OS_MACOSX
+  elif [[ "$os_name" == "Linux" ]] ; then
+    os_name="$OS_LINUX"
+
+    if [[ -f /etc/arch-release ]] ; then
+      os_dist=$DIST_ARCH
+    elif [[ -f /etc/fedora-release ]] ; then
+      os_dist=$DIST_FEDORA
+    elif [[ -f /etc/gentoo-release ]] ; then
+      os_dist=$DIST_GENTOO
+    elif [[ -f /etc/redhat-release ]] ; then
+      os_dist=$DIST_RHEL
+    elif [[ -f /etc/SuSE-release ]] ; then
+      os_dist=$DIST_SUSE
+    elif [[ -f /etc/lsb-release ]] ; then
+      os_dist=$DIST_UBUNTU
+    fi
   fi
 }
 
