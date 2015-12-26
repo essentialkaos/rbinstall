@@ -121,20 +121,23 @@ doInstall() {
   fi
 
   if [[ -z "$GOPATH" ]] ; then
-    error "\$GOPATH must be set before install"
+    error "GOPATH must be set before install\n"
     exit 1
   fi
 
   local install_dir="$GOPATH/src/github.com/essentialkaos/rbinstall"
 
-  action "Creating directory for sources in \$GOPATH" \
+  action "Creating directory for sources in GOPATH" \
          "mkdir" "-p" "$install_dir"
 
-  action "Copying sources to \$GOPATH src directory" \
+  action "Copying sources to GOPATH src directory" \
          "cp" "-r" "*" "$install_dir/"
 
-  action "Installing go dependencies" \
-         "go" "install" "github.com/essentialkaos/rbinstall"
+  action "Installing ek go package" \
+         "go" "get" "pkg.re/essentialkaos/ek.v1"
+
+  action "Installing pb go package" \
+         "go" "get" "github.com/cheggaaa/pb"
 
   action "Building app" \
          "go" "build" "$install_dir/rbinstall.go"
