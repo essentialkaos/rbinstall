@@ -111,12 +111,18 @@ doInstall() {
 
   confirmInstall "RBInstall"
 
+  require "rbenv"
   require "golang"
   require "p7zip"
   require "ca-certificates"
 
   if [[ $requireFailed ]] ; then
     show "" && exit 1
+  fi
+
+  if [[ -z "$GOPATH" ]] ; then
+    error "\$GOPATH must be set before install"
+    exit 1
   fi
 
   local install_dir="$GOPATH/src/github.com/essentialkaos/rbinstall"
@@ -128,7 +134,7 @@ doInstall() {
          "cp" "-r" "*" "$install_dir/"
 
   action "Installing go dependencies" \
-         "go" "get" "-t" "-v" "$install_dir/..."
+         "go" "install" "github.com/essentialkaos/rbinstall"
 
   action "Building app" \
          "go" "build" "$install_dir/rbinstall.go"
@@ -167,7 +173,7 @@ action() {
   
   if [[ $? -ne 0 ]] ; then
     show "${CL_RED}+${CL_NORM} $desc"
-    show "\nError occured with last action. Install process will be interrupted.\n" $RED
+    error "\nError occured with last action. Install process will be interrupted.\n"
     exit 1
   else
     show "${CL_GREEN}+${CL_NORM} $desc"
@@ -187,7 +193,7 @@ require() {
     "$DIST_FEDORA"|"$DIST_CENTOS"|"$DIST_RHEL") requireRPM "$package" ;;
     "$DIST_UBUNTU"|"$DIST_DEBIAN")              requireDEB "$package" ;;
     *) 
-        show "Unsupported platform" $RED
+        error "Unsupported platform"
         requireFailed=true
   esac
 }
@@ -208,7 +214,7 @@ requireRPM() {
   rpm -q $package &> /dev/null
 
   if [[ $? -ne 0 ]] ; then
-    show "This app require package $package please install it first" $BROWN
+    warn "This app require package $package please install it first"
     requireFailed=true
   fi
 }
@@ -229,7 +235,7 @@ requireDEB() {
   dpkg -s $package &> /dev/null
 
   if [[ $? -ne 0 ]] ; then
-    show "This app require package $package please install it first" $BROWN
+    warn "This app require package $package please install it first"
     requireFailed=true
   fi
 }
@@ -240,7 +246,7 @@ requireDEB() {
 # Echo: No
 requireRoot() {
   if [[ $(id -u) != "0" ]] ; then
-    show "Superuser priveleges is required for install" $RED
+    error "Superuser priveleges is required for install"
     exit 1
   fi
 }
@@ -328,6 +334,26 @@ detectOs() {
       os_dist=$DIST_UBUNTU
     fi
   fi
+}
+
+# Show error message
+#
+# 1: Message (String)
+#
+# Code: No
+# Echo: No
+error() {
+  show "$@" $RED
+}
+
+# Show warning message
+#
+# 1: Message (String)
+#
+# Code: No
+# Echo: No
+warn() {
+  show "$@" $BROWN
 }
 
 # Show message
