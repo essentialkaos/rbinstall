@@ -1,0 +1,20 @@
+language: go
+go:
+  - 1.4.2
+  - 1.5.2
+  - tip
+
+os:
+  - linux
+  - osx
+
+sudo: false
+
+before_install:
+  - go get github.com/cheggaaa/pb
+  - go get pkg.re/essentialkaos/ek.v1
+  - go get pkg.re/essentialkaos/z7.v1
+
+script:
+  - go build rbinstall.go
+  - go build rbinstall-make.go
