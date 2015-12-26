@@ -284,7 +284,7 @@ confirmInstall() {
 # Code: No
 # Echo: No
 congratulate() {
-  show "\nYay! $1 is succefully installed!\n" $GREEN
+  show "\nYay! $1 is successfully installed!\n" $GREEN
 }
 
 # Read user yes/no answer
