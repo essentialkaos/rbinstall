@@ -1,4 +1,4 @@
-package main
+package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
@@ -25,9 +25,9 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 const (
-	APP  = "RBInstall Make"
+	APP  = "RBInstall Gen"
 	VER  = "0.4.0"
-	DESC = "Utility for creating RBInstall index"
+	DESC = "Utility for generating RBInstall index"
 )
 
 const (
@@ -77,7 +77,7 @@ var archList []string = []string{"i386", "x86_64"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func main() {
+func Init() {
 	args, errs := arg.Parse(argList)
 
 	if len(errs) != 0 {
@@ -182,7 +182,7 @@ func buildIndex(path string) {
 		arch := dir
 
 		if !sliceutil.Contains(archList, arch) {
-			fmtc.Printf("{y}Unknown arch %s. Skipping...\n", arch)
+			fmtc.Printf("{y}Unknown arch %s. Skipping...\n\n", arch)
 			continue
 		}
 
@@ -193,7 +193,7 @@ func buildIndex(path string) {
 		fileList := fsutil.List(path+"/"+arch, true)
 
 		if len(fileList) == 0 {
-			fmtc.Printf("{y}Can't find files in %s directory{!}\n", path+"/"+arch)
+			fmtc.Printf("{y}Can't find files in %s directory. Skipping...{!}\n\n", path+"/"+arch)
 			continue
 		}
 
@@ -268,7 +268,7 @@ func findInfo(infoList []*VersionInfo, version string) *VersionInfo {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func showUsage() {
-	info := usage.NewInfo("rbinstall-make", "dir")
+	info := usage.NewInfo("", "dir")
 
 	info.AddOption(ARG_OUTPUT, "Custom index output", "file")
 	info.AddOption(ARG_HELP, "Show this help message")

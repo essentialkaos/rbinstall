@@ -142,17 +142,23 @@ doInstall() {
   action "Installed z7 package" \
          "go" "get" "pkg.re/essentialkaos/z7.v1"
 
-  action "App builded" \
+  action "RBInstall compiled" \
          "go" "build" "$install_dir/rbinstall.go"
 
-  action "Copied app to /usr/bin" \
+  action "RBInstall Gen compiled" \
+         "go" "build" "$install_dir/rbinstall-gen.go"
+
+  action "Copied RBInstall to /usr/bin" \
          "install" "-pm 755" "rbinstall" "/usr/bin/rbinstall"
 
-  action "Removed builded app from src directory" \
-         "rm" "-f" "rbinstall"
+  action "Copied RBInstall to /usr/bin" \
+         "install" "-pm 755" "rbinstall-gen" "/usr/bin/rbinstall-gen"
+
+  action "Removed compiled binaries from src directory" \
+         "rm" "-f" "rbinstall" "rbinstall-gen"
 
   action "Copied config file to /etc" \
-         "install" "-pm 644" "rbinstall.conf" "/etc/rbinstall.conf"
+         "install" "-pm 644" "common/rbinstall.conf" "/etc/rbinstall.conf"
 
   congratulate "RBInstall"
 }
