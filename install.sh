@@ -127,31 +127,31 @@ doInstall() {
 
   local install_dir="$GOPATH/src/github.com/essentialkaos/rbinstall"
 
-  action "Creating directory for sources in GOPATH" \
+  action "Created directory for sources in GOPATH" \
          "mkdir" "-p" "$install_dir"
 
-  action "Copying sources to GOPATH src directory" \
+  action "Copied sources to GOPATH src directory" \
          "cp" "-r" "*" "$install_dir/"
 
-  action "Installing ek package" \
+  action "Installed ek package" \
          "go" "get" "pkg.re/essentialkaos/ek.v1"
 
-  action "Installing pb package" \
+  action "Installed pb package" \
          "go" "get" "github.com/cheggaaa/pb"
 
-  action "Installing z7 package" \
+  action "Installed z7 package" \
          "go" "get" "pkg.re/essentialkaos/z7.v1"
 
-  action "Building app" \
+  action "App builded" \
          "go" "build" "$install_dir/rbinstall.go"
 
-  action "Copying app to /usr/bin" \
+  action "Copied app to /usr/bin" \
          "install" "-pm 755" "$install_dir/rbinstall" "/usr/bin/rbinstall"
 
-  action "Removing builded app from src directory" \
+  action "Removed builded app from src directory" \
          "rm" "-f" "$install_dir/rbinstall"
 
-  action "Copying config file to /etc" \
+  action "Copied config file to /etc" \
          "install" "-pm 644" "rbinstall.conf" "/etc/rbinstall.conf"
 
   congratulate "RBInstall"

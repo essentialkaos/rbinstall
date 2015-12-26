@@ -440,8 +440,8 @@ func installCommand(name string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if config.GetS(GEMS_LIST) != "" {
-		for _, gem := range strings.Split(config.GetS(GEMS_LIST), " ") {
+	if config.GetS(GEMS_INSTALL) != "" {
+		for _, gem := range strings.Split(config.GetS(GEMS_INSTALL), " ") {
 			runGemCmd(info.Name, "install", gem)
 		}
 	}
@@ -467,7 +467,7 @@ func updateGems(rubyVersion string) {
 
 	fmtc.Printf("Updating gems for {c}%s{!}...\n", rubyVersion)
 
-	for _, gem := range strings.Split(config.GetS(GEMS_LIST), " ") {
+	for _, gem := range strings.Split(config.GetS(GEMS_INSTALL), " ") {
 		var ok bool
 
 		if isGemInstalled(rubyVersion, gem) {
