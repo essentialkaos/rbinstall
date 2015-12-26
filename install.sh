@@ -133,11 +133,14 @@ doInstall() {
   action "Copying sources to GOPATH src directory" \
          "cp" "-r" "*" "$install_dir/"
 
-  action "Installing ek go package" \
+  action "Installing ek package" \
          "go" "get" "pkg.re/essentialkaos/ek.v1"
 
-  action "Installing pb go package" \
+  action "Installing pb package" \
          "go" "get" "github.com/cheggaaa/pb"
+
+  action "Installing z7 package" \
+         "go" "get" "pkg.re/essentialkaos/z7.v1"
 
   action "Building app" \
          "go" "build" "$install_dir/rbinstall.go"
