@@ -146,10 +146,10 @@ doInstall() {
          "go" "build" "$install_dir/rbinstall.go"
 
   action "Copied app to /usr/bin" \
-         "install" "-pm 755" "$install_dir/rbinstall" "/usr/bin/rbinstall"
+         "install" "-pm 755" "rbinstall" "/usr/bin/rbinstall"
 
   action "Removed builded app from src directory" \
-         "rm" "-f" "$install_dir/rbinstall"
+         "rm" "-f" "rbinstall"
 
   action "Copied config file to /etc" \
          "install" "-pm 644" "rbinstall.conf" "/etc/rbinstall.conf"
@@ -265,7 +265,7 @@ requireRoot() {
 # Echo: No
 confirmInstall() {
   if [[ $yes ]] ; then
-    show "Argument --yes/-y passed to script, install forced" $GREY
+    show "\nArgument --yes/-y passed to script, install forced\n" $GREY
     return 0
   fi
 
