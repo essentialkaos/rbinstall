@@ -11,6 +11,27 @@ yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
 yum install rbinstall
 ```
 
+###### Using install.sh
+
+We provide simple bash script `script.sh` for installing app from the sources.
+
+```
+... install rbenv, golang and 7zip
+... set GOPATH
+
+git clone https://github.com/essentialkaos/rbinstall.git
+cd rbinstall
+git checkout v0.4.0
+
+./install.sh
+```
+
+If you have some issues with installing, try to use script in debug mode:
+
+```
+./install.sh --debug
+```
+
 #### Usage
 ```
 Usage: rbinstall <options> version
