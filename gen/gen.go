@@ -143,7 +143,7 @@ func buildIndex(path string) {
 	dirList := fsutil.List(path, true)
 
 	if len(dirList) == 0 {
-		fmtc.Println("{y}Can't find arch directories in specified directory{!}")
+		fmtc.Println("\n{y}Can't find arch directories in specified directory{!}\n")
 		os.Exit(0)
 	}
 
@@ -167,7 +167,7 @@ func buildIndex(path string) {
 		err = jsonutil.DecodeFile(outputFile, oldIndex)
 
 		if err != nil {
-			fmtc.Printf("{y}Can't reuse existing index: %s{!}\n", err.Error())
+			fmtc.Printf("\n{y}Can't reuse existing index: %s{!}\n\n", err.Error())
 			oldIndex = nil
 		}
 	}
@@ -182,7 +182,7 @@ func buildIndex(path string) {
 		arch := dir
 
 		if !sliceutil.Contains(archList, arch) {
-			fmtc.Printf("{y}Unknown arch %s. Skipping...\n\n", arch)
+			fmtc.Printf("\n{y}Unknown arch %s. Skipping...\n\n", arch)
 			continue
 		}
 
@@ -193,7 +193,7 @@ func buildIndex(path string) {
 		fileList := fsutil.List(path+"/"+arch, true)
 
 		if len(fileList) == 0 {
-			fmtc.Printf("{y}Can't find files in %s directory. Skipping...{!}\n\n", path+"/"+arch)
+			fmtc.Printf("\n{y}Can't find files in %s directory. Skipping...{!}\n\n", path+"/"+arch)
 			continue
 		}
 
@@ -233,13 +233,17 @@ func buildIndex(path string) {
 					Hash:         crypto.FileHash(path + "/" + arch + "/" + file),
 					RailsExpress: fsutil.IsExist(path + "/" + arch + "/" + cleanName + "-railsexpress.7z"),
 				}
-			}
 
-			fmtc.Printf("+ {*c}%s{!} -> {c}%s/%s{c}\n", info.Name, arch, category)
+				fmtc.Printf("{g}+{!} {*c}%-24s{!} -> {c}%s/%s{c}\n", info.Name, arch, category)
+			} else {
+				fmtc.Printf("{y}+{!} {*c}%-24s{!} -> {c}%s/%s{c}\n", info.Name, arch, category)
+			}
 
 			newIndex.Data[arch][category].Versions = append(newIndex.Data[arch][category].Versions, info)
 		}
 	}
+
+	fmtc.NewLine()
 
 	if fsutil.IsExist(outputFile) {
 		os.RemoveAll(outputFile)
@@ -252,6 +256,8 @@ func buildIndex(path string) {
 	} else {
 		fmtc.Printf("{g}Index created and stored as file %s. Processing took %s{!}\n", outputFile, timeutil.PrettyDuration(time.Since(start)))
 	}
+
+	fmtc.NewLine()
 }
 
 // findInfo search version info struct in given slice
