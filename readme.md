@@ -23,13 +23,13 @@ git clone https://github.com/essentialkaos/rbinstall.git
 cd rbinstall
 git checkout v0.4.0
 
-./install.sh
+sudo ./install.sh
 ```
 
 If you have some issues with installing, try to use script in debug mode:
 
 ```
-./install.sh --debug
+sudo ./install.sh --debug
 ```
 
 #### Usage
