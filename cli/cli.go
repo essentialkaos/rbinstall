@@ -41,7 +41,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.4.0"
+	VER  = "0.4.1"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -120,6 +120,7 @@ var (
 	index       *Index
 	temp        *tmp.Temp
 	currentUser *system.User
+	runDate     time.Time
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -465,6 +466,8 @@ func updateGems(rubyVersion string) {
 		exit(1)
 	}
 
+	runDate = time.Now()
+
 	fmtc.Printf("Updating gems for {c}%s{!}...\n", rubyVersion)
 
 	for _, gem := range strings.Split(config.GetS(GEMS_INSTALL), " ") {
@@ -533,7 +536,7 @@ func runGemCmd(rubyVersion, cmd, gem string) bool {
 		version := getInstalledGemVersion(rubyVersion, gem, start)
 
 		if version == "" {
-			fmtc.Println("{r}ERROR{!}")
+			fmtc.Println("{s}unchanged{!}")
 			return false
 		}
 
@@ -642,7 +645,11 @@ func getInstalledGemVersion(rubyVersion string, gemName string, since time.Time)
 		}
 
 		if gem[0:gemNameSize+1] == gemName+"-" {
-			return gem[gemNameSize+1:]
+			modTime, _ := fsutil.GetMTime(gemsDir + "/" + gem)
+
+			if modTime.Unix() > runDate.Unix() {
+				return gem[gemNameSize+1:]
+			}
 		}
 	}
 

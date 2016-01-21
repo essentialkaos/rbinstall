@@ -21,7 +21,7 @@ We provide simple bash script `script.sh` for installing app from the sources.
 
 git clone https://github.com/essentialkaos/rbinstall.git
 cd rbinstall
-git checkout v0.4.0
+git checkout v0.4.1
 
 sudo ./install.sh
 ```
