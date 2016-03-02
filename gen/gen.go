@@ -9,6 +9,7 @@ package gen
 
 import (
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.4.0"
+	VER  = "0.4.2"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -192,6 +193,8 @@ func buildIndex(path string) {
 
 		fileList := fsutil.List(path+"/"+arch, true)
 
+		sort.Strings(fileList)
+
 		if len(fileList) == 0 {
 			fmtc.Printf("\n{y}Can't find files in %s directory. Skipping...{!}\n\n", path+"/"+arch)
 			continue
@@ -234,9 +237,9 @@ func buildIndex(path string) {
 					RailsExpress: fsutil.IsExist(path + "/" + arch + "/" + cleanName + "-railsexpress.7z"),
 				}
 
-				fmtc.Printf("{g}+{!} {*c}%-24s{!} -> {c}%s/%s{c}\n", info.Name, arch, category)
+				fmtc.Printf("{g}+ %-24s{!} → {c}%s/%s{!}\n", info.Name, arch, category)
 			} else {
-				fmtc.Printf("{y}+{!} {*c}%-24s{!} -> {c}%s/%s{c}\n", info.Name, arch, category)
+				fmtc.Printf("{s}+ %-24s → %s/%s{!}\n", info.Name, arch, category)
 			}
 
 			newIndex.Data[arch][category].Versions = append(newIndex.Data[arch][category].Versions, info)
