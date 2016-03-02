@@ -41,7 +41,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.4.1"
+	VER  = "0.4.2"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -135,7 +135,7 @@ func Init() {
 		fmtc.NewLine()
 
 		for _, err := range errs {
-			fmtc.Printf("{r}%s{!}\n", err.Error())
+			fmtc.Printf("{r}%v{!}\n", err)
 		}
 
 		exit(1)
@@ -160,14 +160,14 @@ func Init() {
 	config, err = knf.Read(CONFIG_FILE)
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		fmtc.Printf("{r}%v{!}\n", err)
 		exit(1)
 	}
 
 	currentUser, err = system.CurrentUser()
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		fmtc.Printf("{r}%v{!}\n", err)
 		exit(1)
 	}
 
@@ -177,7 +177,12 @@ func Init() {
 
 	fetchIndex()
 
-	temp = tmp.NewTemp(config.GetS(MAIN_TMP_DIR, "/tmp"))
+	temp, err = tmp.NewTemp(config.GetS(MAIN_TMP_DIR, "/tmp"))
+
+	if err != nil {
+		fmtc.Printf("{r}%v{!}\n", err)
+		exit(1)
+	}
 
 	if len(args) != 0 {
 		prepare()
