@@ -28,7 +28,6 @@ import (
 	"pkg.re/essentialkaos/ek.v1/req"
 	"pkg.re/essentialkaos/ek.v1/sortutil"
 	"pkg.re/essentialkaos/ek.v1/system"
-	"pkg.re/essentialkaos/ek.v1/timeutil"
 	"pkg.re/essentialkaos/ek.v1/tmp"
 	"pkg.re/essentialkaos/ek.v1/usage"
 
@@ -41,7 +40,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.4.2"
+	VER  = "0.5.0"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -116,7 +115,6 @@ var argList map[string]*arg.V = map[string]*arg.V{
 }
 
 var (
-	config      *knf.Config
 	index       *Index
 	temp        *tmp.Temp
 	currentUser *system.User
@@ -126,7 +124,6 @@ var (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
-	var err error
 	var errs []error
 
 	args, errs := arg.Parse(argList)
@@ -157,35 +154,13 @@ func Init() {
 
 	fmtc.NewLine()
 
-	config, err = knf.Read(CONFIG_FILE)
-
-	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
-		exit(1)
-	}
-
-	currentUser, err = system.CurrentUser()
-
-	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
-		exit(1)
-	}
-
-	req.UserAgent = fmt.Sprintf("%s/%s (go; %s; %s-%s)",
-		APP, VER, runtime.Version(),
-		runtime.GOARCH, runtime.GOOS)
-
+	prepare()
 	fetchIndex()
 
-	temp, err = tmp.NewTemp(config.GetS(MAIN_TMP_DIR, "/tmp"))
-
-	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
-		exit(1)
-	}
-
 	if len(args) != 0 {
-		prepare()
+		checkPerms()
+		setupLogger()
+		setupTemp()
 
 		if arg.GetB(ARG_GEMS_UPDATE) {
 			updateGems(args[0])
@@ -201,20 +176,67 @@ func Init() {
 
 // prepare do some preparations
 func prepare() {
+	req.UserAgent = fmt.Sprintf("%s/%s (go; %s; %s-%s)",
+		APP, VER, runtime.Version(),
+		runtime.GOARCH, runtime.GOOS)
+
+	loadConfig()
+	validateConfig()
+}
+
+// checkPerms check user for sudo
+func checkPerms() {
+	var err error
+
+	currentUser, err = system.CurrentUser()
+
+	if err != nil {
+		fmtc.Printf("{r}%v{!}\n", err)
+		exit(1)
+	}
+
 	if !currentUser.IsRoot() {
 		fmtc.Println("{r}This action requires superuser (root) privileges{!}")
 		exit(1)
 	}
+}
 
-	err := log.Set(config.GetS(LOG_FILE), config.GetM(LOG_PERMS))
+// setupLogger setup logging subsystem
+func setupLogger() {
+	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
 
 	if err != nil {
 		fmtc.Printf("{r}%s{!}\n", err.Error())
 		exit(1)
 	}
 
-	log.MinLevel(config.GetI(LOG_LEVEL))
+	log.MinLevel(knf.GetI(LOG_LEVEL))
+}
 
+// setupTemp setup dir for temporary data
+func setupTemp() {
+	var err error
+
+	temp, err = tmp.NewTemp(knf.GetS(MAIN_TMP_DIR, "/tmp"))
+
+	if err != nil {
+		fmtc.Printf("{r}%v{!}\n", err)
+		exit(1)
+	}
+}
+
+// loadConfig load global config
+func loadConfig() {
+	err := knf.Global(CONFIG_FILE)
+
+	if err != nil {
+		fmtc.Printf("{r}%v{!}\n", err)
+		exit(1)
+	}
+}
+
+// validateConfig validate knf.values
+func validateConfig() {
 	var permsChecker = func(config *knf.Config, prop string, value interface{}) error {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
@@ -226,14 +248,14 @@ func prepare() {
 		return nil
 	}
 
-	errs := config.Validate([]*knf.Validator{
+	errs := knf.Validate([]*knf.Validator{
 		&knf.Validator{MAIN_TMP_DIR, permsChecker, "DWX"},
 		&knf.Validator{RBENV_DIR, permsChecker, "DWX"},
 		&knf.Validator{STORAGE_URL, knf.Empty, nil},
 	})
 
 	if len(errs) != 0 {
-		fmtc.Println("{r}Error while config validation:{!}")
+		fmtc.Println("{r}Error while knf.validation:{!}")
 
 		for _, err := range errs {
 			fmtc.Printf("  {r}%s{!}\n", err.Error())
@@ -245,7 +267,7 @@ func prepare() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: config.GetS(STORAGE_URL) + "/index.json"}.Do()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
 
 	if err != nil {
 		fmtc.Printf("{r}Can't fetch repo index: %s{!}\n", err.Error())
@@ -387,7 +409,7 @@ func installCommand(name string) {
 	fullPath := getVersionPath(info.Name)
 
 	if fsutil.IsExist(fullPath) {
-		if config.GetB(RBENV_ALLOW_OVERWRITE) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
 			os.RemoveAll(fullPath)
 		} else {
 			fmtc.Printf("{y}Version %s already installed{!}\n", name)
@@ -399,7 +421,7 @@ func installCommand(name string) {
 
 	fmtc.Printf("Fetching {c}%s{!} {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
 
-	file, err := downloadFile(config.GetS(STORAGE_URL)+info.Path, info.File)
+	file, err := downloadFile(knf.GetS(STORAGE_URL)+info.Path, info.File)
 
 	if err != nil {
 		fmtc.Printf("{r}%s{!}\n", err.Error())
@@ -408,58 +430,117 @@ func installCommand(name string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Checking sha1 checksum... ")
+	checkHashTask := &Task{
+		Desc:    "Checking sha1 checksum",
+		Handler: checkHashTaskHandler,
+	}
 
-	if info.Hash == crypto.FileHash(file) {
-		fmtc.Println("{g}OK{!}")
-	} else {
-		fmtc.Println("{r}FAIL{!}")
+	_, err = checkHashTask.Start(file, info.Hash)
+
+	if err != nil {
+		fmtc.Printf("{r}%s{!}\n", err.Error())
 		exit(1)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	start := time.Now()
+	unpackTask := &Task{
+		Desc:    "Unpacking 7z archive",
+		Handler: unpackTaskHandler,
+	}
 
-	fmtc.Printf("Unpacking 7z archive... ")
+	_, err = unpackTask.Start(file, knf.GetS(RBENV_DIR)+"/versions/")
 
-	output, err := z7.Extract(&z7.Props{
-		File:   file,
-		Output: config.GetS(RBENV_DIR) + "/versions/",
-	})
-
-	if err == nil {
-		fmtc.Printf("{g}DONE{!} {s}(%s){!}\n", timeutil.PrettyDuration(time.Since(start)))
-	} else {
-		fmtc.Println("{r}ERROR{!}")
-		fmtc.NewLine()
-		fmtc.Printf("{r}7za return error: %s{!}\n", err.Error())
-
-		tl, err := logFailedAction([]byte(output))
-
-		if err == nil {
-			fmtc.Printf("{r}7za output saved as %s{!}\n", tl)
-		}
-
+	if err != nil {
+		fmtc.Printf("{r}%s{!}\n", err.Error())
 		exit(1)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if config.GetS(GEMS_INSTALL) != "" {
-		for _, gem := range strings.Split(config.GetS(GEMS_INSTALL), " ") {
-			runGemCmd(info.Name, "install", gem)
+	if knf.GetS(GEMS_INSTALL) != "" {
+		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
+			gemInstallTask := &Task{
+				Desc:    fmt.Sprintf("Installing %s", gem),
+				Handler: installGemTaskHandler,
+			}
+
+			_, err := gemInstallTask.Start(info.Name, gem)
+
+			if err != nil {
+				fmtc.Printf("{r}%s{!}\n", err.Error())
+				exit(1)
+			}
 		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	runRehashing()
+	rehashTask := &Task{
+		Desc:    "Rehashing",
+		Handler: rehashTaskHandler,
+	}
+
+	_, err = rehashTask.Start()
+
+	if err != nil {
+		fmtc.Printf("{r}%s{!}\n", err.Error())
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
 
 	log.Info("[%s] %s %s", currentUser.RealName, "Installed version", info.Name)
 
 	fmtc.NewLine()
 	fmtc.Printf("{g}Version %s successfully installed!{!}\n", info.Name)
+}
+
+func checkHashTaskHandler(args ...string) (string, error) {
+	file := args[0]
+	hash := args[1]
+
+	fileHash := crypto.FileHash(file)
+
+	if hash != fileHash {
+		return "", fmt.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
+	}
+
+	return "", nil
+}
+
+func unpackTaskHandler(args ...string) (string, error) {
+	file := args[0]
+	output := args[1]
+
+	output, err := z7.Extract(&z7.Props{File: file, Output: output})
+
+	if err != nil {
+		actionLog, err := logFailedAction([]byte(output))
+
+		return "", fmt.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
+	}
+
+	return "", nil
+}
+
+func installGemTaskHandler(args ...string) (string, error) {
+	version := args[0]
+	gem := args[1]
+
+	return runGemCmd(version, "install", gem)
+}
+
+func updateGemTaskHandler(args ...string) (string, error) {
+	version := args[0]
+	gem := args[1]
+
+	return runGemCmd(version, "update", gem)
+}
+
+func rehashTaskHandler(args ...string) (string, error) {
+	rehashCmd := exec.Command("rbenv", "rehash")
+	return "", rehashCmd.Run()
 }
 
 // updateGems update gems installed by rbinstall on defined version
@@ -473,66 +554,74 @@ func updateGems(rubyVersion string) {
 
 	runDate = time.Now()
 
-	fmtc.Printf("Updating gems for {c}%s{!}...\n", rubyVersion)
+	fmtc.Printf("Updating gems for {c}%s{!}...\n\n", rubyVersion)
 
-	for _, gem := range strings.Split(config.GetS(GEMS_INSTALL), " ") {
-		var ok bool
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
+		var updateGemTask *Task
 
 		if isGemInstalled(rubyVersion, gem) {
-			ok = runGemCmd(rubyVersion, "update", gem)
+			updateGemTask = &Task{
+				Desc:    fmt.Sprintf("Updating %s", gem),
+				Handler: updateGemTaskHandler,
+			}
 		} else {
-			ok = runGemCmd(rubyVersion, "install", gem)
+			updateGemTask = &Task{
+				Desc:    fmt.Sprintf("Installing %s", gem),
+				Handler: installGemTaskHandler,
+			}
 		}
 
-		if ok {
-			log.Info("[%s] %s %s", currentUser.RealName, "Updated gem", gem)
+		installedVersion, err := updateGemTask.Start(rubyVersion, gem)
+
+		if err == nil {
+			if installedVersion != "" {
+				log.Info(
+					"[%s] Updated gem %s to version %s for %s",
+					currentUser.RealName, gem, installedVersion, rubyVersion,
+				)
+			}
+		} else {
+			fmtc.Printf("{r}%s{!}\n", err.Error())
+			exit(1)
 		}
 	}
 
-	runRehashing()
-}
+	// //////////////////////////////////////////////////////////////////////////////// //
 
-// runRehashing start rehashing
-func runRehashing() {
-	start := time.Now()
+	rehashTask := &Task{
+		Desc:    "Rehashing",
+		Handler: rehashTaskHandler,
+	}
 
-	fmtc.Printf("Rehashing... ")
+	_, err := rehashTask.Start()
 
-	rehashCmd := exec.Command("rbenv", "rehash")
-	err := rehashCmd.Run()
-
-	if err == nil {
-		fmtc.Printf("{g}DONE{!} {s}(%s){!}\n", timeutil.PrettyDuration(time.Since(start)))
-	} else {
-		fmtc.Println("{r}ERROR{!}")
+	if err != nil {
+		fmtc.Printf("{r}%s{!}\n", err.Error())
 		exit(1)
 	}
+
+	fmtc.NewLine()
+	fmtc.Println("{g}All gems successfully updated!{!}")
 }
 
 // runGemCmd run some gem command for some version
-func runGemCmd(rubyVersion, cmd, gem string) bool {
+func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
+	start := time.Now()
 	path := getVersionPath(rubyVersion)
 	gemCmd := exec.Command(path+"/bin/ruby", path+"/bin/gem", cmd, gem)
 
-	if config.GetB(GEMS_NO_RI) {
+	if knf.GetB(GEMS_NO_RI) {
 		gemCmd.Args = append(gemCmd.Args, "--no-ri")
 	}
 
-	if config.GetB(GEMS_NO_RDOC) {
+	if knf.GetB(GEMS_NO_RDOC) {
 		gemCmd.Args = append(gemCmd.Args, "--no-rdoc")
 	}
 
-	if config.GetS(GEMS_SOURCE) != "" {
+	if knf.GetS(GEMS_SOURCE) != "" {
 		gemCmd.Args = append(gemCmd.Args, "--source", getGemSourceURL())
-	}
-
-	start := time.Now()
-
-	switch cmd {
-	case "update":
-		fmtc.Printf("Updating %s... ", gem)
-	default:
-		fmtc.Printf("Installing %s... ", gem)
 	}
 
 	output, err := gemCmd.Output()
@@ -541,24 +630,25 @@ func runGemCmd(rubyVersion, cmd, gem string) bool {
 		version := getInstalledGemVersion(rubyVersion, gem, start)
 
 		if version == "" {
-			fmtc.Println("{s}unchanged{!}")
-			return false
+			return "", nil
 		}
 
-		fmtc.Printf("{g}%s{!} {s}(%s){!}\n", version, timeutil.PrettyDuration(time.Since(start)))
-		return true
+		return version, nil
 	}
 
-	fmtc.Println("{r}ERROR{!}")
-
-	tl, err := logFailedAction(output)
+	actionLog, err := logFailedAction(output)
 
 	if err == nil {
-		fmtc.NewLine()
-		fmtc.Printf("{r}Gem command output saved as %s{!}\n", tl)
+		switch cmd {
+		case "update":
+			return "", fmt.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
+		default:
+			return "", fmt.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
+		}
+
 	}
 
-	return false
+	return "", nil
 }
 
 // downloadFile download file from remote host
@@ -703,7 +793,7 @@ func getVersionGemDirPath(rubyVersion string) string {
 
 // getVersionPath return full path to directory for given ruby version
 func getVersionPath(rubyVersion string) string {
-	return config.GetS(RBENV_DIR) + "/versions/" + rubyVersion
+	return knf.GetS(RBENV_DIR) + "/versions/" + rubyVersion
 }
 
 // getAlignSpaces return spaces for message align
@@ -713,11 +803,11 @@ func getAlignSpaces(t string, l int) string {
 }
 
 func getGemSourceURL() string {
-	if !arg.GetB(ARG_GEMS_INSECURE) && config.GetB(GEMS_SOURCE_SECURE, false) {
-		return "https://" + config.GetS(GEMS_SOURCE)
+	if !arg.GetB(ARG_GEMS_INSECURE) && knf.GetB(GEMS_SOURCE_SECURE, false) {
+		return "https://" + knf.GetS(GEMS_SOURCE)
 	}
 
-	return "http://" + config.GetS(GEMS_SOURCE)
+	return "http://" + knf.GetS(GEMS_SOURCE)
 }
 
 // logFailedAction save data to temporary log file and return path
@@ -727,11 +817,13 @@ func logFailedAction(data []byte) (string, error) {
 		return "", errors.New("Output data is empty")
 	}
 
-	tmpName := config.GetS(MAIN_TMP_DIR) + "/" + FAIL_LOG_NAME
+	tmpName := knf.GetS(MAIN_TMP_DIR) + "/" + FAIL_LOG_NAME
 
 	if fsutil.IsExist(tmpName) {
 		os.Remove(tmpName)
 	}
+
+	data = append(data, []byte("\n\n")...)
 
 	err := ioutil.WriteFile(tmpName, data, 0666)
 
