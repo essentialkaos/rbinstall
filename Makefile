@@ -12,9 +12,9 @@ PREFIX?=/usr
 all: rbinstall rbinstall-gen
 
 deps:
-	go get -v -u pkg.re/essentialkaos/ek.v1
-	go get -v -u pkg.re/essentialkaos/z7.v1
-	go get -v -u github.com/cheggaaa/pb
+	go get -v pkg.re/essentialkaos/ek.v1
+	go get -v pkg.re/essentialkaos/z7.v1
+	go get -v github.com/cheggaaa/pb
 
 rbinstall:
 	go build rbinstall.go
