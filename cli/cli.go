@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -289,15 +290,29 @@ func fetchIndex() {
 	}
 }
 
-func installFromVersionFile() bool {
+func installFromVersionFile() {
 	version, err := ioutil.ReadFile(VERSION_FILE)
 	if err != nil {
-		return false
+		fmtc.Println("Cannot read %s", VERSION_FILE)
+		exit(1)
 	}
 
-	fmtc.Println("Installing version %s from .ruby-version", version)
-	installCommand(string(version))
-	return true
+	ver, err := readVersionFromFile(string(version))
+	if err != nil {
+		fmtc.Println("Cannot find version in %s", VERSION_FILE)
+		exit(1)
+	}
+
+	fmtc.Println("Installing version %s from %s", ver, VERSION_FILE)
+	installCommand(ver)
+}
+
+func readVersionFromFile(body string) (string, error) {
+	matches := regexp.MustCompile(`^\s*(\S+)\s*`).FindStringSubmatch(body)
+	if len(matches) < 2 {
+		return "", errors.New("No version in file")
+	}
+	return matches[1], nil
 }
 
 // listCommand show list of all available versions
