@@ -79,6 +79,7 @@ const (
 
 const CONFIG_FILE = "/etc/rbinstall.conf"
 const FAIL_LOG_NAME = "rbinstall-fail.log"
+const VERSION_FILE = ".ruby-version"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -168,7 +169,9 @@ func Init() {
 			installCommand(args[0])
 		}
 	} else {
-		if !installFromVersionFile() {
+		if fsutil.CheckPerms("FRS", VERSION_FILE) {
+			installFromVersionFile()
+		} else {
 			listCommand()
 		}
 	}
@@ -287,7 +290,7 @@ func fetchIndex() {
 }
 
 func installFromVersionFile() bool {
-	version, err := ioutil.ReadFile(".ruby-version")
+	version, err := ioutil.ReadFile(VERSION_FILE)
 	if err != nil {
 		return false
 	}
