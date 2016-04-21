@@ -291,20 +291,20 @@ func fetchIndex() {
 }
 
 func installFromVersionFile() {
-	version, err := ioutil.ReadFile(VERSION_FILE)
+	blob, err := ioutil.ReadFile(VERSION_FILE)
 	if err != nil {
 		fmtc.Println("Cannot read %s", VERSION_FILE)
 		exit(1)
 	}
 
-	ver, err := readVersionFromFile(string(version))
+	version, err := readVersionFromFile(string(blob))
 	if err != nil {
 		fmtc.Println("Cannot find version in %s", VERSION_FILE)
 		exit(1)
 	}
 
-	fmtc.Println("Installing version %s from %s", ver, VERSION_FILE)
-	installCommand(ver)
+	fmtc.Println("Installing version %s from %s", version, VERSION_FILE)
+	installCommand(version)
 }
 
 func readVersionFromFile(body string) (string, error) {
