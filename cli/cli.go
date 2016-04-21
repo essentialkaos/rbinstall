@@ -168,7 +168,9 @@ func Init() {
 			installCommand(args[0])
 		}
 	} else {
-		listCommand()
+		if !installFromVersionFile() {
+			listCommand()
+		}
 	}
 
 	exit(0)
@@ -282,6 +284,17 @@ func fetchIndex() {
 		fmtc.Printf("{r}Can't decode repo index json: %s{!}\n", err.Error())
 		exit(1)
 	}
+}
+
+func installFromVersionFile() bool {
+	version, err := ioutil.ReadFile(".ruby-version")
+	if err != nil {
+		return false
+	}
+
+	fmtc.Println("Installing version %s from .ruby-version", version)
+	installCommand(string(version))
+	return true
 }
 
 // listCommand show list of all available versions
