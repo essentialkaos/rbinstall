@@ -297,8 +297,8 @@ func installFromVersionFile() {
 		exit(1)
 	}
 
-	version, err := readFirstWord(string(blob))
-	if err != nil {
+	version := readFirstWord(string(blob))
+	if version == "" {
 		fmtc.Printf("{r}Cannot find version in %s{!}\n", VERSION_FILE)
 		exit(1)
 	}
@@ -308,12 +308,13 @@ func installFromVersionFile() {
 }
 
 // readFirstWord returns the first word (sequence of non-whitespace characters) of a string.
-func readFirstWord(body string) (string, error) {
+// If the string has no words (only whitespace), it returns an empty string.
+func readFirstWord(body string) string {
 	words := strings.Fields(body)
 	if len(words) < 1 {
-		return "", errors.New("I have no words!")
+		return ""
 	}
-	return words[0], nil
+	return words[0]
 }
 
 // listCommand show list of all available versions
