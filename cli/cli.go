@@ -106,7 +106,7 @@ type Index struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-var argList map[string]*arg.V = map[string]*arg.V{
+var argMap = arg.Map{
 	ARG_GEMS_UPDATE:   &arg.V{Type: arg.BOOL},
 	ARG_GEMS_INSECURE: &arg.V{Type: arg.BOOL},
 	ARG_NO_COLOR:      &arg.V{Type: arg.BOOL},
@@ -126,7 +126,7 @@ var (
 func Init() {
 	var errs []error
 
-	args, errs := arg.Parse(argList)
+	args, errs := arg.Parse(argMap)
 
 	if len(errs) != 0 {
 		fmtc.NewLine()
