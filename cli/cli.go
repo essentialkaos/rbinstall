@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -308,11 +307,11 @@ func installFromVersionFile() {
 }
 
 func readFirstWord(body string) (string, error) {
-	matches := regexp.MustCompile(`^\s*(\S+)\s*`).FindStringSubmatch(body)
-	if len(matches) < 2 {
+	words := strings.Fields(body)
+	if len(words) < 1 {
 		return "", errors.New("I have no words!")
 	}
-	return matches[1], nil
+	return words[0], nil
 }
 
 // listCommand show list of all available versions
