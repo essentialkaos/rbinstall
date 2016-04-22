@@ -297,7 +297,7 @@ func installFromVersionFile() {
 		exit(1)
 	}
 
-	version, err := readVersionFromFile(string(blob))
+	version, err := readFirstWord(string(blob))
 	if err != nil {
 		fmtc.Println("Cannot find version in %s", VERSION_FILE)
 		exit(1)
@@ -307,10 +307,10 @@ func installFromVersionFile() {
 	installCommand(version)
 }
 
-func readVersionFromFile(body string) (string, error) {
+func readFirstWord(body string) (string, error) {
 	matches := regexp.MustCompile(`^\s*(\S+)\s*`).FindStringSubmatch(body)
 	if len(matches) < 2 {
-		return "", errors.New("No version in file")
+		return "", errors.New("I have no words!")
 	}
 	return matches[1], nil
 }
