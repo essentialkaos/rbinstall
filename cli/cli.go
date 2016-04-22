@@ -289,6 +289,7 @@ func fetchIndex() {
 	}
 }
 
+// installFromVersionFile installs Ruby version specified in the standard Ruby version dotfile (.ruby-version) residing in the current directory.
 func installFromVersionFile() {
 	blob, err := ioutil.ReadFile(VERSION_FILE)
 	if err != nil {
@@ -306,6 +307,7 @@ func installFromVersionFile() {
 	installCommand(version)
 }
 
+// readFirstWord returns the first word (sequence of non-whitespace characters) of a string.
 func readFirstWord(body string) (string, error) {
 	words := strings.Fields(body)
 	if len(words) < 1 {
