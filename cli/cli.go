@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -79,6 +80,7 @@ const (
 
 const CONFIG_FILE = "/etc/rbinstall.conf"
 const FAIL_LOG_NAME = "rbinstall-fail.log"
+const VERSION_FILE = ".ruby-version"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -168,7 +170,11 @@ func Init() {
 			installCommand(args[0])
 		}
 	} else {
-		listCommand()
+		if fsutil.CheckPerms("FRS", VERSION_FILE) {
+			installFromVersionFile()
+		} else {
+			listCommand()
+		}
 	}
 
 	exit(0)
@@ -282,6 +288,31 @@ func fetchIndex() {
 		fmtc.Printf("{r}Can't decode repo index json: %s{!}\n", err.Error())
 		exit(1)
 	}
+}
+
+func installFromVersionFile() {
+	blob, err := ioutil.ReadFile(VERSION_FILE)
+	if err != nil {
+		fmtc.Println("Cannot read %s", VERSION_FILE)
+		exit(1)
+	}
+
+	version, err := readFirstWord(string(blob))
+	if err != nil {
+		fmtc.Println("Cannot find version in %s", VERSION_FILE)
+		exit(1)
+	}
+
+	fmtc.Println("Installing version %s from %s", version, VERSION_FILE)
+	installCommand(version)
+}
+
+func readFirstWord(body string) (string, error) {
+	matches := regexp.MustCompile(`^\s*(\S+)\s*`).FindStringSubmatch(body)
+	if len(matches) < 2 {
+		return "", errors.New("I have no words!")
+	}
+	return matches[1], nil
 }
 
 // listCommand show list of all available versions
