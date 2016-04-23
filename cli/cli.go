@@ -81,6 +81,7 @@ const (
 
 const CONFIG_FILE = "/etc/rbinstall.conf"
 const FAIL_LOG_NAME = "rbinstall-fail.log"
+const VERSION_FILE = ".ruby-version"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -189,7 +190,11 @@ func Init() {
 			installCommand(rubyVersion)
 		}
 	} else {
-		listCommand()
+		if fsutil.CheckPerms("FRS", VERSION_FILE) {
+			installFromVersionFile()
+		} else {
+			listCommand()
+		}
 	}
 
 	exit(0)
@@ -307,6 +312,34 @@ func fetchIndex() {
 		printError("Can't decode repo index json: %v", err)
 		exit(1)
 	}
+}
+
+// installFromVersionFile installs Ruby version specified in the standard Ruby version dotfile (.ruby-version) residing in the current directory.
+func installFromVersionFile() {
+	blob, err := ioutil.ReadFile(VERSION_FILE)
+	if err != nil {
+		fmtc.Printf("{r}Cannot read %s{!}\n", VERSION_FILE)
+		exit(1)
+	}
+
+	version := readFirstWord(string(blob))
+	if version == "" {
+		fmtc.Printf("{r}Cannot find version in %s{!}\n", VERSION_FILE)
+		exit(1)
+	}
+
+	fmtc.Printf("{y}Installing version %s from %s{!}\n", version, VERSION_FILE)
+	installCommand(version)
+}
+
+// readFirstWord returns the first word (sequence of non-whitespace characters) of a string.
+// If the string has no words (only whitespace), it returns an empty string.
+func readFirstWord(body string) string {
+	words := strings.Fields(body)
+	if len(words) < 1 {
+		return ""
+	}
+	return words[0]
 }
 
 // listCommand show list of all available versions
