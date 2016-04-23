@@ -26,6 +26,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/knf"
 	"pkg.re/essentialkaos/ek.v1/log"
 	"pkg.re/essentialkaos/ek.v1/req"
+	"pkg.re/essentialkaos/ek.v1/signal"
 	"pkg.re/essentialkaos/ek.v1/sortutil"
 	"pkg.re/essentialkaos/ek.v1/system"
 	"pkg.re/essentialkaos/ek.v1/tmp"
@@ -40,7 +41,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.5.0"
+	VER  = "0.6.0"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -49,6 +50,7 @@ const (
 const (
 	ARG_GEMS_UPDATE   = "g:gems-update"
 	ARG_GEMS_INSECURE = "S:gems-insecure"
+	ARG_RUBY_VERSION  = "r:ruby-version"
 	ARG_NO_COLOR      = "nc:no-color"
 	ARG_HELP          = "h:help"
 	ARG_VER           = "v:version"
@@ -109,6 +111,7 @@ type Index struct {
 var argMap = arg.Map{
 	ARG_GEMS_UPDATE:   &arg.V{Type: arg.BOOL},
 	ARG_GEMS_INSECURE: &arg.V{Type: arg.BOOL},
+	ARG_RUBY_VERSION:  &arg.V{Type: arg.BOOL},
 	ARG_NO_COLOR:      &arg.V{Type: arg.BOOL},
 	ARG_HELP:          &arg.V{Type: arg.BOOL, Alias: "u:usage"},
 	ARG_VER:           &arg.V{Type: arg.BOOL, Alias: "ver"},
@@ -124,7 +127,10 @@ var (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
+	var err error
 	var errs []error
+
+	runtime.GOMAXPROCS(2)
 
 	args, errs := arg.Parse(argMap)
 
@@ -132,7 +138,7 @@ func Init() {
 		fmtc.NewLine()
 
 		for _, err := range errs {
-			fmtc.Printf("{r}%v{!}\n", err)
+			printError(err.Error())
 		}
 
 		exit(1)
@@ -157,15 +163,30 @@ func Init() {
 	prepare()
 	fetchIndex()
 
+	var rubyVersion string
+
 	if len(args) != 0 {
+		rubyVersion = args[0]
+	} else if arg.GetB(ARG_RUBY_VERSION) {
+		rubyVersion, err = getVersionFromFile()
+
+		if err != nil {
+			printError(err.Error())
+			exit(1)
+		}
+
+		fmtc.Printf("{s}Installing version %s from version file{!}\n\n", rubyVersion)
+	}
+
+	if rubyVersion != "" {
 		checkPerms()
 		setupLogger()
 		setupTemp()
 
 		if arg.GetB(ARG_GEMS_UPDATE) {
-			updateGems(args[0])
+			updateGems(rubyVersion)
 		} else {
-			installCommand(args[0])
+			installCommand(rubyVersion)
 		}
 	} else {
 		listCommand()
@@ -174,7 +195,7 @@ func Init() {
 	exit(0)
 }
 
-// prepare do some preparations
+// prepare do some preparations for installing ruby
 func prepare() {
 	req.UserAgent = fmt.Sprintf("%s/%s (go; %s; %s-%s)",
 		APP, VER, runtime.Version(),
@@ -182,6 +203,10 @@ func prepare() {
 
 	loadConfig()
 	validateConfig()
+
+	signal.Handlers{
+		signal.INT: intSignalHandler,
+	}.TrackAsync()
 }
 
 // checkPerms check user for sudo
@@ -191,12 +216,12 @@ func checkPerms() {
 	currentUser, err = system.CurrentUser()
 
 	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
+		printError(err.Error())
 		exit(1)
 	}
 
 	if !currentUser.IsRoot() {
-		fmtc.Println("{r}This action requires superuser (root) privileges{!}")
+		printError("This action requires superuser (root) privileges")
 		exit(1)
 	}
 }
@@ -206,7 +231,7 @@ func setupLogger() {
 	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -220,7 +245,7 @@ func setupTemp() {
 	temp, err = tmp.NewTemp(knf.GetS(MAIN_TMP_DIR, "/tmp"))
 
 	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
+		printError(err.Error())
 		exit(1)
 	}
 }
@@ -230,7 +255,7 @@ func loadConfig() {
 	err := knf.Global(CONFIG_FILE)
 
 	if err != nil {
-		fmtc.Printf("{r}%v{!}\n", err)
+		printError(err.Error())
 		exit(1)
 	}
 }
@@ -255,10 +280,10 @@ func validateConfig() {
 	})
 
 	if len(errs) != 0 {
-		fmtc.Println("{r}Error while knf.validation:{!}")
+		printError("Error while knf.validation:")
 
 		for _, err := range errs {
-			fmtc.Printf("  {r}%s{!}\n", err.Error())
+			printError("  %v", err)
 		}
 
 		exit(1)
@@ -270,7 +295,7 @@ func fetchIndex() {
 	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
 
 	if err != nil {
-		fmtc.Printf("{r}Can't fetch repo index: %s{!}\n", err.Error())
+		printError("Can't fetch repo index: %v", err)
 		exit(1)
 	}
 
@@ -279,7 +304,7 @@ func fetchIndex() {
 	err = resp.JSON(index)
 
 	if err != nil {
-		fmtc.Printf("{r}Can't decode repo index json: %s{!}\n", err.Error())
+		printError("Can't decode repo index json: %v", err)
 		exit(1)
 	}
 }
@@ -289,12 +314,12 @@ func listCommand() {
 	systemInfo, err := system.GetSystemInfo()
 
 	if err != nil {
-		fmtc.Println("{y}Can't get information about system{!}")
+		printWarn("Can't get information about system")
 		exit(1)
 	}
 
 	if index.Data[systemInfo.Arch] == nil {
-		fmtc.Printf("{y}Prebuilt rubies not found for %s architecture{!}", systemInfo.Arch)
+		printWarn("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
 		exit(0)
 	}
 
@@ -398,11 +423,11 @@ func listCommand() {
 }
 
 // installCommand install some version of ruby
-func installCommand(name string) {
-	info := index.Find(name)
+func installCommand(rubyVersion string) {
+	info := index.Find(rubyVersion)
 
 	if info == nil {
-		fmtc.Printf("{y}Can't find info about version %s{!}\n", name)
+		printWarn("Can't find info about version %s", rubyVersion)
 		exit(1)
 	}
 
@@ -412,8 +437,8 @@ func installCommand(name string) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
 			os.RemoveAll(fullPath)
 		} else {
-			fmtc.Printf("{y}Version %s already installed{!}\n", name)
-			exit(1)
+			printWarn("Version %s already installed", rubyVersion)
+			exit(0)
 		}
 	}
 
@@ -424,7 +449,7 @@ func installCommand(name string) {
 	file, err := downloadFile(knf.GetS(STORAGE_URL)+info.Path, info.File)
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -438,7 +463,7 @@ func installCommand(name string) {
 	_, err = checkHashTask.Start(file, info.Hash)
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -452,7 +477,7 @@ func installCommand(name string) {
 	_, err = unpackTask.Start(file, knf.GetS(RBENV_DIR)+"/versions/")
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -468,7 +493,7 @@ func installCommand(name string) {
 			_, err := gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
-				fmtc.Printf("{r}%s{!}\n", err.Error())
+				printError(err.Error())
 				exit(1)
 			}
 		}
@@ -484,7 +509,7 @@ func installCommand(name string) {
 	_, err = rehashTask.Start()
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -494,6 +519,34 @@ func installCommand(name string) {
 
 	fmtc.NewLine()
 	fmtc.Printf("{g}Version %s successfully installed!{!}\n", info.Name)
+}
+
+// getVersionFromFile try to read version file and return defined version
+func getVersionFromFile() (string, error) {
+	versionFile := fsutil.ProperPath("FRS",
+		[]string{
+			".ruby-version",
+			".rbenv-version",
+		},
+	)
+
+	if versionFile == "" {
+		return "", fmt.Errorf("Can't find proper version file")
+	}
+
+	versionData, err := ioutil.ReadFile(versionFile)
+
+	if err != nil {
+		return "", fmt.Errorf("Can't read version file: %v", err)
+	}
+
+	versionName := strings.Trim(string(versionData[:]), " \n\r")
+
+	if versionName == "" {
+		return "", fmt.Errorf("Can't use version file - file malformed")
+	}
+
+	return versionName, nil
 }
 
 func checkHashTaskHandler(args ...string) (string, error) {
@@ -548,7 +601,7 @@ func updateGems(rubyVersion string) {
 	fullPath := getVersionPath(rubyVersion)
 
 	if !fsutil.IsExist(fullPath) {
-		fmtc.Printf("{r}Version %s is not installed{!}\n", rubyVersion)
+		printError("Version %s is not installed", rubyVersion)
 		exit(1)
 	}
 
@@ -583,7 +636,7 @@ func updateGems(rubyVersion string) {
 				)
 			}
 		} else {
-			fmtc.Printf("{r}%s{!}\n", err.Error())
+			printError(err.Error())
 			exit(1)
 		}
 	}
@@ -598,7 +651,7 @@ func updateGems(rubyVersion string) {
 	_, err := rehashTask.Start()
 
 	if err != nil {
-		fmtc.Printf("{r}%s{!}\n", err.Error())
+		printError(err.Error())
 		exit(1)
 	}
 
@@ -802,6 +855,7 @@ func getAlignSpaces(t string, l int) string {
 	return spaces[0 : l-len(t)]
 }
 
+// getGemSourceURL return url of gem source
 func getGemSourceURL() string {
 	if !arg.GetB(ARG_GEMS_INSECURE) && knf.GetB(GEMS_SOURCE_SECURE, false) {
 		return "https://" + knf.GetS(GEMS_SOURCE)
@@ -832,6 +886,22 @@ func logFailedAction(data []byte) (string, error) {
 	}
 
 	return tmpName, nil
+}
+
+// intSignalHandler is INT (Ctrl+C) signal handler
+func intSignalHandler() {
+	printWarn("\n\nInstall process canceled by Ctrl+C")
+	exit(1)
+}
+
+// printError prints error message to console
+func printError(f string, a ...interface{}) {
+	fmtc.Printf("{r}"+f+"{!}\n", a...)
+}
+
+// printError prints warning message to console
+func printWarn(f string, a ...interface{}) {
+	fmtc.Printf("{y}"+f+"{!}\n", a...)
 }
 
 // exit exits clean temporary data and exit from utility with given exit code
@@ -898,6 +968,7 @@ func showUsage() {
 
 	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version")
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
+	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
 	info.AddOption(ARG_HELP, "Show this help message")
 	info.AddOption(ARG_VER, "Show version")
@@ -905,6 +976,7 @@ func showUsage() {
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -g", "Update gems installed on 2.0.0-p598")
+	info.AddExample("-r", "Install version defined in .ruby-version file")
 
 	info.Render()
 }
