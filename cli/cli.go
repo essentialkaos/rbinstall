@@ -438,7 +438,7 @@ func installCommand(rubyVersion string) {
 			os.RemoveAll(fullPath)
 		} else {
 			printWarn("Version %s already installed", rubyVersion)
-			exit(1)
+			exit(0)
 		}
 	}
 
