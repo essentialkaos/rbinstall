@@ -129,6 +129,8 @@ func Init() {
 	var err error
 	var errs []error
 
+	runtime.GOMAXPROCS(2)
+
 	args, errs := arg.Parse(argMap)
 
 	if len(errs) != 0 {
