@@ -26,6 +26,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/knf"
 	"pkg.re/essentialkaos/ek.v1/log"
 	"pkg.re/essentialkaos/ek.v1/req"
+	"pkg.re/essentialkaos/ek.v1/signal"
 	"pkg.re/essentialkaos/ek.v1/sortutil"
 	"pkg.re/essentialkaos/ek.v1/system"
 	"pkg.re/essentialkaos/ek.v1/tmp"
@@ -202,6 +203,10 @@ func prepare() {
 
 	loadConfig()
 	validateConfig()
+
+	signal.Handlers{
+		signal.INT: intSignalHandler,
+	}.TrackAsync()
 }
 
 // checkPerms check user for sudo
@@ -881,6 +886,12 @@ func logFailedAction(data []byte) (string, error) {
 	}
 
 	return tmpName, nil
+}
+
+// intSignalHandler is INT (Ctrl+C) signal handler
+func intSignalHandler() {
+	printWarn("\n\nInstall process canceled by Ctrl+C")
+	exit(1)
 }
 
 // printError prints error message to console
