@@ -148,11 +148,17 @@ doInstall() {
   action "RBInstall Gen compiled" \
          "go" "build" "$install_dir/rbinstall-gen.go"
 
+  action "RBInstall Clone compiled" \
+         "go" "build" "$install_dir/rbinstall-clone.go"
+
   action "Copied RBInstall to /usr/bin" \
          "install" "-pm 755" "rbinstall" "/usr/bin/rbinstall"
 
-  action "Copied RBInstall to /usr/bin" \
+  action "Copied RBInstall Gen to /usr/bin" \
          "install" "-pm 755" "rbinstall-gen" "/usr/bin/rbinstall-gen"
+
+  action "Copied RBInstall Clone to /usr/bin" \
+         "install" "-pm 755" "rbinstall-clone" "/usr/bin/rbinstall-clone"
 
   action "Removed compiled binaries from src directory" \
          "rm" "-f" "rbinstall" "rbinstall-gen"
