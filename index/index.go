@@ -68,12 +68,12 @@ func (i *Index) Find(name string) *VersionInfo {
 }
 
 // Find info by name
-func (ci *CategoryInfo) Find(name string) *VersionInfo {
-	if len(ci.Versions) == 0 {
+func (i *CategoryInfo) Find(name string) *VersionInfo {
+	if len(i.Versions) == 0 {
 		return nil
 	}
 
-	for _, info := range ci.Versions {
+	for _, info := range i.Versions {
 		if info.Name == name {
 			return info
 		}

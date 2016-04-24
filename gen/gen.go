@@ -18,6 +18,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/fmtc"
 	"pkg.re/essentialkaos/ek.v1/fsutil"
 	"pkg.re/essentialkaos/ek.v1/jsonutil"
+	"pkg.re/essentialkaos/ek.v1/path"
 	"pkg.re/essentialkaos/ek.v1/sliceutil"
 	"pkg.re/essentialkaos/ek.v1/timeutil"
 	"pkg.re/essentialkaos/ek.v1/usage"
@@ -66,7 +67,7 @@ func Init() {
 
 	if len(errs) != 0 {
 		for _, err := range errs {
-			fmtc.Printf("{r}%s{!}\n", err.Error())
+			printError(err.Error())
 		}
 
 		os.Exit(1)
@@ -86,55 +87,55 @@ func Init() {
 		return
 	}
 
-	path := args[0]
+	dataDir := args[0]
 
-	checkDir(path)
-	buildIndex(path)
+	checkDir(dataDir)
+	buildIndex(dataDir)
 }
 
 // checkDir do some checks for provided dir
-func checkDir(path string) {
-	if !fsutil.IsDir(path) {
-		fmtc.Printf("{r}Target %s is not a directory{!}\n", path)
+func checkDir(dataDir string) {
+	if !fsutil.IsDir(dataDir) {
+		printError("Target %s is not a directory", dataDir)
 		os.Exit(1)
 	}
 
-	if !fsutil.IsExist(path) {
-		fmtc.Printf("{r}Directory %s is not exist{!}\n", path)
+	if !fsutil.IsExist(dataDir) {
+		printError("Directory %s is not exist", dataDir)
 		os.Exit(1)
 	}
 
-	if !fsutil.IsReadable(path) {
-		fmtc.Printf("{r}Directory %s is not readable{!}\n", path)
+	if !fsutil.IsReadable(dataDir) {
+		printError("Directory %s is not readable", dataDir)
 		os.Exit(1)
 	}
 
-	if !fsutil.IsExecutable(path) {
-		fmtc.Printf("{r}Directory %s is not exectable{!}\n", path)
+	if !fsutil.IsExecutable(dataDir) {
+		printError("Directory %s is not exectable", dataDir)
 		os.Exit(1)
 	}
 
-	if arg.GetS(ARG_OUTPUT) == "" && !fsutil.IsWritable(path) {
-		fmtc.Printf("{r}Directory %s is not writable{!}\n", path)
+	if arg.GetS(ARG_OUTPUT) == "" && !fsutil.IsWritable(dataDir) {
+		printError("Directory %s is not writable", dataDir)
 		os.Exit(1)
 	}
 }
 
 // buildIndex create index
-func buildIndex(path string) {
+func buildIndex(dataDir string) {
 	var err error
 
-	dirList := fsutil.List(path, true)
+	dirList := fsutil.List(dataDir, true)
 
 	if len(dirList) == 0 {
-		fmtc.Println("\n{y}Can't find arch directories in specified directory{!}\n")
+		printWarn("\nCan't find arch directories in specified directory")
 		os.Exit(0)
 	}
 
 	outputFile := arg.GetS(ARG_OUTPUT)
 
 	if outputFile == "" {
-		outputFile = path + "/index.json"
+		outputFile = path.Join(dataDir, "index.json")
 	}
 
 	var (
@@ -151,7 +152,7 @@ func buildIndex(path string) {
 		err = jsonutil.DecodeFile(outputFile, oldIndex)
 
 		if err != nil {
-			fmtc.Printf("\n{y}Can't reuse existing index: %s{!}\n\n", err.Error())
+			printWarn("\nCan't reuse existing index: %v\n", err)
 			oldIndex = nil
 		}
 	}
@@ -159,14 +160,14 @@ func buildIndex(path string) {
 	start := time.Now()
 
 	for _, dir := range dirList {
-		if !fsutil.IsDir(path + "/" + dir) {
+		if !fsutil.IsDir(path.Join(dataDir, dir)) {
 			continue
 		}
 
 		arch := dir
 
 		if !sliceutil.Contains(archList, arch) {
-			fmtc.Printf("\n{y}Unknown arch %s. Skipping...\n\n", arch)
+			printWarn("\nUnknown arch %s. Skipping...\n", arch)
 			continue
 		}
 
@@ -174,17 +175,19 @@ func buildIndex(path string) {
 			newIndex.Data[arch] = make(index.CategoryData)
 		}
 
-		fileList := fsutil.List(path+"/"+arch, true)
+		fileList := fsutil.List(path.Join(dataDir, arch), true)
 
 		sort.Strings(fileList)
 
 		if len(fileList) == 0 {
-			fmtc.Printf("\n{y}Can't find files in %s directory. Skipping...{!}\n\n", path+"/"+arch)
+			printWarn("\nCan't find files in %s directory. Skipping...\n", dataDir+"/"+arch)
 			continue
 		}
 
 		for _, file := range fileList {
-			if !fsutil.IsRegular(path + "/" + arch + "/" + file) {
+			filePath := path.Join(dataDir, arch, file)
+
+			if !fsutil.IsRegular(filePath) {
 				continue
 			}
 
@@ -206,7 +209,8 @@ func buildIndex(path string) {
 			}
 
 			cleanName := strings.Replace(file, ".7z", "", -1)
-			fileSize := uint64(fsutil.GetSize(path + "/" + arch + "/" + file))
+			fileSize := uint64(fsutil.GetSize(filePath))
+			patchedFilePath := path.Join(dataDir, arch, cleanName+"-railsexpress.7z")
 
 			info := findInfo(oldIndex.Data[arch][category].Versions, cleanName)
 
@@ -216,8 +220,8 @@ func buildIndex(path string) {
 					File:         file,
 					Path:         "/" + arch + "/" + file,
 					Size:         fileSize,
-					Hash:         crypto.FileHash(path + "/" + arch + "/" + file),
-					RailsExpress: fsutil.IsExist(path + "/" + arch + "/" + cleanName + "-railsexpress.7z"),
+					Hash:         crypto.FileHash(filePath),
+					RailsExpress: fsutil.IsExist(patchedFilePath),
 				}
 
 				fmtc.Printf("{g}+ %-24s{!} → {c}%s/%s{!}\n", info.Name, arch, category)
@@ -238,7 +242,7 @@ func buildIndex(path string) {
 	err = jsonutil.EncodeToFile(outputFile, newIndex)
 
 	if err != nil {
-		fmtc.Printf("{r}Can't save index as file %s: %s{!}\n", outputFile, err.Error())
+		printWarn("Can't save index as file %s: %v", outputFile, err)
 	} else {
 		fmtc.Printf("{g}Index created and stored as file %s. Processing took %s{!}\n", outputFile, timeutil.PrettyDuration(time.Since(start)))
 	}
@@ -255,6 +259,16 @@ func findInfo(infoList []*index.VersionInfo, version string) *index.VersionInfo 
 	}
 
 	return nil
+}
+
+// printError prints error message to console
+func printError(f string, a ...interface{}) {
+	fmtc.Printf("{r}"+f+"{!}\n", a...)
+}
+
+// printError prints warning message to console
+func printWarn(f string, a ...interface{}) {
+	fmtc.Printf("{y}"+f+"{!}\n", a...)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
