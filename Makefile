@@ -9,7 +9,7 @@ PREFIX?=/usr
 
 ########################################################################################
 
-all: rbinstall rbinstall-gen
+all: rbinstall rbinstall-gen rbinstall-clone
 
 deps:
 	go get -v pkg.re/essentialkaos/ek.v1
