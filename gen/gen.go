@@ -2,7 +2,7 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2015 Essential Kaos                         //
+//                     Copyright (c) 2009-2016 Essential Kaos                         //
 //      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -21,13 +21,15 @@ import (
 	"pkg.re/essentialkaos/ek.v1/sliceutil"
 	"pkg.re/essentialkaos/ek.v1/timeutil"
 	"pkg.re/essentialkaos/ek.v1/usage"
+
+	"github.com/essentialkaos/rbinstall/index"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.4.2"
+	VER  = "0.4.3"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -45,25 +47,6 @@ const (
 	CATEGORY_RUBINIUS = "rubinius"
 	CATEGORY_OTHER    = "other"
 )
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
-type VersionInfo struct {
-	Name         string `json:"name"`
-	File         string `json:"file"`
-	Path         string `json:"path"`
-	Size         uint64 `json:"size"`
-	Hash         string `json:"hash"`
-	RailsExpress bool   `json:"rx"`
-}
-
-type CategoryInfo struct {
-	Versions []*VersionInfo `json:"versions"`
-}
-
-type Index struct {
-	Data map[string]map[string]*CategoryInfo `json:"data"`
-}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -155,15 +138,15 @@ func buildIndex(path string) {
 	}
 
 	var (
-		newIndex *Index
-		oldIndex *Index
+		newIndex *index.Index
+		oldIndex *index.Index
 	)
 
-	newIndex = &Index{Data: make(map[string]map[string]*CategoryInfo)}
+	newIndex = index.NewIndex()
 
 	// Reuse index if possible
 	if fsutil.IsExist(outputFile) {
-		oldIndex = &Index{}
+		oldIndex = index.NewIndex()
 
 		err = jsonutil.DecodeFile(outputFile, oldIndex)
 
@@ -188,7 +171,7 @@ func buildIndex(path string) {
 		}
 
 		if newIndex.Data[arch] == nil {
-			newIndex.Data[arch] = make(map[string]*CategoryInfo)
+			newIndex.Data[arch] = make(index.CategoryData)
 		}
 
 		fileList := fsutil.List(path+"/"+arch, true)
@@ -219,7 +202,7 @@ func buildIndex(path string) {
 			}
 
 			if newIndex.Data[arch][category] == nil {
-				newIndex.Data[arch][category] = &CategoryInfo{make([]*VersionInfo, 0)}
+				newIndex.Data[arch][category] = index.NewCategoryInfo()
 			}
 
 			cleanName := strings.Replace(file, ".7z", "", -1)
@@ -228,7 +211,7 @@ func buildIndex(path string) {
 			info := findInfo(oldIndex.Data[arch][category].Versions, cleanName)
 
 			if info == nil || info.Size != fileSize {
-				info = &VersionInfo{
+				info = &index.VersionInfo{
 					Name:         cleanName,
 					File:         file,
 					Path:         "/" + arch + "/" + file,
@@ -264,7 +247,7 @@ func buildIndex(path string) {
 }
 
 // findInfo search version info struct in given slice
-func findInfo(infoList []*VersionInfo, version string) *VersionInfo {
+func findInfo(infoList []*index.VersionInfo, version string) *index.VersionInfo {
 	for _, info := range infoList {
 		if info.Name == version {
 			return info

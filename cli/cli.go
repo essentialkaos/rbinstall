@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2015 Essential Kaos                         //
+//                     Copyright (c) 2009-2016 Essential Kaos                         //
 //      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -35,13 +35,15 @@ import (
 	"pkg.re/essentialkaos/z7.v1"
 
 	"github.com/cheggaaa/pb"
+
+	"github.com/essentialkaos/rbinstall/index"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.0"
+	VER  = "0.6.1"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -89,23 +91,6 @@ type PassThru struct {
 	pb *pb.ProgressBar
 }
 
-type VersionInfo struct {
-	Name         string `json:"name"`
-	File         string `json:"file"`
-	Path         string `json:"path"`
-	Size         uint64 `json:"size"`
-	Hash         string `json:"hash"`
-	RailsExpress bool   `json:"rx"`
-}
-
-type CategoryInfo struct {
-	Versions []*VersionInfo `json:"versions"`
-}
-
-type Index struct {
-	Data map[string]map[string]*CategoryInfo `json:"data"`
-}
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var argMap = arg.Map{
@@ -118,7 +103,7 @@ var argMap = arg.Map{
 }
 
 var (
-	index       *Index
+	repoIndex   *index.Index
 	temp        *tmp.Temp
 	currentUser *system.User
 	runDate     time.Time
@@ -299,9 +284,9 @@ func fetchIndex() {
 		exit(1)
 	}
 
-	index = &Index{}
+	repoIndex = index.NewIndex()
 
-	err = resp.JSON(index)
+	err = resp.JSON(repoIndex)
 
 	if err != nil {
 		printError("Can't decode repo index json: %v", err)
@@ -318,7 +303,7 @@ func listCommand() {
 		exit(1)
 	}
 
-	if index.Data[systemInfo.Arch] == nil {
+	if repoIndex.Data[systemInfo.Arch] == nil {
 		printWarn("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
 		exit(0)
 	}
@@ -334,11 +319,11 @@ func listCommand() {
 	var count int = 0
 
 	var (
-		ruby     []string = getVersionNames(index.Data[systemInfo.Arch][CATEGORY_RUBY])
-		jruby    []string = getVersionNames(index.Data[systemInfo.Arch][CATEGORY_JRUBY])
-		ree      []string = getVersionNames(index.Data[systemInfo.Arch][CATEGORY_REE])
-		rubinius []string = getVersionNames(index.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
-		other    []string = getVersionNames(index.Data[systemInfo.Arch][CATEGORY_OTHER])
+		ruby     []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
+		jruby    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
+		ree      []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_REE])
+		rubinius []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
+		other    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
 	)
 
 	for {
@@ -424,7 +409,7 @@ func listCommand() {
 
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
-	info := index.Find(rubyVersion)
+	info := repoIndex.Find(rubyVersion)
 
 	if info == nil {
 		printWarn("Can't find info about version %s", rubyVersion)
@@ -752,7 +737,7 @@ func downloadFile(url, fileName string) (string, error) {
 }
 
 // getVersionNames return sorted version names
-func getVersionNames(category *CategoryInfo) []string {
+func getVersionNames(category *index.CategoryInfo) []string {
 	result := make([]string, 0)
 
 	if category == nil {
@@ -915,40 +900,6 @@ func exit(code int) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
-
-// Find info by name
-func (i *Index) Find(name string) *VersionInfo {
-	systemInfo, err := system.GetSystemInfo()
-
-	if err != nil {
-		return nil
-	}
-
-	for _, category := range i.Data[systemInfo.Arch] {
-		info := category.Find(name)
-
-		if info != nil {
-			return info
-		}
-	}
-
-	return nil
-}
-
-// Find info by name
-func (ci *CategoryInfo) Find(name string) *VersionInfo {
-	if len(ci.Versions) == 0 {
-		return nil
-	}
-
-	for _, info := range ci.Versions {
-		if info.Name == name {
-			return info
-		}
-	}
-
-	return nil
-}
 
 // Read proxy for progress bar
 func (pt *PassThru) Read(p []byte) (int, error) {
