@@ -16,12 +16,11 @@ yum install rbinstall
 We provide simple bash script `script.sh` for installing app from the sources.
 
 ```
-... install rbenv, golang and 7zip
+... install rbenv, golang and latest 7zip
 ... set GOPATH
 
 git clone https://github.com/essentialkaos/rbinstall.git
 cd rbinstall
-git checkout v0.5.0
 
 sudo ./install.sh
 ```
@@ -40,6 +39,7 @@ Options:
 
   --gems-update, -g       Update gems for some version
   --gems-insecure, -S     Use http instead https for installing gems
+  --ruby-version, -r      Install version defined in version file
   --no-color, -nc         Disable colors in output
   --help, -h              Show this help message
   --version, -v           Show version
@@ -54,6 +54,9 @@ Examples:
 
   rbinstall 2.0.0-p598 -g
   Update gems installed on 2.0.0-p598
+
+  rbinstall -r
+  Install version defined in .ruby-version file
 
 ```
 
