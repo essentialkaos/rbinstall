@@ -2,6 +2,10 @@
 
 `rbinstall` is utility for installing prebuilt ruby to RBEnv.
 
+#### Usage demo
+
+[![asciicast](https://asciinema.org/a/44015.png)](https://asciinema.org/a/44015)
+
 #### Installation
 
 ###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
