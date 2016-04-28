@@ -13,7 +13,7 @@ all: rbinstall rbinstall-gen rbinstall-clone
 
 deps:
 	go get -v pkg.re/essentialkaos/ek.v1
-	go get -v pkg.re/essentialkaos/z7.v1
+	go get -v pkg.re/essentialkaos/z7.v2
 	go get -v github.com/cheggaaa/pb
 	go get -v github.com/GeertJohan/go.linenoise
 

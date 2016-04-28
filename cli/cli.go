@@ -32,7 +32,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/tmp"
 	"pkg.re/essentialkaos/ek.v1/usage"
 
-	"pkg.re/essentialkaos/z7.v1"
+	"pkg.re/essentialkaos/z7.v2"
 
 	"github.com/cheggaaa/pb"
 
@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.1"
+	VER  = "0.6.2"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -260,7 +260,6 @@ func validateConfig() {
 
 	errs := knf.Validate([]*knf.Validator{
 		&knf.Validator{MAIN_TMP_DIR, permsChecker, "DWX"},
-		&knf.Validator{RBENV_DIR, permsChecker, "DWX"},
 		&knf.Validator{STORAGE_URL, knf.Empty, nil},
 	})
 
@@ -416,6 +415,8 @@ func installCommand(rubyVersion string) {
 		exit(1)
 	}
 
+	checkRBEnvDirPerms()
+
 	fullPath := getVersionPath(info.Name)
 
 	if fsutil.IsExist(fullPath) {
@@ -549,9 +550,9 @@ func checkHashTaskHandler(args ...string) (string, error) {
 
 func unpackTaskHandler(args ...string) (string, error) {
 	file := args[0]
-	output := args[1]
+	outputDir := args[1]
 
-	output, err := z7.Extract(&z7.Props{File: file, Output: output})
+	output, err := z7.Extract(&z7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
 		actionLog, err := logFailedAction([]byte(output))
@@ -589,6 +590,8 @@ func updateGems(rubyVersion string) {
 		printError("Version %s is not installed", rubyVersion)
 		exit(1)
 	}
+
+	checkRBEnvDirPerms()
 
 	runDate = time.Now()
 
@@ -847,6 +850,14 @@ func getGemSourceURL() string {
 	}
 
 	return "http://" + knf.GetS(GEMS_SOURCE)
+}
+
+// checkRBEnvDirPerms check permissions on rbenv directory
+func checkRBEnvDirPerms() {
+	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
+		printError("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
+		exit(1)
+	}
 }
 
 // logFailedAction save data to temporary log file and return path
