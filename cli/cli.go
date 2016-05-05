@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.2"
+	VER  = "0.6.3"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -880,6 +880,8 @@ func logFailedAction(data []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	os.Chown(tmpName, currentUser.RealUID, currentUser.RealGID)
 
 	return tmpName, nil
 }
