@@ -10,6 +10,7 @@ package clone
 import (
 	"io"
 	"os"
+	"runtime"
 	"time"
 
 	"pkg.re/essentialkaos/ek.v1/arg"
@@ -31,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.1.0"
+	VER  = "0.1.1"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -63,6 +64,8 @@ var archList []string = []string{"i386", "x86_64"}
 
 // Init is main func
 func Init() {
+	runtime.GOMAXPROCS(1)
+
 	args, errs := arg.Parse(argList)
 
 	if len(errs) != 0 {
