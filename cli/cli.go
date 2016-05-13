@@ -27,7 +27,6 @@ import (
 	"pkg.re/essentialkaos/ek.v1/log"
 	"pkg.re/essentialkaos/ek.v1/req"
 	"pkg.re/essentialkaos/ek.v1/signal"
-	"pkg.re/essentialkaos/ek.v1/sortutil"
 	"pkg.re/essentialkaos/ek.v1/system"
 	"pkg.re/essentialkaos/ek.v1/tmp"
 	"pkg.re/essentialkaos/ek.v1/usage"
@@ -43,7 +42,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.3"
+	VER  = "0.6.4"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -291,6 +290,8 @@ func fetchIndex() {
 		printError("Can't decode repo index json: %v", err)
 		exit(1)
 	}
+
+	repoIndex.Sort()
 }
 
 // listCommand show list of all available versions
@@ -759,8 +760,6 @@ func getVersionNames(category *index.CategoryInfo) []string {
 			result = append(result, info.Name)
 		}
 	}
-
-	sortutil.Versions(result)
 
 	return result
 }

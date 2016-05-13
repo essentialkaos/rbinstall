@@ -8,6 +8,10 @@ package index
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"sort"
+	"strings"
+
+	"pkg.re/essentialkaos/ek.v1/sortutil"
 	"pkg.re/essentialkaos/ek.v1/system"
 )
 
@@ -32,6 +36,19 @@ type Data map[string]CategoryData
 
 type Index struct {
 	Data Data `json:"data"`
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+type versionInfoSlice []*VersionInfo
+
+func (s versionInfoSlice) Len() int      { return len(s) }
+func (s versionInfoSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s versionInfoSlice) Less(i, j int) bool {
+	iv := strings.Replace(s[i].Name, "-", ".", -1)
+	jv := strings.Replace(s[j].Name, "-", ".", -1)
+
+	return sortutil.VersionCompare(iv, jv)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -80,4 +97,13 @@ func (i *CategoryInfo) Find(name string) *VersionInfo {
 	}
 
 	return nil
+}
+
+// Sort sorts versions data
+func (i *Index) Sort() {
+	for _, cData := range i.Data {
+		for _, cInfo := range cData {
+			sort.Sort(versionInfoSlice(cInfo.Versions))
+		}
+	}
 }
