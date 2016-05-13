@@ -251,7 +251,7 @@ func validateConfig() {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
 			case "DWX":
-				return errors.New(fmt.Sprintf("Property %s must be path to writable directory.", prop))
+				return fmt.Errorf("Property %s must be path to writable directory.", prop)
 			}
 		}
 
@@ -417,7 +417,7 @@ func installCommand(rubyVersion string) {
 				Handler: installGemTaskHandler,
 			}
 
-			_, err := gemInstallTask.Start(info.Name, gem)
+			_, err = gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
 				printError(err.Error())
@@ -658,7 +658,7 @@ func downloadFile(url, fileName string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", errors.New(fmt.Sprintf("Server return error code %d", resp.StatusCode))
+		return "", fmt.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
 	bar := pb.New64(resp.ContentLength)
