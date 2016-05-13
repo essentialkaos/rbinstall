@@ -31,7 +31,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.4.4"
+	VER  = "0.4.5"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -59,7 +59,7 @@ var argList = arg.Map{
 	ARG_VER:      &arg.V{Type: arg.BOOL, Alias: "ver"},
 }
 
-var archList []string = []string{"i386", "x86_64"}
+var archList = []string{"i386", "x86_64"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
