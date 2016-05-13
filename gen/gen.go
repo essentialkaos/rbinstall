@@ -9,6 +9,7 @@ package gen
 
 import (
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -30,7 +31,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.4.3"
+	VER  = "0.4.4"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -63,6 +64,8 @@ var archList []string = []string{"i386", "x86_64"}
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
+	runtime.GOMAXPROCS(1)
+
 	args, errs := arg.Parse(argList)
 
 	if len(errs) != 0 {
@@ -238,6 +241,8 @@ func buildIndex(dataDir string) {
 	if fsutil.IsExist(outputFile) {
 		os.RemoveAll(outputFile)
 	}
+
+	newIndex.Sort()
 
 	err = jsonutil.EncodeToFile(outputFile, newIndex)
 
