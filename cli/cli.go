@@ -17,6 +17,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"pkg.re/essentialkaos/ek.v1/arg"
 	"pkg.re/essentialkaos/ek.v1/crypto"
@@ -42,7 +43,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.4"
+	VER  = "0.7.0"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -250,7 +251,7 @@ func validateConfig() {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
 			case "DWX":
-				return errors.New(fmt.Sprintf("Property %s must be path to writable directory.", prop))
+				return fmt.Errorf("Property %s must be path to writable directory.", prop)
 			}
 		}
 
@@ -316,94 +317,35 @@ func listCommand() {
 		strings.ToUpper(CATEGORY_OTHER),
 	)
 
-	var count int = 0
-
 	var (
-		ruby     []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
-		jruby    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
-		ree      []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_REE])
-		rubinius []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
-		other    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
+		ruby     = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
+		jruby    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
+		ree      = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_REE])
+		rubinius = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
+		other    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
+
+		installed = getInstalledVersionsMap()
 	)
 
+	var index int
+
 	for {
+
 		hasItems := false
 
-		if ruby != nil && len(ruby) > count {
-			switch {
-			case strings.Contains(ruby[count], "-railsexpress"):
-				baseName := strings.Replace(ruby[count], "-railsexpress", "", -1)
-				fmtc.Printf(" %s{s}-railsexpress{!} "+getAlignSpaces(baseName+"-railsexpress", 26), baseName)
-			case ruby[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", ruby[count])
-			}
+		hasItems = printCurrentVersionName(ruby, installed, "y", index) || hasItems
+		hasItems = printCurrentVersionName(jruby, installed, "c", index) || hasItems
+		hasItems = printCurrentVersionName(ree, installed, "g", index) || hasItems
+		hasItems = printCurrentVersionName(rubinius, installed, "m", index) || hasItems
+		hasItems = printCurrentVersionName(other, installed, "s", index) || hasItems
 
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if jruby != nil && len(jruby) > count {
-			switch {
-			case jruby[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", jruby[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if ree != nil && len(ree) > count {
-			switch {
-			case ree[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", ree[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if rubinius != nil && len(rubinius) > count {
-			switch {
-			case rubinius[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", rubinius[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if other != nil && len(other) > count {
-			switch {
-			case other[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", other[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s", "")
-		}
-
-		if hasItems == false {
+		if !hasItems {
 			break
 		}
 
 		fmtc.NewLine()
 
-		count++
+		index++
 	}
 }
 
@@ -418,13 +360,11 @@ func installCommand(rubyVersion string) {
 
 	checkRBEnvDirPerms()
 
-	fullPath := getVersionPath(info.Name)
-
-	if fsutil.IsExist(fullPath) {
+	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
-			os.RemoveAll(fullPath)
+			os.RemoveAll(getVersionPath(info.Name))
 		} else {
-			printWarn("Version %s already installed", rubyVersion)
+			printWarn("Version %s already installed", info.Name)
 			exit(0)
 		}
 	}
@@ -461,7 +401,7 @@ func installCommand(rubyVersion string) {
 		Handler: unpackTaskHandler,
 	}
 
-	_, err = unpackTask.Start(file, knf.GetS(RBENV_DIR)+"/versions/")
+	_, err = unpackTask.Start(file, getRBEnvVersionsPath())
 
 	if err != nil {
 		printError(err.Error())
@@ -477,7 +417,7 @@ func installCommand(rubyVersion string) {
 				Handler: installGemTaskHandler,
 			}
 
-			_, err := gemInstallTask.Start(info.Name, gem)
+			_, err = gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
 				printError(err.Error())
@@ -718,7 +658,7 @@ func downloadFile(url, fileName string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", errors.New(fmt.Sprintf("Server return error code %d", resp.StatusCode))
+		return "", fmt.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
 	bar := pb.New64(resp.ContentLength)
@@ -742,7 +682,7 @@ func downloadFile(url, fileName string) (string, error) {
 
 // getVersionNames return sorted version names
 func getVersionNames(category *index.CategoryInfo) []string {
-	result := make([]string, 0)
+	var result []string
 
 	if category == nil {
 		result = append(result, "-none-")
@@ -762,6 +702,48 @@ func getVersionNames(category *index.CategoryInfo) []string {
 	}
 
 	return result
+}
+
+// printCurrentVersionName print version from given slice for
+// versions listing
+func printCurrentVersionName(names []string, installed map[string]bool, color string, index int) bool {
+	if len(names) > index {
+		curName := names[index]
+
+		if curName == "-none-" {
+			fmtc.Printf(" {s}%-26s{!} ", curName)
+			return true
+		}
+
+		if strings.Contains(curName, "-railsexpress") {
+			baseName := strings.Replace(curName, "-railsexpress", "", -1)
+
+			if installed[curName] || installed[baseName] {
+				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, color))
+			} else {
+				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!}", baseName))
+			}
+
+			return true
+		}
+
+		if installed[curName] {
+			printRubyVersion(fmt.Sprintf("%s {%s}•{!}", curName, color))
+		} else {
+			fmtc.Printf(" %-26s ", curName)
+		}
+
+		return true
+	}
+
+	fmtc.Printf(" %-26s ", "")
+
+	return false
+}
+
+// printRubyVersion print version with align spaces
+func printRubyVersion(name string) {
+	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), 26) + " ")
 }
 
 // installedGemVersion return version of installed gem
@@ -814,6 +796,31 @@ func isGemInstalled(rubyVersion string, gemName string) bool {
 	return false
 }
 
+// isVersionInstalled return true is given version already installed
+func isVersionInstalled(rubyVersion string) bool {
+	fullPath := getVersionPath(rubyVersion)
+	return fsutil.IsExist(fullPath)
+}
+
+// getInstalledVersionsMap return map with names of installed versions
+func getInstalledVersionsMap() map[string]bool {
+	result := make(map[string]bool)
+	versions := fsutil.List(
+		getRBEnvVersionsPath(), true,
+		&fsutil.ListingFilter{Perms: "D"},
+	)
+
+	if len(versions) == 0 {
+		return result
+	}
+
+	for _, version := range versions {
+		result[version] = true
+	}
+
+	return result
+}
+
 // getVersionGemPath return path to directory with installed gems
 func getVersionGemDirPath(rubyVersion string) string {
 	gemsPath := getVersionPath(rubyVersion) + "/lib/ruby/gems"
@@ -833,13 +840,18 @@ func getVersionGemDirPath(rubyVersion string) string {
 
 // getVersionPath return full path to directory for given ruby version
 func getVersionPath(rubyVersion string) string {
-	return knf.GetS(RBENV_DIR) + "/versions/" + rubyVersion
+	return getRBEnvVersionsPath() + "/" + rubyVersion
+}
+
+// getRBEnvVersionsPath return path to rbenv directory with all versions
+func getRBEnvVersionsPath() string {
+	return knf.GetS(RBENV_DIR) + "/versions"
 }
 
 // getAlignSpaces return spaces for message align
 func getAlignSpaces(t string, l int) string {
 	spaces := "                                    "
-	return spaces[0 : l-len(t)]
+	return spaces[0 : l-utf8.RuneCount([]byte(t))]
 }
 
 // getGemSourceURL return url of gem source

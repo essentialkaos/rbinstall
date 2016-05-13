@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.1.1"
+	VER  = "0.1.2"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -57,8 +57,6 @@ var argList = arg.Map{
 	ARG_HELP:     &arg.V{Type: arg.BOOL, Alias: "u:usage"},
 	ARG_VER:      &arg.V{Type: arg.BOOL, Alias: "ver"},
 }
-
-var archList []string = []string{"i386", "x86_64"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -210,10 +208,10 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 			for _, versionData := range categoryData.Versions {
 				fmtc.Printf("%-36s → ", arch+"/"+category+"/"+versionData.Name)
 
-				fileUrl := url + "/" + versionData.Path
+				fileURL := url + "/" + versionData.Path
 				outputFile := path.Join(dir, versionData.Path)
 
-				dlTime, err := downloadFile(fileUrl, outputFile)
+				dlTime, err := downloadFile(fileURL, outputFile)
 
 				if err != nil {
 					fmtc.Println("{r}ERROR{!}\n")
