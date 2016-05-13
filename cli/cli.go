@@ -42,7 +42,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.6.4"
+	VER  = "0.7.0"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -316,8 +316,6 @@ func listCommand() {
 		strings.ToUpper(CATEGORY_OTHER),
 	)
 
-	var count int = 0
-
 	var (
 		ruby     []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
 		jruby    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
@@ -326,84 +324,25 @@ func listCommand() {
 		other    []string = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
 	)
 
+	var index int
+
 	for {
+
 		hasItems := false
 
-		if ruby != nil && len(ruby) > count {
-			switch {
-			case strings.Contains(ruby[count], "-railsexpress"):
-				baseName := strings.Replace(ruby[count], "-railsexpress", "", -1)
-				fmtc.Printf(" %s{s}-railsexpress{!} "+getAlignSpaces(baseName+"-railsexpress", 26), baseName)
-			case ruby[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", ruby[count])
-			}
+		hasItems = printCurrentVersionName(ruby, index) || hasItems
+		hasItems = printCurrentVersionName(jruby, index) || hasItems
+		hasItems = printCurrentVersionName(ree, index) || hasItems
+		hasItems = printCurrentVersionName(rubinius, index) || hasItems
+		hasItems = printCurrentVersionName(other, index) || hasItems
 
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if jruby != nil && len(jruby) > count {
-			switch {
-			case jruby[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", jruby[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if ree != nil && len(ree) > count {
-			switch {
-			case ree[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", ree[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if rubinius != nil && len(rubinius) > count {
-			switch {
-			case rubinius[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", rubinius[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s ", "")
-		}
-
-		if other != nil && len(other) > count {
-			switch {
-			case other[count] == "-none-":
-				fmtc.Printf(" {s}%-26s{!} ", "-none-")
-			default:
-				fmtc.Printf(" %-26s ", other[count])
-			}
-
-			hasItems = true
-		} else {
-			fmtc.Printf(" %-26s", "")
-		}
-
-		if hasItems == false {
+		if !hasItems {
 			break
 		}
 
 		fmtc.NewLine()
 
-		count++
+		index++
 	}
 }
 
@@ -742,7 +681,7 @@ func downloadFile(url, fileName string) (string, error) {
 
 // getVersionNames return sorted version names
 func getVersionNames(category *index.CategoryInfo) []string {
-	result := make([]string, 0)
+	var result []string
 
 	if category == nil {
 		result = append(result, "-none-")
@@ -762,6 +701,33 @@ func getVersionNames(category *index.CategoryInfo) []string {
 	}
 
 	return result
+}
+
+// printCurrentVersionName print version from given slice for
+// versions listing
+func printCurrentVersionName(names []string, index int) bool {
+	if len(names) > index {
+		curName := names[index]
+
+		switch {
+
+		case strings.Contains(curName, "-railsexpress"):
+			baseName := strings.Replace(curName, "-railsexpress", "", -1)
+			fmtc.Printf(" %s{s}-railsexpress{!} "+getAlignSpaces(baseName+"-railsexpress", 26), baseName)
+
+		case curName == "-none-":
+			fmtc.Printf(" {s}%-26s{!} ", curName)
+
+		default:
+			fmtc.Printf(" %-26s ", curName)
+		}
+
+		return true
+	}
+
+	fmtc.Printf(" %-26s ", "")
+
+	return false
 }
 
 // installedGemVersion return version of installed gem
