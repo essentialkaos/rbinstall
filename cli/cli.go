@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.0"
+	VER  = "0.7.1"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -664,7 +664,7 @@ func downloadFile(url, fileName string) (string, error) {
 	bar := pb.New64(resp.ContentLength)
 
 	bar.ShowCounters = false
-	bar.Format("###  ")
+	bar.Format("——→  ")
 	bar.SetMaxWidth(80)
 	bar.SetRefreshRate(50 * time.Millisecond)
 

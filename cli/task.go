@@ -27,6 +27,13 @@ type Task struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+var (
+	spinnerFrames = []string{"⢰", "⣰", "⣠", "⣀", "⣄", "⣆", "⡆", "⠇", "⠏", "⠋", "⠉", "⠙", "⠹", "⠸"}
+	framesDelay   = []time.Duration{40, 30, 20, 30, 40, 50, 50, 50, 50, 60, 70, 60, 50, 50}
+)
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // Start start task
 func (t *Task) Start(args ...string) (string, error) {
 	t.start = time.Now()
@@ -41,16 +48,14 @@ func (t *Task) Start(args ...string) (string, error) {
 }
 
 func (t *Task) showSpinner() {
-	spinner := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-
 	t.spinnerActive = true
 	t.spinnerHiden = false
 
 SPINNERLOOP:
 	for {
-		for _, frame := range spinner {
-			fmtc.Printf("{c}%s{!} "+t.Desc, frame)
-			time.Sleep(50 * time.Millisecond)
+		for i, frame := range spinnerFrames {
+			fmtc.Printf("{c}%s{!} %s", frame, t.Desc)
+			time.Sleep(framesDelay[i] * time.Millisecond)
 			fmtc.Printf("\r")
 
 			if !t.spinnerActive {
