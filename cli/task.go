@@ -27,6 +27,13 @@ type Task struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+var (
+	spinnerFrames = []string{"⠸", "⠴", "⠤", "⠦", "⠇", "⠋", "⠉", "⠙"}
+	framesDelay   = []time.Duration{60, 40, 30, 40, 60, 60, 60, 60}
+)
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // Start start task
 func (t *Task) Start(args ...string) (string, error) {
 	t.start = time.Now()
@@ -41,16 +48,14 @@ func (t *Task) Start(args ...string) (string, error) {
 }
 
 func (t *Task) showSpinner() {
-	spinner := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-
 	t.spinnerActive = true
 	t.spinnerHiden = false
 
 SPINNERLOOP:
 	for {
-		for _, frame := range spinner {
-			fmtc.Printf("{c}%s{!} "+t.Desc, frame)
-			time.Sleep(50 * time.Millisecond)
+		for i, frame := range spinnerFrames {
+			fmtc.Printf("{y}%s{!} %s", frame, t.Desc)
+			time.Sleep(framesDelay[i] * time.Millisecond)
 			fmtc.Printf("\r")
 
 			if !t.spinnerActive {
@@ -73,6 +78,6 @@ func (t *Task) hideSpinner(ok bool) {
 	if ok {
 		fmtc.Printf("{g}✔{!} %s {s}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	} else {
-		fmtc.Printf("{r}✘{!} %s {s}(%s){!}\n\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
+		fmtc.Printf("{r}✖{!} %s {s}(%s){!}\n\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	}
 }
