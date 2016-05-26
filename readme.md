@@ -1,10 +1,12 @@
-### RBInstall
+## RBInstall [![Release](https://img.shields.io/github/release/essentialkaos/rbinstall.svg?style=flat-square)](https://github.com/essentialkaos/rbinstall/releases/latest)
 
 `rbinstall` is utility for installing prebuilt ruby to RBEnv.
 
+[Usage demo](#usage-demo) • [Installation](#installation) • [Usage](#usage) • [Build Status](#build-status) • [Contributing](#contributing) • [License](#license)
+
 #### Usage demo
 
-[![asciicast](https://asciinema.org/a/45482.png)](https://asciinema.org/a/45482)
+[![asciicast](https://essentialkaos.com/github/rbinstall-071.gif)](https://asciinema.org/a/46878)
 
 #### Installation
 
