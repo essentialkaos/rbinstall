@@ -2,6 +2,13 @@
 
 `rbinstall` is utility for installing prebuilt ruby to RBEnv.
 
+* [Usage demo](#usage-demo)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Build Status](#build-status)
+* [Contributing](#contributing)
+* [License](#license)
+
 #### Usage demo
 
 [![asciicast](https://essentialkaos.com/github/rbinstall-071.gif)](https://asciinema.org/a/46878)
