@@ -1,4 +1,4 @@
-### RBInstall
+## RBInstall [![Release](https://img.shields.io/github/release/essentialkaos/rbinstall.svg)](https://github.com/essentialkaos/rbinstall/releases/latest)
 
 `rbinstall` is utility for installing prebuilt ruby to RBEnv.
 
