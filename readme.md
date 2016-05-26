@@ -4,7 +4,7 @@
 
 #### Usage demo
 
-[![asciicast](https://asciinema.org/a/45482.png)](https://asciinema.org/a/45482)
+[![asciicast](https://essentialkaos.com/github/rbinstall-071.gif)](https://asciinema.org/a/46878)
 
 #### Installation
 
