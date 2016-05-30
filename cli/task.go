@@ -10,6 +10,7 @@ package cli
 import (
 	"time"
 
+	"pkg.re/essentialkaos/ek.v1/arg"
 	"pkg.re/essentialkaos/ek.v1/fmtc"
 	"pkg.re/essentialkaos/ek.v1/timeutil"
 )
@@ -48,6 +49,11 @@ func (t *Task) Start(args ...string) (string, error) {
 }
 
 func (t *Task) showSpinner() {
+	if arg.GetB(ARG_NO_PROGRESS) {
+		t.spinnerHiden = true
+		return
+	}
+
 	t.spinnerActive = true
 	t.spinnerHiden = false
 
