@@ -47,6 +47,7 @@ Options:
   --gems-insecure, -S     Use http instead https for installing gems
   --ruby-version, -r      Install version defined in version file
   --no-color, -nc         Disable colors in output
+  --no-progress, -np      Disable progress bar and spinner
   --help, -h              Show this help message
   --version, -v           Show version
 
