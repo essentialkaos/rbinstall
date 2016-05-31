@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.1"
+	VER  = "0.7.2"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -54,6 +54,7 @@ const (
 	ARG_GEMS_INSECURE = "S:gems-insecure"
 	ARG_RUBY_VERSION  = "r:ruby-version"
 	ARG_NO_COLOR      = "nc:no-color"
+	ARG_NO_PROGRESS   = "np:no-progress"
 	ARG_HELP          = "h:help"
 	ARG_VER           = "v:version"
 )
@@ -98,6 +99,7 @@ var argMap = arg.Map{
 	ARG_GEMS_INSECURE: &arg.V{Type: arg.BOOL},
 	ARG_RUBY_VERSION:  &arg.V{Type: arg.BOOL},
 	ARG_NO_COLOR:      &arg.V{Type: arg.BOOL},
+	ARG_NO_PROGRESS:   &arg.V{Type: arg.BOOL},
 	ARG_HELP:          &arg.V{Type: arg.BOOL, Alias: "u:usage"},
 	ARG_VER:           &arg.V{Type: arg.BOOL, Alias: "ver"},
 }
@@ -661,21 +663,25 @@ func downloadFile(url, fileName string) (string, error) {
 		return "", fmt.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
-	bar := pb.New64(resp.ContentLength)
+	if arg.GetB(ARG_NO_PROGRESS) {
+		_, err = io.Copy(fd, resp.Body)
+	} else {
+		bar := pb.New64(resp.ContentLength)
 
-	bar.ShowCounters = false
-	bar.Format("——→  ")
-	bar.SetMaxWidth(80)
-	bar.SetRefreshRate(50 * time.Millisecond)
+		bar.ShowCounters = false
+		bar.Format("——→  ")
+		bar.SetMaxWidth(80)
+		bar.SetRefreshRate(50 * time.Millisecond)
 
-	defer bar.Finish()
+		defer bar.Finish()
 
-	pt := &PassThru{
-		Reader: resp.Body,
-		pb:     bar.Start(),
+		pt := &PassThru{
+			Reader: resp.Body,
+			pb:     bar.Start(),
+		}
+
+		_, err = io.Copy(fd, pt)
 	}
-
-	_, err = io.Copy(fd, pt)
 
 	return tmpDir + "/" + fileName, err
 }
@@ -945,6 +951,7 @@ func showUsage() {
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
+	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(ARG_HELP, "Show this help message")
 	info.AddOption(ARG_VER, "Show version")
 
