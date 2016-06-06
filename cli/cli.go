@@ -29,6 +29,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/req"
 	"pkg.re/essentialkaos/ek.v1/signal"
 	"pkg.re/essentialkaos/ek.v1/system"
+	"pkg.re/essentialkaos/ek.v1/terminal"
 	"pkg.re/essentialkaos/ek.v1/tmp"
 	"pkg.re/essentialkaos/ek.v1/usage"
 
@@ -43,12 +44,13 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.2"
+	VER  = "0.7.3"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// List of supported command-line arguments
 const (
 	ARG_GEMS_UPDATE   = "g:gems-update"
 	ARG_GEMS_INSECURE = "S:gems-insecure"
@@ -59,6 +61,7 @@ const (
 	ARG_VER           = "v:version"
 )
 
+// List of supported config values
 const (
 	MAIN_TMP_DIR          = "main:tmp-dir"
 	STORAGE_URL           = "storage:url"
@@ -74,6 +77,7 @@ const (
 	LOG_LEVEL             = "log:level"
 )
 
+// List of default ruby categories
 const (
 	CATEGORY_RUBY     = "ruby"
 	CATEGORY_JRUBY    = "jruby"
@@ -82,8 +86,17 @@ const (
 	CATEGORY_OTHER    = "other"
 )
 
+// Path to config file
 const CONFIG_FILE = "/etc/rbinstall.conf"
+
+// Name of log with failed actions (gem install)
 const FAIL_LOG_NAME = "rbinstall-fail.log"
+
+// Value for column without any versions
+const NONE_VERSION = "- none -"
+
+// Default category column size
+const DEFAULT_CATEGORY_SIZE = 26
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -110,6 +123,16 @@ var (
 	currentUser *system.User
 	runDate     time.Time
 )
+
+var categoryColor = map[string]string{
+	CATEGORY_RUBY:     "y",
+	CATEGORY_JRUBY:    "c",
+	CATEGORY_REE:      "g",
+	CATEGORY_RUBINIUS: "m",
+	CATEGORY_OTHER:    "s",
+}
+
+var categorySize = map[string]int{}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -184,7 +207,7 @@ func Init() {
 
 // prepare do some preparations for installing ruby
 func prepare() {
-	req.UserAgent = fmt.Sprintf("%s/%s (go; %s; %s-%s)",
+	req.UserAgent = fmtc.Sprintf("%s/%s (go; %s; %s-%s)",
 		APP, VER, runtime.Version(),
 		runtime.GOARCH, runtime.GOOS)
 
@@ -253,7 +276,7 @@ func validateConfig() {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
 			case "DWX":
-				return fmt.Errorf("Property %s must be path to writable directory.", prop)
+				return fmtc.Errorf("Property %s must be path to writable directory.", prop)
 			}
 		}
 
@@ -311,14 +334,6 @@ func listCommand() {
 		exit(0)
 	}
 
-	fmtc.Printf("{dY*} %-26s{!} {dC*} %-26s{!} {dG*} %-26s{!} {dM*} %-26s{!} {dS*} %-26s{!}\n\n",
-		strings.ToUpper(CATEGORY_RUBY),
-		strings.ToUpper(CATEGORY_JRUBY),
-		strings.ToUpper(CATEGORY_REE),
-		strings.ToUpper(CATEGORY_RUBINIUS),
-		strings.ToUpper(CATEGORY_OTHER),
-	)
-
 	var (
 		ruby     = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
 		jruby    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
@@ -329,17 +344,41 @@ func listCommand() {
 		installed = getInstalledVersionsMap()
 	)
 
+	configureCategorySizes(map[string][]string{
+		CATEGORY_RUBY:     ruby,
+		CATEGORY_JRUBY:    jruby,
+		CATEGORY_REE:      ree,
+		CATEGORY_RUBINIUS: rubinius,
+		CATEGORY_OTHER:    other,
+	})
+
 	var index int
+
+	headerTemplate := fmt.Sprintf(
+		"{dY} %%-%ds{!} {dC} %%-%ds{!} {dG} %%-%ds{!} {dM} %%-%ds{!} {dS} %%-%ds{!}\n\n",
+		categorySize[CATEGORY_RUBY], categorySize[CATEGORY_JRUBY],
+		categorySize[CATEGORY_REE], categorySize[CATEGORY_RUBINIUS],
+		categorySize[CATEGORY_OTHER],
+	)
+
+	fmtc.Printf(
+		headerTemplate,
+		strings.ToUpper(CATEGORY_RUBY),
+		strings.ToUpper(CATEGORY_JRUBY),
+		strings.ToUpper(CATEGORY_REE),
+		strings.ToUpper(CATEGORY_RUBINIUS),
+		strings.ToUpper(CATEGORY_OTHER),
+	)
 
 	for {
 
 		hasItems := false
 
-		hasItems = printCurrentVersionName(ruby, installed, "y", index) || hasItems
-		hasItems = printCurrentVersionName(jruby, installed, "c", index) || hasItems
-		hasItems = printCurrentVersionName(ree, installed, "g", index) || hasItems
-		hasItems = printCurrentVersionName(rubinius, installed, "m", index) || hasItems
-		hasItems = printCurrentVersionName(other, installed, "s", index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_RUBY, ruby, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_JRUBY, jruby, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_REE, ree, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_RUBINIUS, rubinius, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_OTHER, other, installed, index) || hasItems
 
 		if !hasItems {
 			break
@@ -415,7 +454,7 @@ func installCommand(rubyVersion string) {
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemInstallTask := &Task{
-				Desc:    fmt.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gem),
 				Handler: installGemTaskHandler,
 			}
 
@@ -460,19 +499,19 @@ func getVersionFromFile() (string, error) {
 	)
 
 	if versionFile == "" {
-		return "", fmt.Errorf("Can't find proper version file")
+		return "", fmtc.Errorf("Can't find proper version file")
 	}
 
 	versionData, err := ioutil.ReadFile(versionFile)
 
 	if err != nil {
-		return "", fmt.Errorf("Can't read version file: %v", err)
+		return "", fmtc.Errorf("Can't read version file: %v", err)
 	}
 
 	versionName := strings.Trim(string(versionData[:]), " \n\r")
 
 	if versionName == "" {
-		return "", fmt.Errorf("Can't use version file - file malformed")
+		return "", fmtc.Errorf("Can't use version file - file malformed")
 	}
 
 	return versionName, nil
@@ -485,7 +524,7 @@ func checkHashTaskHandler(args ...string) (string, error) {
 	fileHash := crypto.FileHash(file)
 
 	if hash != fileHash {
-		return "", fmt.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
+		return "", fmtc.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
 	}
 
 	return "", nil
@@ -500,7 +539,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	if err != nil {
 		actionLog, err := logFailedAction([]byte(output))
 
-		return "", fmt.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
+		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
 	}
 
 	return "", nil
@@ -547,12 +586,12 @@ func updateGems(rubyVersion string) {
 
 		if isGemInstalled(rubyVersion, gem) {
 			updateGemTask = &Task{
-				Desc:    fmt.Sprintf("Updating %s", gem),
+				Desc:    fmtc.Sprintf("Updating %s", gem),
 				Handler: updateGemTaskHandler,
 			}
 		} else {
 			updateGemTask = &Task{
-				Desc:    fmt.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gem),
 				Handler: installGemTaskHandler,
 			}
 		}
@@ -625,9 +664,9 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmt.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
 		default:
-			return "", fmt.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
 		}
 
 	}
@@ -660,7 +699,7 @@ func downloadFile(url, fileName string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Server return error code %d", resp.StatusCode)
+		return "", fmtc.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
 	if arg.GetB(ARG_NO_PROGRESS) {
@@ -691,7 +730,7 @@ func getVersionNames(category *index.CategoryInfo) []string {
 	var result []string
 
 	if category == nil {
-		result = append(result, "-none-")
+		result = append(result, NONE_VERSION)
 		return result
 	}
 
@@ -712,44 +751,97 @@ func getVersionNames(category *index.CategoryInfo) []string {
 
 // printCurrentVersionName print version from given slice for
 // versions listing
-func printCurrentVersionName(names []string, installed map[string]bool, color string, index int) bool {
+func printCurrentVersionName(category string, names []string, installed map[string]bool, index int) bool {
 	if len(names) > index {
 		curName := names[index]
 
-		if curName == "-none-" {
-			fmtc.Printf(" {s}%-26s{!} ", curName)
+		if curName == NONE_VERSION {
+			printSized(" {s}%%-%ds{!} ", categorySize[category], curName)
 			return true
 		}
+
+		var prettyName string
 
 		if strings.Contains(curName, "-railsexpress") {
 			baseName := strings.Replace(curName, "-railsexpress", "", -1)
 
 			if installed[curName] || installed[baseName] {
-				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, color))
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, categoryColor[category])
 			} else {
-				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!}", baseName))
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", baseName)
 			}
+
+			printRubyVersion(category, prettyName)
 
 			return true
 		}
 
 		if installed[curName] {
-			printRubyVersion(fmt.Sprintf("%s {%s}•{!}", curName, color))
+			prettyName = fmt.Sprintf("%s {%s}•{!}", curName, categoryColor[category])
+			printRubyVersion(category, prettyName)
 		} else {
-			fmtc.Printf(" %-26s ", curName)
+			printSized(" %%-%ds ", categorySize[category], curName)
 		}
 
 		return true
 	}
 
-	fmtc.Printf(" %-26s ", "")
+	printSized(" %%-%ds ", categorySize[category], "")
 
 	return false
 }
 
+// printSized render format with given size and print text with give arguments
+func printSized(format string, size int, a ...interface{}) {
+	fmtc.Printf(fmtc.Sprintf(format, size), a...)
+}
+
 // printRubyVersion print version with align spaces
-func printRubyVersion(name string) {
-	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), 26) + " ")
+func printRubyVersion(category, name string) {
+	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), categorySize[category]) + " ")
+}
+
+// configureCategorySizes configure column size for each category
+func configureCategorySizes(names map[string][]string) {
+	terminalWidth, _ := terminal.GetSize()
+
+	if terminalWidth == -1 || terminalWidth >= 140 {
+		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_REE] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_RUBINIUS] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_OTHER] = DEFAULT_CATEGORY_SIZE
+
+		return
+	}
+
+	averageCategorySize := (terminalWidth - 10) / len(names)
+	averageSize := terminalWidth - 10
+	averageItems := 0
+
+	for category, nameSlice := range names {
+		for _, curName := range nameSlice {
+			curNameLen := len(curName) + 3 // 3 for bullet
+
+			if categorySize[category] < curNameLen {
+				categorySize[category] = curNameLen
+			}
+		}
+
+		if categorySize[category] > averageCategorySize {
+			averageSize -= categorySize[category]
+		} else {
+			averageItems++
+		}
+	}
+
+	if averageItems > 0 {
+		for category, size := range categorySize {
+			if size < averageCategorySize {
+				categorySize[category] = averageSize / averageItems
+			}
+		}
+	}
 }
 
 // installedGemVersion return version of installed gem
