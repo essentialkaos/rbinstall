@@ -29,6 +29,7 @@ import (
 	"pkg.re/essentialkaos/ek.v1/req"
 	"pkg.re/essentialkaos/ek.v1/signal"
 	"pkg.re/essentialkaos/ek.v1/system"
+	"pkg.re/essentialkaos/ek.v1/terminal"
 	"pkg.re/essentialkaos/ek.v1/tmp"
 	"pkg.re/essentialkaos/ek.v1/usage"
 
@@ -85,6 +86,10 @@ const (
 const CONFIG_FILE = "/etc/rbinstall.conf"
 const FAIL_LOG_NAME = "rbinstall-fail.log"
 
+const NONE_VERSION = "- none -"
+
+const DEFAULT_CATEGORY_SIZE = 26
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type PassThru struct {
@@ -110,6 +115,16 @@ var (
 	currentUser *system.User
 	runDate     time.Time
 )
+
+var categoryColor = map[string]string{
+	CATEGORY_RUBY:     "y",
+	CATEGORY_JRUBY:    "c",
+	CATEGORY_REE:      "g",
+	CATEGORY_RUBINIUS: "m",
+	CATEGORY_OTHER:    "s",
+}
+
+var categorySize = map[string]int{}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -311,14 +326,6 @@ func listCommand() {
 		exit(0)
 	}
 
-	fmtc.Printf("{dY*} %-26s{!} {dC*} %-26s{!} {dG*} %-26s{!} {dM*} %-26s{!} {dS*} %-26s{!}\n\n",
-		strings.ToUpper(CATEGORY_RUBY),
-		strings.ToUpper(CATEGORY_JRUBY),
-		strings.ToUpper(CATEGORY_REE),
-		strings.ToUpper(CATEGORY_RUBINIUS),
-		strings.ToUpper(CATEGORY_OTHER),
-	)
-
 	var (
 		ruby     = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
 		jruby    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
@@ -329,17 +336,41 @@ func listCommand() {
 		installed = getInstalledVersionsMap()
 	)
 
+	configureCategorySizes(map[string][]string{
+		CATEGORY_RUBY:     ruby,
+		CATEGORY_JRUBY:    jruby,
+		CATEGORY_REE:      ree,
+		CATEGORY_RUBINIUS: rubinius,
+		CATEGORY_OTHER:    other,
+	})
+
 	var index int
+
+	headerTemplate := fmt.Sprintf(
+		"{dY} %%-%ds{!} {dC} %%-%ds{!} {dG} %%-%ds{!} {dM} %%-%ds{!} {dS} %%-%ds{!}\n\n",
+		categorySize[CATEGORY_RUBY], categorySize[CATEGORY_JRUBY],
+		categorySize[CATEGORY_REE], categorySize[CATEGORY_RUBINIUS],
+		categorySize[CATEGORY_OTHER],
+	)
+
+	fmtc.Printf(
+		headerTemplate,
+		strings.ToUpper(CATEGORY_RUBY),
+		strings.ToUpper(CATEGORY_JRUBY),
+		strings.ToUpper(CATEGORY_REE),
+		strings.ToUpper(CATEGORY_RUBINIUS),
+		strings.ToUpper(CATEGORY_OTHER),
+	)
 
 	for {
 
 		hasItems := false
 
-		hasItems = printCurrentVersionName(ruby, installed, "y", index) || hasItems
-		hasItems = printCurrentVersionName(jruby, installed, "c", index) || hasItems
-		hasItems = printCurrentVersionName(ree, installed, "g", index) || hasItems
-		hasItems = printCurrentVersionName(rubinius, installed, "m", index) || hasItems
-		hasItems = printCurrentVersionName(other, installed, "s", index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_RUBY, ruby, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_JRUBY, jruby, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_REE, ree, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_RUBINIUS, rubinius, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_OTHER, other, installed, index) || hasItems
 
 		if !hasItems {
 			break
@@ -691,7 +722,7 @@ func getVersionNames(category *index.CategoryInfo) []string {
 	var result []string
 
 	if category == nil {
-		result = append(result, "-none-")
+		result = append(result, NONE_VERSION)
 		return result
 	}
 
@@ -712,44 +743,97 @@ func getVersionNames(category *index.CategoryInfo) []string {
 
 // printCurrentVersionName print version from given slice for
 // versions listing
-func printCurrentVersionName(names []string, installed map[string]bool, color string, index int) bool {
+func printCurrentVersionName(category string, names []string, installed map[string]bool, index int) bool {
 	if len(names) > index {
 		curName := names[index]
 
-		if curName == "-none-" {
-			fmtc.Printf(" {s}%-26s{!} ", curName)
+		if curName == NONE_VERSION {
+			printSized(" {s}%%-%ds{!} ", categorySize[category], curName)
 			return true
 		}
+
+		var prettyName string
 
 		if strings.Contains(curName, "-railsexpress") {
 			baseName := strings.Replace(curName, "-railsexpress", "", -1)
 
 			if installed[curName] || installed[baseName] {
-				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, color))
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, categoryColor[category])
 			} else {
-				printRubyVersion(fmt.Sprintf("%s{s}-railsexpress{!}", baseName))
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", baseName)
 			}
+
+			printRubyVersion(category, prettyName)
 
 			return true
 		}
 
 		if installed[curName] {
-			printRubyVersion(fmt.Sprintf("%s {%s}•{!}", curName, color))
+			prettyName = fmt.Sprintf("%s {%s}•{!}", curName, categoryColor[category])
+			printRubyVersion(category, prettyName)
 		} else {
-			fmtc.Printf(" %-26s ", curName)
+			printSized(" %%-%ds ", categorySize[category], curName)
 		}
 
 		return true
 	}
 
-	fmtc.Printf(" %-26s ", "")
+	printSized(" %%-%ds ", categorySize[category], "")
 
 	return false
 }
 
+// printSized render format with given size and print text with give arguments
+func printSized(format string, size int, a ...interface{}) {
+	fmtc.Printf(fmtc.Sprintf(format, size), a...)
+}
+
 // printRubyVersion print version with align spaces
-func printRubyVersion(name string) {
-	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), 26) + " ")
+func printRubyVersion(category, name string) {
+	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), categorySize[category]) + " ")
+}
+
+// configureCategorySizes configure column size for each category
+func configureCategorySizes(names map[string][]string) {
+	terminalWidth, _ := terminal.GetSize()
+
+	if terminalWidth == -1 || terminalWidth >= 140 {
+		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_REE] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_RUBINIUS] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_OTHER] = DEFAULT_CATEGORY_SIZE
+
+		return
+	}
+
+	averageCategorySize := (terminalWidth - 10) / len(names)
+	averageSize := terminalWidth - 10
+	averageItems := 0
+
+	for category, nameSlice := range names {
+		for _, curName := range nameSlice {
+			curNameLen := len(curName) + 3 // 3 for bullet
+
+			if categorySize[category] < curNameLen {
+				categorySize[category] = curNameLen
+			}
+		}
+
+		if categorySize[category] > averageCategorySize {
+			averageSize -= categorySize[category]
+		} else {
+			averageItems++
+		}
+	}
+
+	if averageItems > 0 {
+		for category, size := range categorySize {
+			if size < averageCategorySize {
+				categorySize[category] = averageSize / averageItems
+			}
+		}
+	}
 }
 
 // installedGemVersion return version of installed gem
