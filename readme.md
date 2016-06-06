@@ -6,7 +6,7 @@
 
 #### Usage demo
 
-[![asciicast](https://essentialkaos.com/github/rbinstall-071.gif)](https://asciinema.org/a/46878)
+[![asciicast](https://essentialkaos.com/github/rbinstall-073.gif)](https://asciinema.org/a/47983)
 
 #### Installation
 
