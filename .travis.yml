@@ -6,7 +6,6 @@ go:
 
 os:
   - linux
-  - osx
 
 sudo: false
 
