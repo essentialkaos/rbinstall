@@ -50,6 +50,7 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// List of supported command-line arguments
 const (
 	ARG_GEMS_UPDATE   = "g:gems-update"
 	ARG_GEMS_INSECURE = "S:gems-insecure"
@@ -60,6 +61,7 @@ const (
 	ARG_VER           = "v:version"
 )
 
+// List of supported config values
 const (
 	MAIN_TMP_DIR          = "main:tmp-dir"
 	STORAGE_URL           = "storage:url"
@@ -75,6 +77,7 @@ const (
 	LOG_LEVEL             = "log:level"
 )
 
+// List of default ruby categories
 const (
 	CATEGORY_RUBY     = "ruby"
 	CATEGORY_JRUBY    = "jruby"
@@ -83,11 +86,16 @@ const (
 	CATEGORY_OTHER    = "other"
 )
 
+// Path to config file
 const CONFIG_FILE = "/etc/rbinstall.conf"
+
+// Name of log with failed actions (gem install)
 const FAIL_LOG_NAME = "rbinstall-fail.log"
 
+// Value for column without any versions
 const NONE_VERSION = "- none -"
 
+// Default category column size
 const DEFAULT_CATEGORY_SIZE = 26
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -199,7 +207,7 @@ func Init() {
 
 // prepare do some preparations for installing ruby
 func prepare() {
-	req.UserAgent = fmt.Sprintf("%s/%s (go; %s; %s-%s)",
+	req.UserAgent = fmtc.Sprintf("%s/%s (go; %s; %s-%s)",
 		APP, VER, runtime.Version(),
 		runtime.GOARCH, runtime.GOOS)
 
@@ -268,7 +276,7 @@ func validateConfig() {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
 			case "DWX":
-				return fmt.Errorf("Property %s must be path to writable directory.", prop)
+				return fmtc.Errorf("Property %s must be path to writable directory.", prop)
 			}
 		}
 
@@ -446,7 +454,7 @@ func installCommand(rubyVersion string) {
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemInstallTask := &Task{
-				Desc:    fmt.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gem),
 				Handler: installGemTaskHandler,
 			}
 
@@ -491,19 +499,19 @@ func getVersionFromFile() (string, error) {
 	)
 
 	if versionFile == "" {
-		return "", fmt.Errorf("Can't find proper version file")
+		return "", fmtc.Errorf("Can't find proper version file")
 	}
 
 	versionData, err := ioutil.ReadFile(versionFile)
 
 	if err != nil {
-		return "", fmt.Errorf("Can't read version file: %v", err)
+		return "", fmtc.Errorf("Can't read version file: %v", err)
 	}
 
 	versionName := strings.Trim(string(versionData[:]), " \n\r")
 
 	if versionName == "" {
-		return "", fmt.Errorf("Can't use version file - file malformed")
+		return "", fmtc.Errorf("Can't use version file - file malformed")
 	}
 
 	return versionName, nil
@@ -516,7 +524,7 @@ func checkHashTaskHandler(args ...string) (string, error) {
 	fileHash := crypto.FileHash(file)
 
 	if hash != fileHash {
-		return "", fmt.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
+		return "", fmtc.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
 	}
 
 	return "", nil
@@ -531,7 +539,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	if err != nil {
 		actionLog, err := logFailedAction([]byte(output))
 
-		return "", fmt.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
+		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
 	}
 
 	return "", nil
@@ -578,12 +586,12 @@ func updateGems(rubyVersion string) {
 
 		if isGemInstalled(rubyVersion, gem) {
 			updateGemTask = &Task{
-				Desc:    fmt.Sprintf("Updating %s", gem),
+				Desc:    fmtc.Sprintf("Updating %s", gem),
 				Handler: updateGemTaskHandler,
 			}
 		} else {
 			updateGemTask = &Task{
-				Desc:    fmt.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gem),
 				Handler: installGemTaskHandler,
 			}
 		}
@@ -656,9 +664,9 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmt.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
 		default:
-			return "", fmt.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
 		}
 
 	}
@@ -691,7 +699,7 @@ func downloadFile(url, fileName string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Server return error code %d", resp.StatusCode)
+		return "", fmtc.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
 	if arg.GetB(ARG_NO_PROGRESS) {
