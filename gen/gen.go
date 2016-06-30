@@ -213,7 +213,6 @@ func buildIndex(dataDir string) {
 
 			cleanName := strings.Replace(file, ".7z", "", -1)
 			fileSize := uint64(fsutil.GetSize(filePath))
-			patchedFilePath := path.Join(dataDir, arch, cleanName+"-railsexpress.7z")
 
 			info := findInfo(oldIndex.Data[arch][category].Versions, cleanName)
 
@@ -224,7 +223,7 @@ func buildIndex(dataDir string) {
 					Path:         "/" + arch + "/" + file,
 					Size:         fileSize,
 					Hash:         crypto.FileHash(filePath),
-					RailsExpress: fsutil.IsExist(patchedFilePath),
+					RailsExpress: strings.Contains(filePath, "-railsexpress"),
 				}
 
 				fmtc.Printf("{g}+ %-24s{!} → {c}%s/%s{!}\n", info.Name, arch, category)
