@@ -44,7 +44,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.3"
+	VER  = "0.7.4"
 	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
 )
 
@@ -96,7 +96,7 @@ const FAIL_LOG_NAME = "rbinstall-fail.log"
 const NONE_VERSION = "- none -"
 
 // Default category column size
-const DEFAULT_CATEGORY_SIZE = 26
+const DEFAULT_CATEGORY_SIZE = 28
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -765,9 +765,14 @@ func printCurrentVersionName(category string, names []string, installed map[stri
 		if strings.Contains(curName, "-railsexpress") {
 			baseName := strings.Replace(curName, "-railsexpress", "", -1)
 
-			if installed[curName] || installed[baseName] {
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, categoryColor[category])
-			} else {
+			switch {
+			case installed[curName] && installed[baseName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", baseName, categoryColor[category])
+			case installed[curName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", baseName, categoryColor[category])
+			case installed[baseName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", baseName, categoryColor[category])
+			default:
 				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", baseName)
 			}
 
@@ -821,7 +826,7 @@ func configureCategorySizes(names map[string][]string) {
 
 	for category, nameSlice := range names {
 		for _, curName := range nameSlice {
-			curNameLen := len(curName) + 3 // 3 for bullet
+			curNameLen := len(curName) + 4 // 4 for bullets
 
 			if categorySize[category] < curNameLen {
 				categorySize[category] = curNameLen
