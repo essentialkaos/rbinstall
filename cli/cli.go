@@ -21,6 +21,7 @@ import (
 
 	"pkg.re/essentialkaos/ek.v1/arg"
 	"pkg.re/essentialkaos/ek.v1/crypto"
+	"pkg.re/essentialkaos/ek.v1/env"
 	"pkg.re/essentialkaos/ek.v1/fmtc"
 	"pkg.re/essentialkaos/ek.v1/fmtutil"
 	"pkg.re/essentialkaos/ek.v1/fsutil"
@@ -392,7 +393,7 @@ func listCommand() {
 
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
-	info := repoIndex.Find(rubyVersion)
+	info, category := repoIndex.Find(rubyVersion)
 
 	if info == nil {
 		printWarn("Can't find info about version %s", rubyVersion)
@@ -400,6 +401,7 @@ func installCommand(rubyVersion string) {
 	}
 
 	checkRBEnvDirPerms()
+	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
@@ -970,6 +972,18 @@ func getGemSourceURL() string {
 func checkRBEnvDirPerms() {
 	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
 		printError("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
+		exit(1)
+	}
+}
+
+// checkDependencies check dependencies for given category
+func checkDependencies(category string) {
+	if category != CATEGORY_JRUBY {
+		return
+	}
+
+	if env.Which("java") == "" {
+		printError("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
 		exit(1)
 	}
 }

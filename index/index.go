@@ -66,22 +66,22 @@ func NewCategoryInfo() *CategoryInfo {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Find info by name
-func (i *Index) Find(name string) *VersionInfo {
+func (i *Index) Find(name string) (*VersionInfo, string) {
 	systemInfo, err := system.GetSystemInfo()
 
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 
-	for _, category := range i.Data[systemInfo.Arch] {
+	for categoryName, category := range i.Data[systemInfo.Arch] {
 		info := category.Find(name)
 
 		if info != nil {
-			return info
+			return info, categoryName
 		}
 	}
 
-	return nil
+	return nil, ""
 }
 
 // Find info by name
