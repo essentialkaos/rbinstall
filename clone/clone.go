@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v1/arg"
-	"pkg.re/essentialkaos/ek.v1/fmtc"
-	"pkg.re/essentialkaos/ek.v1/fmtutil"
-	"pkg.re/essentialkaos/ek.v1/fsutil"
-	"pkg.re/essentialkaos/ek.v1/httputil"
-	"pkg.re/essentialkaos/ek.v1/jsonutil"
-	"pkg.re/essentialkaos/ek.v1/path"
-	"pkg.re/essentialkaos/ek.v1/req"
-	"pkg.re/essentialkaos/ek.v1/terminal"
-	"pkg.re/essentialkaos/ek.v1/timeutil"
-	"pkg.re/essentialkaos/ek.v1/usage"
+	"pkg.re/essentialkaos/ek.v3/arg"
+	"pkg.re/essentialkaos/ek.v3/fmtc"
+	"pkg.re/essentialkaos/ek.v3/fmtutil"
+	"pkg.re/essentialkaos/ek.v3/fsutil"
+	"pkg.re/essentialkaos/ek.v3/httputil"
+	"pkg.re/essentialkaos/ek.v3/jsonutil"
+	"pkg.re/essentialkaos/ek.v3/path"
+	"pkg.re/essentialkaos/ek.v3/req"
+	"pkg.re/essentialkaos/ek.v3/terminal"
+	"pkg.re/essentialkaos/ek.v3/timeutil"
+	"pkg.re/essentialkaos/ek.v3/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -146,7 +146,9 @@ func cloneRepository(url, dir string) {
 
 	fmtutil.Separator(false)
 
-	if !terminal.ReadAnswer("Clone this repository? (Y/n)", "y") {
+	ok, err := terminal.ReadAnswer("Clone this repository?", "y")
+
+	if !ok || err != nil {
 		fmtc.NewLine()
 		os.Exit(0)
 	}

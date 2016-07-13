@@ -19,20 +19,20 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v1/arg"
-	"pkg.re/essentialkaos/ek.v1/crypto"
-	"pkg.re/essentialkaos/ek.v1/env"
-	"pkg.re/essentialkaos/ek.v1/fmtc"
-	"pkg.re/essentialkaos/ek.v1/fmtutil"
-	"pkg.re/essentialkaos/ek.v1/fsutil"
-	"pkg.re/essentialkaos/ek.v1/knf"
-	"pkg.re/essentialkaos/ek.v1/log"
-	"pkg.re/essentialkaos/ek.v1/req"
-	"pkg.re/essentialkaos/ek.v1/signal"
-	"pkg.re/essentialkaos/ek.v1/system"
-	"pkg.re/essentialkaos/ek.v1/terminal"
-	"pkg.re/essentialkaos/ek.v1/tmp"
-	"pkg.re/essentialkaos/ek.v1/usage"
+	"pkg.re/essentialkaos/ek.v3/arg"
+	"pkg.re/essentialkaos/ek.v3/crypto"
+	"pkg.re/essentialkaos/ek.v3/env"
+	"pkg.re/essentialkaos/ek.v3/fmtc"
+	"pkg.re/essentialkaos/ek.v3/fmtutil"
+	"pkg.re/essentialkaos/ek.v3/fsutil"
+	"pkg.re/essentialkaos/ek.v3/knf"
+	"pkg.re/essentialkaos/ek.v3/log"
+	"pkg.re/essentialkaos/ek.v3/req"
+	"pkg.re/essentialkaos/ek.v3/signal"
+	"pkg.re/essentialkaos/ek.v3/system"
+	"pkg.re/essentialkaos/ek.v3/terminal"
+	"pkg.re/essentialkaos/ek.v3/tmp"
+	"pkg.re/essentialkaos/ek.v3/usage"
 
 	"pkg.re/essentialkaos/z7.v2"
 
@@ -149,7 +149,7 @@ func Init() {
 		fmtc.NewLine()
 
 		for _, err := range errs {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 		}
 
 		exit(1)
@@ -182,7 +182,7 @@ func Init() {
 		rubyVersion, err = getVersionFromFile()
 
 		if err != nil {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 			exit(1)
 		}
 
@@ -227,12 +227,12 @@ func checkPerms() {
 	currentUser, err = system.CurrentUser()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
 	if !currentUser.IsRoot() {
-		printError("This action requires superuser (root) privileges")
+		terminal.PrintErrorMessage("This action requires superuser (root) privileges")
 		exit(1)
 	}
 }
@@ -242,7 +242,7 @@ func setupLogger() {
 	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -256,7 +256,7 @@ func setupTemp() {
 	temp, err = tmp.NewTemp(knf.GetS(MAIN_TMP_DIR, "/tmp"))
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 }
@@ -266,7 +266,7 @@ func loadConfig() {
 	err := knf.Global(CONFIG_FILE)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 }
@@ -290,10 +290,10 @@ func validateConfig() {
 	})
 
 	if len(errs) != 0 {
-		printError("Error while knf.validation:")
+		terminal.PrintErrorMessage("Error while knf.validation:")
 
 		for _, err := range errs {
-			printError("  %v", err)
+			terminal.PrintErrorMessage("  %v", err)
 		}
 
 		exit(1)
@@ -305,7 +305,7 @@ func fetchIndex() {
 	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
 
 	if err != nil {
-		printError("Can't fetch repo index: %v", err)
+		terminal.PrintErrorMessage("Can't fetch repo index: %v", err)
 		exit(1)
 	}
 
@@ -314,7 +314,7 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		printError("Can't decode repo index json: %v", err)
+		terminal.PrintErrorMessage("Can't decode repo index json: %v", err)
 		exit(1)
 	}
 
@@ -326,12 +326,12 @@ func listCommand() {
 	systemInfo, err := system.GetSystemInfo()
 
 	if err != nil {
-		printWarn("Can't get information about system")
+		terminal.PrintWarnMessage("Can't get information about system")
 		exit(1)
 	}
 
 	if repoIndex.Data[systemInfo.Arch] == nil {
-		printWarn("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
+		terminal.PrintWarnMessage("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
 		exit(0)
 	}
 
@@ -396,7 +396,7 @@ func installCommand(rubyVersion string) {
 	info, category := repoIndex.Find(rubyVersion)
 
 	if info == nil {
-		printWarn("Can't find info about version %s", rubyVersion)
+		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
 		exit(1)
 	}
 
@@ -407,7 +407,7 @@ func installCommand(rubyVersion string) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
 			os.RemoveAll(getVersionPath(info.Name))
 		} else {
-			printWarn("Version %s already installed", info.Name)
+			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
 		}
 	}
@@ -419,7 +419,7 @@ func installCommand(rubyVersion string) {
 	file, err := downloadFile(knf.GetS(STORAGE_URL)+info.Path, info.File)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -433,7 +433,7 @@ func installCommand(rubyVersion string) {
 	_, err = checkHashTask.Start(file, info.Hash)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -447,7 +447,7 @@ func installCommand(rubyVersion string) {
 	_, err = unpackTask.Start(file, getRBEnvVersionsPath())
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -463,7 +463,7 @@ func installCommand(rubyVersion string) {
 			_, err = gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
-				printError(err.Error())
+				terminal.PrintErrorMessage(err.Error())
 				exit(1)
 			}
 		}
@@ -479,7 +479,7 @@ func installCommand(rubyVersion string) {
 	_, err = rehashTask.Start()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -571,7 +571,7 @@ func updateGems(rubyVersion string) {
 	fullPath := getVersionPath(rubyVersion)
 
 	if !fsutil.IsExist(fullPath) {
-		printError("Version %s is not installed", rubyVersion)
+		terminal.PrintErrorMessage("Version %s is not installed", rubyVersion)
 		exit(1)
 	}
 
@@ -608,7 +608,7 @@ func updateGems(rubyVersion string) {
 				)
 			}
 		} else {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 			exit(1)
 		}
 	}
@@ -623,7 +623,7 @@ func updateGems(rubyVersion string) {
 	_, err := rehashTask.Start()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -971,7 +971,7 @@ func getGemSourceURL() string {
 // checkRBEnvDirPerms check permissions on rbenv directory
 func checkRBEnvDirPerms() {
 	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
-		printError("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
+		terminal.PrintErrorMessage("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
 		exit(1)
 	}
 }
@@ -983,7 +983,7 @@ func checkDependencies(category string) {
 	}
 
 	if env.Which("java") == "" {
-		printError("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
+		terminal.PrintErrorMessage("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
 		exit(1)
 	}
 }
@@ -1016,18 +1016,8 @@ func logFailedAction(data []byte) (string, error) {
 
 // intSignalHandler is INT (Ctrl+C) signal handler
 func intSignalHandler() {
-	printWarn("\n\nInstall process canceled by Ctrl+C")
+	terminal.PrintWarnMessage("\n\nInstall process canceled by Ctrl+C")
 	exit(1)
-}
-
-// printError prints error message to console
-func printError(f string, a ...interface{}) {
-	fmtc.Printf("{r}"+f+"{!}\n", a...)
-}
-
-// printError prints warning message to console
-func printWarn(f string, a ...interface{}) {
-	fmtc.Printf("{y}"+f+"{!}\n", a...)
 }
 
 // exit exits clean temporary data and exit from utility with given exit code

@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"pkg.re/essentialkaos/ek.v1/sortutil"
-	"pkg.re/essentialkaos/ek.v1/system"
+	"pkg.re/essentialkaos/ek.v3/sortutil"
+	"pkg.re/essentialkaos/ek.v3/system"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
