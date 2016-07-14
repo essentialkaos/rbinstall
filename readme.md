@@ -1,8 +1,12 @@
-![RBInstall Logo](https://essentialkaos.com/github/rbinstall-v1.png)
+<p align="center">
+<a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
+</p>
+
+<p align="center">
+<img width="800" height="150" src="https://essentialkaos.com/github/rbinstall-v1.png"/>
+</p>
 
 `rbinstall` is utility for installing prebuilt ruby to RBEnv.
-
-[Usage demo](#usage-demo) • [Installation](#installation) • [Usage](#usage) • [Build Status](#build-status) • [Contributing](#contributing) • [License](#license)
 
 ## Usage demo
 
