@@ -4,20 +4,20 @@
 
 [Usage demo](#usage-demo) • [Installation](#installation) • [Usage](#usage) • [Build Status](#build-status) • [Contributing](#contributing) • [License](#license)
 
-#### Usage demo
+## Usage demo
 
 [![asciicast](https://essentialkaos.com/github/rbinstall-073.gif)](https://asciinema.org/a/47983)
 
-#### Installation
+## Installation
 
-###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```
 yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
 yum install rbinstall
 ```
 
-###### Using install.sh
+#### Using install.sh
 
 We provide simple bash script `script.sh` for installing app from the sources.
 
@@ -37,7 +37,7 @@ If you have some issues with installing, try to use script in debug mode:
 sudo ./install.sh --debug
 ```
 
-#### Usage
+## Usage
 ```
 Usage: rbinstall <options> version
 
@@ -67,17 +67,17 @@ Examples:
 
 ```
 
-#### Build Status
+## Build Status
 
-| Repository | Status |
+| Branch | Status |
 |------------|--------|
-| Stable | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
-| Unstable | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
+| `master` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
+| `develop` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
 
-#### Contributing
+## Contributing
 
 Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).
 
-#### License
+## License
 
 [EKOL](https://essentialkaos.com/ekol)
