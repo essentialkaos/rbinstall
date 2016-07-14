@@ -971,12 +971,7 @@ func getGemSourceURL() string {
 // checkRBEnv check RBEnv directory and state
 func checkRBEnv() {
 	if env.Which("rbenv") == "" {
-		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
-		exit(1)
-	}
-
-	if env.Get().GetS("RBENV_ROOT") == "" {
-		terminal.PrintErrorMessage("RBEnv is not initialized. Run \"rbenv init\" for shell-specific instructions on how to initialize rbenv.")
+		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install RBEnv https://github.com/rbenv/rbenv#installation")
 		exit(1)
 	}
 
