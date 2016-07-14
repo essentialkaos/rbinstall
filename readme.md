@@ -6,7 +6,7 @@
 <img width="300" height="150" src="https://essentialkaos.com/github/rbinstall-v2.png"/>
 </p>
 
-`rbinstall` is utility for installing prebuilt ruby to RBEnv.
+`rbinstall` is utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
 ## Usage demo
 

@@ -46,7 +46,7 @@ import (
 const (
 	APP  = "RBInstall"
 	VER  = "0.7.4"
-	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
+	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -980,7 +980,7 @@ func checkRBEnv() {
 	binary := knf.GetS(RBENV_DIR) + "/libexec/rbenv"
 
 	if !fsutil.CheckPerms("FRX", binary) {
-		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install RBEnv https://github.com/rbenv/rbenv#installation")
+		terminal.PrintErrorMessage("rbenv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
 		exit(1)
 	}
 }
