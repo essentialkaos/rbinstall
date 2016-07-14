@@ -400,7 +400,7 @@ func installCommand(rubyVersion string) {
 		exit(1)
 	}
 
-	checkRBEnvDirPerms()
+	checkRBEnv()
 	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
@@ -575,7 +575,7 @@ func updateGems(rubyVersion string) {
 		exit(1)
 	}
 
-	checkRBEnvDirPerms()
+	checkRBEnv()
 
 	runDate = time.Now()
 
@@ -968,8 +968,18 @@ func getGemSourceURL() string {
 	return "http://" + knf.GetS(GEMS_SOURCE)
 }
 
-// checkRBEnvDirPerms check permissions on rbenv directory
-func checkRBEnvDirPerms() {
+// checkRBEnv check RBEnv directory and state
+func checkRBEnv() {
+	if env.Which("rbenv") == "" {
+		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
+		exit(1)
+	}
+
+	if env.Get().GetS("RBENV_ROOT") == "" {
+		terminal.PrintErrorMessage("RBEnv is not initialized. Run \"rbenv init\" for shell-specific instructions on how to initialize rbenv.")
+		exit(1)
+	}
+
 	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
 		terminal.PrintErrorMessage("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
 		exit(1)
