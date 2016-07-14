@@ -970,13 +970,17 @@ func getGemSourceURL() string {
 
 // checkRBEnv check RBEnv directory and state
 func checkRBEnv() {
-	if env.Which("rbenv") == "" {
-		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install RBEnv https://github.com/rbenv/rbenv#installation")
+	versionsDir := getRBEnvVersionsPath()
+
+	if !fsutil.CheckPerms("DWX", versionsDir) {
+		terminal.PrintErrorMessage("Directory %s must be writable and executable", versionsDir)
 		exit(1)
 	}
 
-	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
-		terminal.PrintErrorMessage("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
+	binary := knf.GetS(RBENV_DIR) + "/libexec/rbenv"
+
+	if !fsutil.CheckPerms("FRX", binary) {
+		terminal.PrintErrorMessage("RBEnv is not installed. Follow these instructions to install RBEnv https://github.com/rbenv/rbenv#installation")
 		exit(1)
 	}
 }
