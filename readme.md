@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-<img width="300" height="150" src="https://essentialkaos.com/github/rbinstall-v2.png"/>
+<img width="300" height="150" src="https://essentialkaos.com/github/rbinstall-v3.png"/>
 </p>
 
 `rbinstall` is utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
