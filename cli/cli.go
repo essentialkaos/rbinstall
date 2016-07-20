@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.4"
+	VER  = "0.8.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -99,6 +99,13 @@ const NONE_VERSION = "- none -"
 // Default category column size
 const DEFAULT_CATEGORY_SIZE = 28
 
+// Default arch names
+const (
+	ARCH_X32 = "x32"
+	ARCH_X64 = "x64"
+	ARCH_ARM = "arm"
+)
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type PassThru struct {
@@ -133,7 +140,13 @@ var categoryColor = map[string]string{
 	CATEGORY_OTHER:    "s",
 }
 
-var categorySize = map[string]int{}
+var categorySize = map[string]int{
+	CATEGORY_RUBY:     0,
+	CATEGORY_JRUBY:    0,
+	CATEGORY_REE:      0,
+	CATEGORY_RUBINIUS: 0,
+	CATEGORY_OTHER:    0,
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -323,37 +336,35 @@ func fetchIndex() {
 
 // listCommand show list of all available versions
 func listCommand() {
-	systemInfo, err := system.GetSystemInfo()
+	osName, archName, err := getSystemInfo()
 
 	if err != nil {
-		terminal.PrintWarnMessage("Can't get information about system")
+		terminal.PrintErrorMessage("%v", err)
 		exit(1)
 	}
 
-	if repoIndex.Data[systemInfo.Arch] == nil {
-		terminal.PrintWarnMessage("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
+	if !repoIndex.HasData(osName, archName) {
+		terminal.PrintWarnMessage("Prebuilt binaries not found for this system")
 		exit(0)
 	}
 
 	var (
-		ruby     = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
-		jruby    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
-		ree      = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_REE])
-		rubinius = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
-		other    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
+		ruby     = repoIndex.Data[osName][archName][CATEGORY_RUBY]
+		jruby    = repoIndex.Data[osName][archName][CATEGORY_JRUBY]
+		ree      = repoIndex.Data[osName][archName][CATEGORY_REE]
+		rubinius = repoIndex.Data[osName][archName][CATEGORY_RUBINIUS]
+		other    = repoIndex.Data[osName][archName][CATEGORY_OTHER]
 
 		installed = getInstalledVersionsMap()
 	)
 
-	configureCategorySizes(map[string][]string{
+	configureCategorySizes(map[string]index.CategoryData{
 		CATEGORY_RUBY:     ruby,
 		CATEGORY_JRUBY:    jruby,
 		CATEGORY_REE:      ree,
 		CATEGORY_RUBINIUS: rubinius,
 		CATEGORY_OTHER:    other,
 	})
-
-	var index int
 
 	headerTemplate := fmt.Sprintf(
 		"{dY} %%-%ds{!} {dC} %%-%ds{!} {dG} %%-%ds{!} {dM} %%-%ds{!} {dS} %%-%ds{!}\n\n",
@@ -370,6 +381,8 @@ func listCommand() {
 		strings.ToUpper(CATEGORY_RUBINIUS),
 		strings.ToUpper(CATEGORY_OTHER),
 	)
+
+	var index int
 
 	for {
 
@@ -393,7 +406,14 @@ func listCommand() {
 
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
-	info, category := repoIndex.Find(rubyVersion)
+	osName, archName, err := getSystemInfo()
+
+	if err != nil {
+		terminal.PrintErrorMessage("%v", err)
+		exit(1)
+	}
+
+	info, category := repoIndex.Find(osName, archName, rubyVersion)
 
 	if info == nil {
 		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
@@ -416,7 +436,8 @@ func installCommand(rubyVersion string) {
 
 	fmtc.Printf("Fetching {c}%s{!} {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
 
-	file, err := downloadFile(knf.GetS(STORAGE_URL)+info.Path, info.File)
+	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
+	file, err := downloadFile(url, info.File)
 
 	if err != nil {
 		terminal.PrintErrorMessage(err.Error())
@@ -727,55 +748,28 @@ func downloadFile(url, fileName string) (string, error) {
 	return tmpDir + "/" + fileName, err
 }
 
-// getVersionNames return sorted version names
-func getVersionNames(category *index.CategoryInfo) []string {
-	var result []string
-
-	if category == nil {
-		result = append(result, NONE_VERSION)
-		return result
-	}
-
-	for _, info := range category.Versions {
-		if strings.Contains(info.Name, "-railsexpress") {
-			continue
-		}
-
-		if info.RailsExpress {
-			result = append(result, info.Name+"-railsexpress")
-		} else {
-			result = append(result, info.Name)
-		}
-	}
-
-	return result
-}
-
 // printCurrentVersionName print version from given slice for
 // versions listing
-func printCurrentVersionName(category string, names []string, installed map[string]bool, index int) bool {
-	if len(names) > index {
-		curName := names[index]
-
-		if curName == NONE_VERSION {
-			printSized(" {s}%%-%ds{!} ", categorySize[category], curName)
-			return true
-		}
+func printCurrentVersionName(category string, versions index.CategoryData, installed map[string]bool, index int) bool {
+	if len(versions) > index {
+		curName := versions[index].Name
 
 		var prettyName string
 
-		if strings.Contains(curName, "-railsexpress") {
-			baseName := strings.Replace(curName, "-railsexpress", "", -1)
+		if len(versions[index].Variations) != 0 {
+
+			// Currently subversion is only one - railsexpress
+			subVerName := versions[index].Variations[0].Name
 
 			switch {
-			case installed[curName] && installed[baseName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", baseName, categoryColor[category])
+			case installed[curName] && installed[subVerName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
+			case installed[subVerName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", curName, categoryColor[category])
 			case installed[curName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", baseName, categoryColor[category])
-			case installed[baseName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", baseName, categoryColor[category])
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", curName, categoryColor[category])
 			default:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", baseName)
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", curName)
 			}
 
 			printRubyVersion(category, prettyName)
@@ -790,6 +784,11 @@ func printCurrentVersionName(category string, names []string, installed map[stri
 			printSized(" %%-%ds ", categorySize[category], curName)
 		}
 
+		return true
+	}
+
+	if len(versions) == 0 && index == 0 {
+		printSized(" {s}%%-%ds{!} ", categorySize[category], NONE_VERSION)
 		return true
 	}
 
@@ -809,7 +808,7 @@ func printRubyVersion(category, name string) {
 }
 
 // configureCategorySizes configure column size for each category
-func configureCategorySizes(names map[string][]string) {
+func configureCategorySizes(data map[string]index.CategoryData) {
 	terminalWidth, _ := terminal.GetSize()
 
 	if terminalWidth == -1 || terminalWidth >= 140 {
@@ -822,30 +821,40 @@ func configureCategorySizes(names map[string][]string) {
 		return
 	}
 
-	averageCategorySize := (terminalWidth - 10) / len(names)
+	averageCategorySize := (terminalWidth - 10) / len(data)
 	averageSize := terminalWidth - 10
 	averageItems := 0
 
-	for category, nameSlice := range names {
-		for _, curName := range nameSlice {
-			curNameLen := len(curName) + 4 // 4 for bullets
+	for categoryName, categoryData := range data {
+		for _, item := range categoryData {
+			nameLen := len(item.Name) + 4 // 4 for bullets
 
-			if categorySize[category] < curNameLen {
-				categorySize[category] = curNameLen
+			if categorySize[categoryName] < nameLen {
+				categorySize[categoryName] = nameLen
+			}
+
+			if len(item.Variations) != 0 {
+				for _, subVer := range item.Variations {
+					nameLen = len(subVer.Name) + 4 // 4 for bullets
+
+					if categorySize[categoryName] < nameLen {
+						categorySize[categoryName] = nameLen
+					}
+				}
 			}
 		}
 
-		if categorySize[category] > averageCategorySize {
-			averageSize -= categorySize[category]
+		if categorySize[categoryName] > averageCategorySize {
+			averageSize -= categorySize[categoryName]
 		} else {
 			averageItems++
 		}
 	}
 
 	if averageItems > 0 {
-		for category, size := range categorySize {
+		for categoryName, size := range categorySize {
 			if size < averageCategorySize {
-				categorySize[category] = averageSize / averageItems
+				categorySize[categoryName] = averageSize / averageItems
 			}
 		}
 	}
@@ -995,6 +1004,41 @@ func checkDependencies(category string) {
 		terminal.PrintErrorMessage("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
 		exit(1)
 	}
+}
+
+// getSystemInfo return info about system
+func getSystemInfo() (string, string, error) {
+	var (
+		os   string
+		arch string
+	)
+
+	systemInfo, err := system.GetSystemInfo()
+
+	// Return by default x64
+	if err != nil {
+		return "", "", fmt.Errorf("Can't get information about system")
+	}
+
+	switch systemInfo.Arch {
+	case "i386", "i586", "i686":
+		arch = ARCH_X32
+	case "x86_64":
+		arch = ARCH_X64
+	case "arm":
+		arch = ARCH_ARM
+	default:
+		return "", "", fmt.Errorf("Architecture %s is not supported yet", systemInfo.Arch)
+	}
+
+	switch strings.ToLower(systemInfo.OS) {
+	case "linux", "darwin", "freebsd":
+		os = strings.ToLower(systemInfo.OS)
+	default:
+		return "", "", fmt.Errorf("%s is not supported yet", systemInfo.OS)
+	}
+
+	return os, arch, nil
 }
 
 // logFailedAction save data to temporary log file and return path

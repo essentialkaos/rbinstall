@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.1.2"
+	VER  = "0.2.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -49,6 +49,16 @@ const (
 	CATEGORY_RUBINIUS = "rubinius"
 	CATEGORY_OTHER    = "other"
 )
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+type FileInfo struct {
+	File string
+	URL  string
+	OS   string
+	Arch string
+	Size int64
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -87,6 +97,9 @@ func Init() {
 		showUsage()
 		return
 	}
+
+	fmtutil.SizeSeparator = " "
+	req.UserAgent = "RBI-Cloner/" + VER
 
 	url := args[0]
 	dir := args[1]
@@ -136,15 +149,12 @@ func cloneRepository(url, dir string) {
 		os.Exit(1)
 	}
 
-	fileCount, totalSize := getRepoStats(repoIndex)
+	if repoIndex.Meta.Items == 0 {
+		printWarn("Repository is empty")
+		os.Exit(0)
+	}
 
-	fmtutil.Separator(false, "Repository Statistics")
-
-	fmtc.Printf("  {*}Index:{!}   %s\n", url+"/index.json")
-	fmtc.Printf("  {*}Files:{!}   %s\n", fmtutil.PrettyNum(fileCount))
-	fmtc.Printf("  {*}Size: {!}   %s\n", fmtutil.PrettySize(totalSize))
-
-	fmtutil.Separator(false)
+	printRepositoryInfo(repoIndex)
 
 	ok, err := terminal.ReadAnswer("Clone this repository?", "y")
 
@@ -156,9 +166,25 @@ func cloneRepository(url, dir string) {
 	fmtc.NewLine()
 
 	downloadRepositoryData(repoIndex, url, dir)
+
+	fmtutil.Separator(false)
+
 	saveIndex(repoIndex, dir)
 
-	fmtc.Printf("\n{g}Repository successfully cloned to %s{!}\n\n", dir)
+	fmtc.Printf("\n{g}Repository successfully cloned to {g*}%s{!}\n\n", dir)
+}
+
+// printRepositoryInfo print basic info about repository data
+func printRepositoryInfo(repoIndex *index.Index) {
+	fmtutil.Separator(false, "REPOSITORY INFO")
+
+	updatedDate := time.Unix(repoIndex.Meta.Created, 0)
+
+	fmtc.Printf("  Updated: %s\n", timeutil.Format(updatedDate, "%Y/%m/%d %H:%M:%S"))
+	fmtc.Printf("  Items: %s\n", fmtutil.PrettyNum(repoIndex.Meta.Items))
+	fmtc.Printf("  Total Size: %s\n", fmtutil.PrettySize(repoIndex.Meta.Size))
+
+	fmtutil.Separator(false)
 }
 
 // fetchIndex download remote repository index
@@ -166,7 +192,11 @@ func fetchIndex(url string) (*index.Index, error) {
 	resp, err := req.Request{URL: url + "/index.json"}.Get()
 
 	if err != nil {
-		return nil, fmtc.Errorf("Can't fetch repo index: %v", err)
+		return nil, fmtc.Errorf("Can't fetch repository index: %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmtc.Errorf("Can't fetch repository index: server return status code %d", resp.StatusCode)
 	}
 
 	repoIndex := index.NewIndex()
@@ -174,58 +204,97 @@ func fetchIndex(url string) (*index.Index, error) {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		return nil, fmtc.Errorf("Can't decode repo index json: %v", err)
+		return nil, fmtc.Errorf("Can't decode repository index: %v", err)
 	}
 
 	return repoIndex, nil
 }
 
-// getRepoStats return number of files in repo and total size
-func getRepoStats(repoIndex *index.Index) (int, int64) {
-	var (
-		fileCount int
-		totalSize uint64
-	)
-
-	for _, archData := range repoIndex.Data {
-		for _, categoryData := range archData {
-			for _, versionData := range categoryData.Versions {
-				totalSize += versionData.Size
-				fileCount++
-			}
-		}
-	}
-
-	return fileCount, int64(totalSize)
-}
-
 // downloadRepositoryData download all files from repository
 func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
-	fmtc.Println("Downloading repository data...\n")
+	items := getItems(repoIndex, url)
 
-	for arch, archData := range repoIndex.Data {
-		os.Mkdir(path.Join(dir, arch), 0755)
+	fmtc.Printf("{s}Downloading %d items...{!}\n\n", len(items))
 
-		for category, categoryData := range archData {
-			for _, versionData := range categoryData.Versions {
-				fmtc.Printf("%-36s → ", arch+"/"+category+"/"+versionData.Name)
+	for _, item := range items {
+		fileDir := path.Join(dir, item.OS, item.Arch)
+		filePath := path.Join(dir, item.OS, item.Arch, item.File)
 
-				fileURL := url + "/" + versionData.Path
-				outputFile := path.Join(dir, versionData.Path)
+		if !fsutil.IsExist(fileDir) {
+			err := os.MkdirAll(fileDir, 0755)
 
-				dlTime, err := downloadFile(fileURL, outputFile)
+			if err != nil {
+				printError("Can't create directory %s: %v", fileDir, err)
+				os.Exit(1)
+			}
+		}
 
-				if err != nil {
-					fmtc.Println("{r}ERROR{!}\n")
-					printError("%v\n", err)
+		if fsutil.IsExist(filePath) {
+			fileSize := fsutil.GetSize(filePath)
 
-					os.Exit(1)
+			if fileSize == item.Size {
+				fmtc.Printf(
+					"{s}  %-28s → %s/%s{!}\n",
+					item.File, item.OS, item.Arch,
+				)
+
+				continue
+			} else {
+				os.Remove(filePath)
+			}
+		}
+
+		fmtc.Printf(
+			"{g}↓ %-28s{!} → {c}%s/%s{!} ",
+			item.File, item.OS, item.Arch,
+		)
+
+		dlTime, err := downloadFile(item.URL, filePath)
+
+		if err != nil {
+			fmtc.Println("{r}ERROR{!}\n")
+			printError("%v\n", err)
+
+			os.Exit(1)
+		}
+
+		fmtc.Printf("{g}DONE{!} {s}(%s){!}\n", timeutil.PrettyDuration(dlTime))
+	}
+}
+
+// getItems return slice with info about items in repository
+func getItems(repoIndex *index.Index, url string) []FileInfo {
+	var items []FileInfo
+
+	for osName, os := range repoIndex.Data {
+		for archName, arch := range os {
+			for _, category := range arch {
+				for _, version := range category {
+					items = append(items, FileInfo{
+						File: version.File,
+						URL:  url + "/" + version.Path + "/" + version.File,
+						OS:   osName,
+						Arch: archName,
+						Size: version.Size,
+					})
+
+					if len(version.Variations) != 0 {
+						for _, subVersion := range version.Variations {
+							items = append(items, FileInfo{
+								File: subVersion.File,
+								URL:  url + "/" + subVersion.Path + "/" + subVersion.File,
+								OS:   osName,
+								Arch: archName,
+								Size: subVersion.Size,
+							})
+						}
+					}
 				}
-
-				fmtc.Printf("{g}DONE{!} {s}(%s){!}\n", timeutil.PrettyDuration(dlTime))
 			}
 		}
 	}
+
+	return items
 }
 
 // downloadFile download and save remote file
@@ -244,13 +313,14 @@ func downloadFile(url, output string) (time.Duration, error) {
 
 	defer fd.Close()
 
-	resp, err := req.Request{
-		URL:       url,
-		UserAgent: "RBI-Cloner/" + VER,
-	}.Get()
+	resp, err := req.Request{URL: url}.Get()
 
 	if err != nil {
 		return time.Since(start), fmtc.Errorf("Can't download file: %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		return time.Since(start), fmtc.Errorf("Can't download file: server return status code %d", resp.StatusCode)
 	}
 
 	_, err = io.Copy(fd, resp.Body)
@@ -266,13 +336,13 @@ func downloadFile(url, output string) (time.Duration, error) {
 func saveIndex(repoIndex *index.Index, dir string) {
 	indexPath := path.Join(dir, "index.json")
 
-	fmtc.Printf("\nSaving index to %s... ", indexPath)
+	fmtc.Printf("Saving index... ")
 
 	err := jsonutil.EncodeToFile(indexPath, repoIndex)
 
 	if err != nil {
 		fmtc.Println("{r}ERROR{!}")
-		printError("Can't save index to %s: %v", indexPath, err)
+		printError("Can't save index as %s: %v", indexPath, err)
 		os.Exit(1)
 	}
 

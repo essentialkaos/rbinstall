@@ -8,6 +8,7 @@ package gen
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"io/ioutil"
 	"os"
 	"runtime"
 	"sort"
@@ -20,7 +21,7 @@ import (
 	"pkg.re/essentialkaos/ek.v3/fsutil"
 	"pkg.re/essentialkaos/ek.v3/jsonutil"
 	"pkg.re/essentialkaos/ek.v3/path"
-	"pkg.re/essentialkaos/ek.v3/sliceutil"
+	"pkg.re/essentialkaos/ek.v3/sortutil"
 	"pkg.re/essentialkaos/ek.v3/timeutil"
 	"pkg.re/essentialkaos/ek.v3/usage"
 
@@ -31,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.4.5"
+	VER  = "0.5.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -52,21 +53,42 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-var argList = arg.Map{
+type FileInfo struct {
+	OS       string
+	Arch     string
+	Category string
+	File     string
+}
+
+type fileInfoSlice []FileInfo
+
+func (s fileInfoSlice) Len() int      { return len(s) }
+func (s fileInfoSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s fileInfoSlice) Less(i, j int) bool {
+	iv := strings.Replace(s[i].File, "-", ".", -1)
+	jv := strings.Replace(s[j].File, "-", ".", -1)
+
+	return sortutil.VersionCompare(iv, jv)
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+var argMap = arg.Map{
 	ARG_OUTPUT:   &arg.V{},
 	ARG_NO_COLOR: &arg.V{Type: arg.BOOL},
 	ARG_HELP:     &arg.V{Type: arg.BOOL, Alias: "u:usage"},
 	ARG_VER:      &arg.V{Type: arg.BOOL, Alias: "ver"},
 }
 
-var archList = []string{"i386", "x86_64"}
+var archList = []string{"x32", "x64"}
+var osList = []string{"linux", "darwin", "freebsd"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
 	runtime.GOMAXPROCS(1)
 
-	args, errs := arg.Parse(argList)
+	args, errs := arg.Parse(argMap)
 
 	if len(errs) != 0 {
 		for _, err := range errs {
@@ -126,133 +148,158 @@ func checkDir(dataDir string) {
 
 // buildIndex create index
 func buildIndex(dataDir string) {
-	var err error
+	fmtc.NewLine()
 
-	dirList := fsutil.List(dataDir, true)
+	fileList := fsutil.ListAllFiles(
+		dataDir, true,
+		&fsutil.ListingFilter{
+			Perms:         "FR",
+			MatchPatterns: []string{"*.7z"},
+		})
 
-	if len(dirList) == 0 {
-		printWarn("\nCan't find arch directories in specified directory")
-		os.Exit(0)
+	if len(fileList) == 0 {
+		printWarn("Can't find any data in given directory\n")
+		os.Exit(1)
 	}
 
-	outputFile := arg.GetS(ARG_OUTPUT)
-
-	if outputFile == "" {
-		outputFile = path.Join(dataDir, "index.json")
-	}
+	outputFile := getOutputFile(dataDir)
 
 	var (
-		newIndex *index.Index
-		oldIndex *index.Index
+		newIndex = index.NewIndex()
+		oldIndex = getExistentIndex(outputFile)
 	)
-
-	newIndex = index.NewIndex()
-
-	// Reuse index if possible
-	if fsutil.IsExist(outputFile) {
-		oldIndex = index.NewIndex()
-
-		err = jsonutil.DecodeFile(outputFile, oldIndex)
-
-		if err != nil {
-			printWarn("\nCan't reuse existing index: %v\n", err)
-			oldIndex = nil
-		}
-	}
 
 	start := time.Now()
 
-	for _, dir := range dirList {
-		if !fsutil.IsDir(path.Join(dataDir, dir)) {
-			continue
+	for _, fileInfo := range processFiles(fileList) {
+		alreadyExist := false
+
+		filePath := path.Join(dataDir, fileInfo.OS, fileInfo.Arch, fileInfo.File)
+		fileName := strings.Replace(fileInfo.File, ".7z", "", -1)
+		fileSize := fsutil.GetSize(filePath)
+		fileAdded, _ := fsutil.GetCTime(filePath)
+
+		versionInfo := &index.VersionInfo{
+			Name:  fileName,
+			File:  fileName + ".7z",
+			Path:  path.Join(fileInfo.OS, fileInfo.Arch),
+			Size:  fileSize,
+			Added: fileAdded.Unix(),
 		}
 
-		arch := dir
+		oldVersionInfo, _ := oldIndex.Find(fileInfo.OS, fileInfo.Arch, fileName)
 
-		if !sliceutil.Contains(archList, arch) {
-			printWarn("\nUnknown arch %s. Skipping...\n", arch)
-			continue
+		// If 7z file have same creation date and size, we use hash from old index
+		if oldVersionInfo != nil {
+			if oldVersionInfo.Added == fileAdded.Unix() && oldVersionInfo.Size == fileSize {
+				versionInfo.Hash = oldVersionInfo.Hash
+				alreadyExist = true
+			}
 		}
 
-		if newIndex.Data[arch] == nil {
-			newIndex.Data[arch] = make(index.CategoryData)
+		// Calculate hash if is not set
+		if versionInfo.Hash == "" {
+			versionInfo.Hash = crypto.FileHash(filePath)
 		}
 
-		fileList := fsutil.List(path.Join(dataDir, arch), true)
+		if strings.HasSuffix(fileName, "-railsexpress") {
+			baseVersionName := strings.Replace(fileName, "-railsexpress", "", -1)
+			baseVersionInfo, _ := newIndex.Find(fileInfo.OS, fileInfo.Arch, baseVersionName)
 
-		sort.Strings(fileList)
-
-		if len(fileList) == 0 {
-			printWarn("\nCan't find files in %s directory. Skipping...\n", dataDir+"/"+arch)
-			continue
-		}
-
-		for _, file := range fileList {
-			filePath := path.Join(dataDir, arch, file)
-
-			if !fsutil.IsRegular(filePath) {
+			if baseVersionInfo == nil {
+				printWarn("Can't find base version info for %s", fileName)
 				continue
 			}
 
-			category := CATEGORY_OTHER
+			baseVersionInfo.Variations = append(baseVersionInfo.Variations, versionInfo)
+		} else {
+			newIndex.Add(fileInfo.OS, fileInfo.Arch, fileInfo.Category, versionInfo)
+		}
 
-			switch {
-			case file[0:2] == "1.", file[0:2] == "2.", file[0:3] == "dev":
-				category = CATEGORY_RUBY
-			case file[0:5] == "jruby":
-				category = CATEGORY_JRUBY
-			case file[0:3] == "ree":
-				category = CATEGORY_REE
-			case file[0:5] == "rubin":
-				category = CATEGORY_RUBINIUS
-			}
-
-			if newIndex.Data[arch][category] == nil {
-				newIndex.Data[arch][category] = index.NewCategoryInfo()
-			}
-
-			cleanName := strings.Replace(file, ".7z", "", -1)
-			fileSize := uint64(fsutil.GetSize(filePath))
-			patchedFilePath := path.Join(dataDir, arch, cleanName+"-railsexpress.7z")
-
-			info := findInfo(oldIndex.Data[arch][category].Versions, cleanName)
-
-			if info == nil || info.Size != fileSize {
-				info = &index.VersionInfo{
-					Name:         cleanName,
-					File:         file,
-					Path:         "/" + arch + "/" + file,
-					Size:         fileSize,
-					Hash:         crypto.FileHash(filePath),
-					RailsExpress: fsutil.IsExist(patchedFilePath),
-				}
-
-				fmtc.Printf("{g}+ %-24s{!} → {c}%s/%s{!}\n", info.Name, arch, category)
-			} else {
-				fmtc.Printf("{s}+ %-24s → %s/%s{!}\n", info.Name, arch, category)
-			}
-
-			newIndex.Data[arch][category].Versions = append(newIndex.Data[arch][category].Versions, info)
+		if alreadyExist {
+			fmtc.Printf(
+				"{s}  %-24s → %s/%s %s{!}\n",
+				fileName, fileInfo.OS,
+				fileInfo.Arch, fileInfo.Category,
+			)
+		} else {
+			fmtc.Printf(
+				"{g}+ %-24s{!} → {c}%s/%s %s{!}\n",
+				fileName, fileInfo.OS,
+				fileInfo.Arch, fileInfo.Category,
+			)
 		}
 	}
 
 	fmtc.NewLine()
+
+	saveIndex(outputFile, newIndex)
+
+	fmtc.Printf(
+		"{g}Index created and stored as file {g*}%s{g}. Processing took %s{!}\n\n",
+		outputFile, timeutil.PrettyDuration(time.Since(start)),
+	)
+}
+
+// processFiles parse file list to FileInfo slice
+func processFiles(files []string) []FileInfo {
+	var result []FileInfo
+
+	for _, file := range files {
+		fileInfoSlice := strings.Split(file, "/")
+
+		if len(fileInfoSlice) != 3 {
+			continue
+		}
+
+		result = append(result, FileInfo{
+			OS:       fileInfoSlice[0],
+			Arch:     fileInfoSlice[1],
+			Category: guessCategory(fileInfoSlice[2]),
+			File:     fileInfoSlice[2],
+		})
+	}
+
+	sort.Sort(fileInfoSlice(result))
+
+	return result
+}
+
+// saveIndex save index data as JSON to file
+func saveIndex(outputFile string, i *index.Index) {
+	indexData, err := i.Encode()
+
+	if err != nil {
+		printError(err.Error())
+		os.Exit(1)
+	}
 
 	if fsutil.IsExist(outputFile) {
 		os.RemoveAll(outputFile)
 	}
 
-	newIndex.Sort()
-
-	err = jsonutil.EncodeToFile(outputFile, newIndex)
+	err = ioutil.WriteFile(outputFile, indexData, 0644)
 
 	if err != nil {
-		printWarn("Can't save index as file %s: %v", outputFile, err)
-	} else {
-		fmtc.Printf("{g}Index created and stored as file %s. Processing took %s{!}\n", outputFile, timeutil.PrettyDuration(time.Since(start)))
+		printError(err.Error())
+		os.Exit(1)
+	}
+}
+
+// guessCategory try to guess category by file name
+func guessCategory(name string) string {
+	switch {
+	case name[0:2] == "1.", name[0:2] == "2.":
+		return CATEGORY_RUBY
+	case name[0:5] == "jruby":
+		return CATEGORY_JRUBY
+	case name[0:3] == "ree":
+		return CATEGORY_REE
+	case name[0:5] == "rubin":
+		return CATEGORY_RUBINIUS
 	}
 
-	fmtc.NewLine()
+	return CATEGORY_OTHER
 }
 
 // findInfo search version info struct in given slice
@@ -264,6 +311,36 @@ func findInfo(infoList []*index.VersionInfo, version string) *index.VersionInfo 
 	}
 
 	return nil
+}
+
+// getOutputFile return path to output file
+func getOutputFile(dataDir string) string {
+	outputFile := arg.GetS(ARG_OUTPUT)
+
+	if outputFile != "" {
+		return outputFile
+	}
+
+	return path.Join(dataDir, "index.json")
+}
+
+// getExistentIndex read and decode index
+func getExistentIndex(file string) *index.Index {
+	if !fsutil.IsExist(file) {
+		fmtc.Println("{s}An earlier version of index is not found{!}\n")
+		return nil
+	}
+
+	i := index.NewIndex()
+
+	err := jsonutil.DecodeFile(file, i)
+
+	if err != nil {
+		printWarn("Can't reuse existing index: %v\n", err)
+		return nil
+	}
+
+	return i
 }
 
 // printError prints error message to console
