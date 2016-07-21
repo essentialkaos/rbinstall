@@ -199,7 +199,7 @@ func Init() {
 			exit(1)
 		}
 
-		fmtc.Printf("{s}Installing version %s from version file{!}\n\n", rubyVersion)
+		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
 	}
 
 	if rubyVersion != "" {
@@ -434,7 +434,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s{!} {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {c}%s {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
 
 	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
 	file, err := downloadFile(url, info.File)
