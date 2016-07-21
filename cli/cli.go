@@ -509,7 +509,7 @@ func installCommand(rubyVersion string) {
 	log.Info("[%s] %s %s", currentUser.RealName, "Installed version", info.Name)
 
 	fmtc.NewLine()
-	fmtc.Printf("{g}Version %s successfully installed!{!}\n", info.Name)
+	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
 }
 
 // getVersionFromFile try to read version file and return defined version
