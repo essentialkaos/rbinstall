@@ -19,19 +19,20 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v1/arg"
-	"pkg.re/essentialkaos/ek.v1/crypto"
-	"pkg.re/essentialkaos/ek.v1/fmtc"
-	"pkg.re/essentialkaos/ek.v1/fmtutil"
-	"pkg.re/essentialkaos/ek.v1/fsutil"
-	"pkg.re/essentialkaos/ek.v1/knf"
-	"pkg.re/essentialkaos/ek.v1/log"
-	"pkg.re/essentialkaos/ek.v1/req"
-	"pkg.re/essentialkaos/ek.v1/signal"
-	"pkg.re/essentialkaos/ek.v1/system"
-	"pkg.re/essentialkaos/ek.v1/terminal"
-	"pkg.re/essentialkaos/ek.v1/tmp"
-	"pkg.re/essentialkaos/ek.v1/usage"
+	"pkg.re/essentialkaos/ek.v3/arg"
+	"pkg.re/essentialkaos/ek.v3/crypto"
+	"pkg.re/essentialkaos/ek.v3/env"
+	"pkg.re/essentialkaos/ek.v3/fmtc"
+	"pkg.re/essentialkaos/ek.v3/fmtutil"
+	"pkg.re/essentialkaos/ek.v3/fsutil"
+	"pkg.re/essentialkaos/ek.v3/knf"
+	"pkg.re/essentialkaos/ek.v3/log"
+	"pkg.re/essentialkaos/ek.v3/req"
+	"pkg.re/essentialkaos/ek.v3/signal"
+	"pkg.re/essentialkaos/ek.v3/system"
+	"pkg.re/essentialkaos/ek.v3/terminal"
+	"pkg.re/essentialkaos/ek.v3/tmp"
+	"pkg.re/essentialkaos/ek.v3/usage"
 
 	"pkg.re/essentialkaos/z7.v2"
 
@@ -44,8 +45,8 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.7.3"
-	DESC = "Utility for installing prebuilt ruby versions to RBEnv"
+	VER  = "0.8.0"
+	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -96,7 +97,14 @@ const FAIL_LOG_NAME = "rbinstall-fail.log"
 const NONE_VERSION = "- none -"
 
 // Default category column size
-const DEFAULT_CATEGORY_SIZE = 26
+const DEFAULT_CATEGORY_SIZE = 28
+
+// Default arch names
+const (
+	ARCH_X32 = "x32"
+	ARCH_X64 = "x64"
+	ARCH_ARM = "arm"
+)
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -132,7 +140,13 @@ var categoryColor = map[string]string{
 	CATEGORY_OTHER:    "s",
 }
 
-var categorySize = map[string]int{}
+var categorySize = map[string]int{
+	CATEGORY_RUBY:     0,
+	CATEGORY_JRUBY:    0,
+	CATEGORY_REE:      0,
+	CATEGORY_RUBINIUS: 0,
+	CATEGORY_OTHER:    0,
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -148,7 +162,7 @@ func Init() {
 		fmtc.NewLine()
 
 		for _, err := range errs {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 		}
 
 		exit(1)
@@ -181,11 +195,11 @@ func Init() {
 		rubyVersion, err = getVersionFromFile()
 
 		if err != nil {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 			exit(1)
 		}
 
-		fmtc.Printf("{s}Installing version %s from version file{!}\n\n", rubyVersion)
+		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
 	}
 
 	if rubyVersion != "" {
@@ -226,12 +240,12 @@ func checkPerms() {
 	currentUser, err = system.CurrentUser()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
 	if !currentUser.IsRoot() {
-		printError("This action requires superuser (root) privileges")
+		terminal.PrintErrorMessage("This action requires superuser (root) privileges")
 		exit(1)
 	}
 }
@@ -241,7 +255,7 @@ func setupLogger() {
 	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -255,7 +269,7 @@ func setupTemp() {
 	temp, err = tmp.NewTemp(knf.GetS(MAIN_TMP_DIR, "/tmp"))
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 }
@@ -265,7 +279,7 @@ func loadConfig() {
 	err := knf.Global(CONFIG_FILE)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 }
@@ -289,10 +303,10 @@ func validateConfig() {
 	})
 
 	if len(errs) != 0 {
-		printError("Error while knf.validation:")
+		terminal.PrintErrorMessage("Error while knf.validation:")
 
 		for _, err := range errs {
-			printError("  %v", err)
+			terminal.PrintErrorMessage("  %v", err)
 		}
 
 		exit(1)
@@ -304,7 +318,7 @@ func fetchIndex() {
 	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
 
 	if err != nil {
-		printError("Can't fetch repo index: %v", err)
+		terminal.PrintErrorMessage("Can't fetch repo index: %v", err)
 		exit(1)
 	}
 
@@ -313,7 +327,7 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		printError("Can't decode repo index json: %v", err)
+		terminal.PrintErrorMessage("Can't decode repo index json: %v", err)
 		exit(1)
 	}
 
@@ -322,37 +336,35 @@ func fetchIndex() {
 
 // listCommand show list of all available versions
 func listCommand() {
-	systemInfo, err := system.GetSystemInfo()
+	osName, archName, err := getSystemInfo()
 
 	if err != nil {
-		printWarn("Can't get information about system")
+		terminal.PrintErrorMessage("%v", err)
 		exit(1)
 	}
 
-	if repoIndex.Data[systemInfo.Arch] == nil {
-		printWarn("Prebuilt rubies not found for %s architecture", systemInfo.Arch)
+	if !repoIndex.HasData(osName, archName) {
+		terminal.PrintWarnMessage("Prebuilt binaries not found for this system")
 		exit(0)
 	}
 
 	var (
-		ruby     = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBY])
-		jruby    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_JRUBY])
-		ree      = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_REE])
-		rubinius = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_RUBINIUS])
-		other    = getVersionNames(repoIndex.Data[systemInfo.Arch][CATEGORY_OTHER])
+		ruby     = repoIndex.Data[osName][archName][CATEGORY_RUBY]
+		jruby    = repoIndex.Data[osName][archName][CATEGORY_JRUBY]
+		ree      = repoIndex.Data[osName][archName][CATEGORY_REE]
+		rubinius = repoIndex.Data[osName][archName][CATEGORY_RUBINIUS]
+		other    = repoIndex.Data[osName][archName][CATEGORY_OTHER]
 
 		installed = getInstalledVersionsMap()
 	)
 
-	configureCategorySizes(map[string][]string{
+	configureCategorySizes(map[string]index.CategoryData{
 		CATEGORY_RUBY:     ruby,
 		CATEGORY_JRUBY:    jruby,
 		CATEGORY_REE:      ree,
 		CATEGORY_RUBINIUS: rubinius,
 		CATEGORY_OTHER:    other,
 	})
-
-	var index int
 
 	headerTemplate := fmt.Sprintf(
 		"{dY} %%-%ds{!} {dC} %%-%ds{!} {dG} %%-%ds{!} {dM} %%-%ds{!} {dS} %%-%ds{!}\n\n",
@@ -369,6 +381,8 @@ func listCommand() {
 		strings.ToUpper(CATEGORY_RUBINIUS),
 		strings.ToUpper(CATEGORY_OTHER),
 	)
+
+	var index int
 
 	for {
 
@@ -392,32 +406,41 @@ func listCommand() {
 
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
-	info := repoIndex.Find(rubyVersion)
+	osName, archName, err := getSystemInfo()
 
-	if info == nil {
-		printWarn("Can't find info about version %s", rubyVersion)
+	if err != nil {
+		terminal.PrintErrorMessage("%v", err)
 		exit(1)
 	}
 
-	checkRBEnvDirPerms()
+	info, category := repoIndex.Find(osName, archName, rubyVersion)
+
+	if info == nil {
+		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
+		exit(1)
+	}
+
+	checkRBEnv()
+	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
 			os.RemoveAll(getVersionPath(info.Name))
 		} else {
-			printWarn("Version %s already installed", info.Name)
+			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
 		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s{!} {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {c}%s {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
 
-	file, err := downloadFile(knf.GetS(STORAGE_URL)+info.Path, info.File)
+	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
+	file, err := downloadFile(url, info.File)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -431,7 +454,7 @@ func installCommand(rubyVersion string) {
 	_, err = checkHashTask.Start(file, info.Hash)
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -445,7 +468,7 @@ func installCommand(rubyVersion string) {
 	_, err = unpackTask.Start(file, getRBEnvVersionsPath())
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -461,7 +484,7 @@ func installCommand(rubyVersion string) {
 			_, err = gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
-				printError(err.Error())
+				terminal.PrintErrorMessage(err.Error())
 				exit(1)
 			}
 		}
@@ -477,7 +500,7 @@ func installCommand(rubyVersion string) {
 	_, err = rehashTask.Start()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -486,7 +509,7 @@ func installCommand(rubyVersion string) {
 	log.Info("[%s] %s %s", currentUser.RealName, "Installed version", info.Name)
 
 	fmtc.NewLine()
-	fmtc.Printf("{g}Version %s successfully installed!{!}\n", info.Name)
+	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
 }
 
 // getVersionFromFile try to read version file and return defined version
@@ -569,11 +592,11 @@ func updateGems(rubyVersion string) {
 	fullPath := getVersionPath(rubyVersion)
 
 	if !fsutil.IsExist(fullPath) {
-		printError("Version %s is not installed", rubyVersion)
+		terminal.PrintErrorMessage("Version %s is not installed", rubyVersion)
 		exit(1)
 	}
 
-	checkRBEnvDirPerms()
+	checkRBEnv()
 
 	runDate = time.Now()
 
@@ -606,7 +629,7 @@ func updateGems(rubyVersion string) {
 				)
 			}
 		} else {
-			printError(err.Error())
+			terminal.PrintErrorMessage(err.Error())
 			exit(1)
 		}
 	}
@@ -621,7 +644,7 @@ func updateGems(rubyVersion string) {
 	_, err := rehashTask.Start()
 
 	if err != nil {
-		printError(err.Error())
+		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
 
@@ -725,50 +748,28 @@ func downloadFile(url, fileName string) (string, error) {
 	return tmpDir + "/" + fileName, err
 }
 
-// getVersionNames return sorted version names
-func getVersionNames(category *index.CategoryInfo) []string {
-	var result []string
-
-	if category == nil {
-		result = append(result, NONE_VERSION)
-		return result
-	}
-
-	for _, info := range category.Versions {
-		if strings.Contains(info.Name, "-railsexpress") {
-			continue
-		}
-
-		if info.RailsExpress {
-			result = append(result, info.Name+"-railsexpress")
-		} else {
-			result = append(result, info.Name)
-		}
-	}
-
-	return result
-}
-
 // printCurrentVersionName print version from given slice for
 // versions listing
-func printCurrentVersionName(category string, names []string, installed map[string]bool, index int) bool {
-	if len(names) > index {
-		curName := names[index]
-
-		if curName == NONE_VERSION {
-			printSized(" {s}%%-%ds{!} ", categorySize[category], curName)
-			return true
-		}
+func printCurrentVersionName(category string, versions index.CategoryData, installed map[string]bool, index int) bool {
+	if len(versions) > index {
+		curName := versions[index].Name
 
 		var prettyName string
 
-		if strings.Contains(curName, "-railsexpress") {
-			baseName := strings.Replace(curName, "-railsexpress", "", -1)
+		if len(versions[index].Variations) != 0 {
 
-			if installed[curName] || installed[baseName] {
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{!}", baseName, categoryColor[category])
-			} else {
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", baseName)
+			// Currently subversion is only one - railsexpress
+			subVerName := versions[index].Variations[0].Name
+
+			switch {
+			case installed[curName] && installed[subVerName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
+			case installed[subVerName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", curName, categoryColor[category])
+			case installed[curName]:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", curName, categoryColor[category])
+			default:
+				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", curName)
 			}
 
 			printRubyVersion(category, prettyName)
@@ -783,6 +784,11 @@ func printCurrentVersionName(category string, names []string, installed map[stri
 			printSized(" %%-%ds ", categorySize[category], curName)
 		}
 
+		return true
+	}
+
+	if len(versions) == 0 && index == 0 {
+		printSized(" {s}%%-%ds{!} ", categorySize[category], NONE_VERSION)
 		return true
 	}
 
@@ -802,7 +808,7 @@ func printRubyVersion(category, name string) {
 }
 
 // configureCategorySizes configure column size for each category
-func configureCategorySizes(names map[string][]string) {
+func configureCategorySizes(data map[string]index.CategoryData) {
 	terminalWidth, _ := terminal.GetSize()
 
 	if terminalWidth == -1 || terminalWidth >= 140 {
@@ -815,30 +821,40 @@ func configureCategorySizes(names map[string][]string) {
 		return
 	}
 
-	averageCategorySize := (terminalWidth - 10) / len(names)
+	averageCategorySize := (terminalWidth - 10) / len(data)
 	averageSize := terminalWidth - 10
 	averageItems := 0
 
-	for category, nameSlice := range names {
-		for _, curName := range nameSlice {
-			curNameLen := len(curName) + 3 // 3 for bullet
+	for categoryName, categoryData := range data {
+		for _, item := range categoryData {
+			nameLen := len(item.Name) + 4 // 4 for bullets
 
-			if categorySize[category] < curNameLen {
-				categorySize[category] = curNameLen
+			if categorySize[categoryName] < nameLen {
+				categorySize[categoryName] = nameLen
+			}
+
+			if len(item.Variations) != 0 {
+				for _, subVer := range item.Variations {
+					nameLen = len(subVer.Name) + 4 // 4 for bullets
+
+					if categorySize[categoryName] < nameLen {
+						categorySize[categoryName] = nameLen
+					}
+				}
 			}
 		}
 
-		if categorySize[category] > averageCategorySize {
-			averageSize -= categorySize[category]
+		if categorySize[categoryName] > averageCategorySize {
+			averageSize -= categorySize[categoryName]
 		} else {
 			averageItems++
 		}
 	}
 
 	if averageItems > 0 {
-		for category, size := range categorySize {
+		for categoryName, size := range categorySize {
 			if size < averageCategorySize {
-				categorySize[category] = averageSize / averageItems
+				categorySize[categoryName] = averageSize / averageItems
 			}
 		}
 	}
@@ -961,12 +977,68 @@ func getGemSourceURL() string {
 	return "http://" + knf.GetS(GEMS_SOURCE)
 }
 
-// checkRBEnvDirPerms check permissions on rbenv directory
-func checkRBEnvDirPerms() {
-	if !fsutil.CheckPerms("DWX", knf.GetS(RBENV_DIR)) {
-		printError("Directory %s must be writable and executable", knf.GetS(RBENV_DIR))
+// checkRBEnv check RBEnv directory and state
+func checkRBEnv() {
+	versionsDir := getRBEnvVersionsPath()
+
+	if !fsutil.CheckPerms("DWX", versionsDir) {
+		terminal.PrintErrorMessage("Directory %s must be writable and executable", versionsDir)
 		exit(1)
 	}
+
+	binary := knf.GetS(RBENV_DIR) + "/libexec/rbenv"
+
+	if !fsutil.CheckPerms("FRX", binary) {
+		terminal.PrintErrorMessage("rbenv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
+		exit(1)
+	}
+}
+
+// checkDependencies check dependencies for given category
+func checkDependencies(category string) {
+	if category != CATEGORY_JRUBY {
+		return
+	}
+
+	if env.Which("java") == "" {
+		terminal.PrintErrorMessage("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
+		exit(1)
+	}
+}
+
+// getSystemInfo return info about system
+func getSystemInfo() (string, string, error) {
+	var (
+		os   string
+		arch string
+	)
+
+	systemInfo, err := system.GetSystemInfo()
+
+	// Return by default x64
+	if err != nil {
+		return "", "", fmt.Errorf("Can't get information about system")
+	}
+
+	switch systemInfo.Arch {
+	case "i386", "i586", "i686":
+		arch = ARCH_X32
+	case "x86_64":
+		arch = ARCH_X64
+	case "arm":
+		arch = ARCH_ARM
+	default:
+		return "", "", fmt.Errorf("Architecture %s is not supported yet", systemInfo.Arch)
+	}
+
+	switch strings.ToLower(systemInfo.OS) {
+	case "linux", "darwin", "freebsd":
+		os = strings.ToLower(systemInfo.OS)
+	default:
+		return "", "", fmt.Errorf("%s is not supported yet", systemInfo.OS)
+	}
+
+	return os, arch, nil
 }
 
 // logFailedAction save data to temporary log file and return path
@@ -997,18 +1069,8 @@ func logFailedAction(data []byte) (string, error) {
 
 // intSignalHandler is INT (Ctrl+C) signal handler
 func intSignalHandler() {
-	printWarn("\n\nInstall process canceled by Ctrl+C")
+	terminal.PrintWarnMessage("\n\nInstall process canceled by Ctrl+C")
 	exit(1)
-}
-
-// printError prints error message to console
-func printError(f string, a ...interface{}) {
-	fmtc.Printf("{r}"+f+"{!}\n", a...)
-}
-
-// printError prints warning message to console
-func printWarn(f string, a ...interface{}) {
-	fmtc.Printf("{y}"+f+"{!}\n", a...)
 }
 
 // exit exits clean temporary data and exit from utility with given exit code

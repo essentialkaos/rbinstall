@@ -8,34 +8,45 @@ package index
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"encoding/json"
+	"errors"
 	"sort"
 	"strings"
+	"time"
 
-	"pkg.re/essentialkaos/ek.v1/sortutil"
-	"pkg.re/essentialkaos/ek.v1/system"
+	"pkg.re/essentialkaos/ek.v3/sortutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-type VersionInfo struct {
-	Name         string `json:"name"`
-	File         string `json:"file"`
-	Path         string `json:"path"`
-	Size         uint64 `json:"size"`
-	Hash         string `json:"hash"`
-	RailsExpress bool   `json:"rx"`
-}
-
-type CategoryInfo struct {
-	Versions []*VersionInfo `json:"versions"`
-}
-
-type CategoryData map[string]*CategoryInfo
-
-type Data map[string]CategoryData
-
 type Index struct {
-	Data Data `json:"data"`
+	Meta *Metadata         `json:"meta"`
+	Data map[string]OSData `json:"data"`
+}
+
+type Metadata struct {
+	Created int64 `json:"created"` // Index creation timestamp
+	Size    int64 `json:"size"`    // Total data size
+	Items   int   `json:"items"`   // Total number of items in repo
+}
+
+type OSData map[string]ArchData
+
+type ArchData map[string]CategoryData
+
+type CategoryData []*VersionInfo
+
+type VersionInfo struct {
+	Name  string `json:"name"`  // Version name
+	File  string `json:"file"`  // Full filename (with extension)
+	Path  string `json:"path"`  // Relative path to 7z file
+	Size  int64  `json:"size"`  // Size in bytes
+	Hash  string `json:"hash"`  // SHA-256 hash
+	Added int64  `json:"added"` // Timestamp with date when version was added to repo
+
+	// Variations contains info about version variations (railsexpress version
+	// for example)
+	Variations []*VersionInfo `json:"variations,omitempty"`
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -53,57 +64,146 @@ func (s versionInfoSlice) Less(i, j int) bool {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// NewIndex create new index struct
+// NewIndex return pointer to new index struct
 func NewIndex() *Index {
-	return &Index{Data: make(Data)}
-}
-
-// NewCategoryInfo create new category info struct
-func NewCategoryInfo() *CategoryInfo {
-	return &CategoryInfo{make([]*VersionInfo, 0)}
+	return &Index{
+		Meta: &Metadata{},
+		Data: make(map[string]OSData),
+	}
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Find info by name
-func (i *Index) Find(name string) *VersionInfo {
-	systemInfo, err := system.GetSystemInfo()
-
-	if err != nil {
-		return nil
+// Add used for adding info about some ruby version
+func (i *Index) Add(osName, archName, categoryName string, info *VersionInfo) {
+	if i == nil {
+		return
 	}
 
-	for _, category := range i.Data[systemInfo.Arch] {
-		info := category.Find(name)
-
-		if info != nil {
-			return info
-		}
+	if i.Data[osName] == nil {
+		i.Data[osName] = make(OSData)
 	}
 
-	return nil
+	if i.Data[osName][archName] == nil {
+		i.Data[osName][archName] = make(ArchData)
+	}
+
+	if i.Data[osName][archName][categoryName] == nil {
+		i.Data[osName][archName][categoryName] = make(CategoryData, 0)
+	}
+
+	i.Data[osName][archName][categoryName] = append(
+		i.Data[osName][archName][categoryName], info,
+	)
 }
 
-// Find info by name
-func (i *CategoryInfo) Find(name string) *VersionInfo {
-	if len(i.Versions) == 0 {
-		return nil
+// HasData return true if index contains data for
+// some os + arch
+func (i *Index) HasData(osName, archName string) bool {
+	if i.Data[osName] == nil {
+		return false
 	}
 
-	for _, info := range i.Versions {
-		if info.Name == name {
-			return info
+	if i.Data[osName][archName] == nil {
+		return false
+	}
+
+	return true
+}
+
+// Encode encode index to JSON format
+func (i *Index) Encode() ([]byte, error) {
+	if i == nil {
+		return nil, errors.New("Index is nil")
+	}
+
+	// Prepare index for encoding
+	i.Sort()
+	i.UpdateMetadata()
+
+	data, err := json.MarshalIndent(i, "", "  ")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// UpdateMetadata update index metadata
+func (i *Index) UpdateMetadata() {
+	if i == nil {
+		return
+	}
+
+	for _, os := range i.Data {
+		for _, arch := range os {
+			for _, category := range arch {
+				for _, version := range category {
+
+					i.Meta.Items++
+					i.Meta.Size += version.Size
+
+					if len(version.Variations) != 0 {
+						for _, subver := range version.Variations {
+							i.Meta.Items++
+							i.Meta.Size += subver.Size
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return nil
+	i.Meta.Created = time.Now().Unix()
 }
 
 // Sort sorts versions data
 func (i *Index) Sort() {
-	for _, cData := range i.Data {
-		for _, cInfo := range cData {
-			sort.Sort(versionInfoSlice(cInfo.Versions))
+	if i == nil {
+		return
+	}
+
+	for _, os := range i.Data {
+		for _, arch := range os {
+			for _, category := range arch {
+				sort.Sort(versionInfoSlice(category))
+			}
 		}
 	}
 }
+
+// Find try to find info about version by name
+func (i *Index) Find(os, arch, name string) (*VersionInfo, string) {
+	if i == nil {
+		return nil, ""
+	}
+
+	if i.Data[os] == nil {
+		return nil, ""
+	}
+
+	if i.Data[os][arch] == nil {
+		return nil, ""
+	}
+
+	for categoryName, category := range i.Data[os][arch] {
+		for _, version := range category {
+			if version.Name == name {
+				return version, categoryName
+			}
+
+			if len(version.Variations) != 0 {
+				for _, variation := range version.Variations {
+					if variation.Name == name {
+						return variation, categoryName
+					}
+				}
+			}
+		}
+	}
+
+	return nil, ""
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //

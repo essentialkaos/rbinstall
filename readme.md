@@ -1,23 +1,27 @@
-![RBInstall Logo](https://essentialkaos.com/github/rbinstall-v1.png)
+<p align="center">
+<a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
+</p>
 
-`rbinstall` is utility for installing prebuilt ruby to RBEnv.
+<p align="center">
+<img width="300" height="150" src="https://essentialkaos.com/github/rbinstall.png"/>
+</p>
 
-[Usage demo](#usage-demo) • [Installation](#installation) • [Usage](#usage) • [Build Status](#build-status) • [Contributing](#contributing) • [License](#license)
+`rbinstall` is utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
-#### Usage demo
+## Usage demo
 
 [![asciicast](https://essentialkaos.com/github/rbinstall-073.gif)](https://asciinema.org/a/47983)
 
-#### Installation
+## Installation
 
-###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```
 yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
 yum install rbinstall
 ```
 
-###### Using install.sh
+#### Using install.sh
 
 We provide simple bash script `script.sh` for installing app from the sources.
 
@@ -37,7 +41,7 @@ If you have some issues with installing, try to use script in debug mode:
 sudo ./install.sh --debug
 ```
 
-#### Usage
+## Usage
 ```
 Usage: rbinstall <options> version
 
@@ -67,17 +71,17 @@ Examples:
 
 ```
 
-#### Build Status
+## Build Status
 
-| Repository | Status |
+| Branch | Status |
 |------------|--------|
-| Stable | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
-| Unstable | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
+| `master` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
+| `develop` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
 
-#### Contributing
+## Contributing
 
 Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).
 
-#### License
+## License
 
 [EKOL](https://essentialkaos.com/ekol)
