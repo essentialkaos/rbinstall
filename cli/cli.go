@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.0"
+	VER  = "0.8.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -761,15 +761,28 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 			// Currently subversion is only one - railsexpress
 			subVerName := versions[index].Variations[0].Name
 
-			switch {
-			case installed[curName] && installed[subVerName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
-			case installed[subVerName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", curName, categoryColor[category])
-			case installed[curName]:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", curName, categoryColor[category])
-			default:
-				prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", curName)
+			if arg.GetB(ARG_NO_COLOR) {
+				switch {
+				case installed[curName] && installed[subVerName]:
+					prettyName = fmt.Sprintf("%s-railsexpress ••", curName)
+				case installed[subVerName]:
+					prettyName = fmt.Sprintf("%s-railsexpress -•", curName)
+				case installed[curName]:
+					prettyName = fmt.Sprintf("%s-railsexpress •-", curName)
+				default:
+					prettyName = fmt.Sprintf("%s-railsexpress", curName)
+				}
+			} else {
+				switch {
+				case installed[curName] && installed[subVerName]:
+					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
+				case installed[subVerName]:
+					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", curName, categoryColor[category])
+				case installed[curName]:
+					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", curName, categoryColor[category])
+				default:
+					prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", curName)
+				}
 			}
 
 			printRubyVersion(category, prettyName)
