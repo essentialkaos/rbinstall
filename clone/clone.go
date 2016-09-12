@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.2.0"
+	VER  = "0.2.1"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -214,7 +214,7 @@ func fetchIndex(url string) (*index.Index, error) {
 func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 	items := getItems(repoIndex, url)
 
-	fmtc.Printf("{s}Downloading %d items...{!}\n\n", len(items))
+	fmtc.Printf("{s-}Downloading %d items...{!}\n\n", len(items))
 
 	for _, item := range items {
 		fileDir := path.Join(dir, item.OS, item.Arch)
@@ -234,7 +234,7 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 
 			if fileSize == item.Size {
 				fmtc.Printf(
-					"{s}  %-28s → %s/%s{!}\n",
+					"{s-}  %-28s → %s/%s{!}\n",
 					item.File, item.OS, item.Arch,
 				)
 
@@ -258,7 +258,7 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 			os.Exit(1)
 		}
 
-		fmtc.Printf("{g}DONE{!} {s}(%s){!}\n", timeutil.PrettyDuration(dlTime))
+		fmtc.Printf("{g}DONE{!} {s-}(%s){!}\n", timeutil.PrettyDuration(dlTime))
 	}
 }
 

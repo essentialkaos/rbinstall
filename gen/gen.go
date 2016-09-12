@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.5.0"
+	VER  = "0.5.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -218,7 +218,7 @@ func buildIndex(dataDir string) {
 
 		if alreadyExist {
 			fmtc.Printf(
-				"{s}  %-24s → %s/%s %s{!}\n",
+				"{s-}  %-24s → %s/%s %s{!}\n",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
@@ -327,7 +327,7 @@ func getOutputFile(dataDir string) string {
 // getExistentIndex read and decode index
 func getExistentIndex(file string) *index.Index {
 	if !fsutil.IsExist(file) {
-		fmtc.Println("{s}An earlier version of index is not found{!}\n")
+		fmtc.Println("{s-}An earlier version of index is not found{!}\n")
 		return nil
 	}
 
