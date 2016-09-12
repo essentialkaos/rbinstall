@@ -10,7 +10,7 @@
 
 ## Usage demo
 
-[![asciicast](https://essentialkaos.com/github/rbinstall-080.gif)](https://asciinema.org/a/80580)
+[![asciicast](https://essentialkaos.com/github/rbinstall-082.gif)](https://asciinema.org/a/85547)
 
 ## Installation
 
