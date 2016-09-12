@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.1"
+	VER  = "0.8.2"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -434,7 +434,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s {s}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {c}%s {s-}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
 
 	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
 	file, err := downloadFile(url, info.File)
@@ -775,13 +775,13 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 			} else {
 				switch {
 				case installed[curName] && installed[subVerName]:
-					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
+					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
 				case installed[subVerName]:
-					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {s}•{%s}•{!}", curName, categoryColor[category])
+					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {s-}•{%s}•{!}", curName, categoryColor[category])
 				case installed[curName]:
-					prettyName = fmt.Sprintf("%s{s}-railsexpress{!} {%s}•{s}•{!}", curName, categoryColor[category])
+					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {%s}•{s-}•{!}", curName, categoryColor[category])
 				default:
-					prettyName = fmt.Sprintf("%s{s}-railsexpress{!}", curName)
+					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!}", curName)
 				}
 			}
 
@@ -801,7 +801,7 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 	}
 
 	if len(versions) == 0 && index == 0 {
-		printSized(" {s}%%-%ds{!} ", categorySize[category], NONE_VERSION)
+		printSized(" {s-}%%-%ds{!} ", categorySize[category], NONE_VERSION)
 		return true
 	}
 
