@@ -43,9 +43,9 @@ sudo ./install.sh --debug
 
 ## Usage
 ```
-Usage: rbinstall <options> version
+Usage: rbinstall {options} version
 
-Options:
+Options
 
   --gems-update, -g       Update gems for some version
   --gems-insecure, -S     Use http instead https for installing gems
