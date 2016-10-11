@@ -15,15 +15,15 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v3/arg"
-	"pkg.re/essentialkaos/ek.v3/crypto"
-	"pkg.re/essentialkaos/ek.v3/fmtc"
-	"pkg.re/essentialkaos/ek.v3/fsutil"
-	"pkg.re/essentialkaos/ek.v3/jsonutil"
-	"pkg.re/essentialkaos/ek.v3/path"
-	"pkg.re/essentialkaos/ek.v3/sortutil"
-	"pkg.re/essentialkaos/ek.v3/timeutil"
-	"pkg.re/essentialkaos/ek.v3/usage"
+	"pkg.re/essentialkaos/ek.v5/arg"
+	"pkg.re/essentialkaos/ek.v5/fmtc"
+	"pkg.re/essentialkaos/ek.v5/fsutil"
+	"pkg.re/essentialkaos/ek.v5/hash"
+	"pkg.re/essentialkaos/ek.v5/jsonutil"
+	"pkg.re/essentialkaos/ek.v5/path"
+	"pkg.re/essentialkaos/ek.v5/sortutil"
+	"pkg.re/essentialkaos/ek.v5/timeutil"
+	"pkg.re/essentialkaos/ek.v5/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.5.1"
+	VER  = "0.5.2"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -199,7 +199,7 @@ func buildIndex(dataDir string) {
 
 		// Calculate hash if is not set
 		if versionInfo.Hash == "" {
-			versionInfo.Hash = crypto.FileHash(filePath)
+			versionInfo.Hash = hash.FileHash(filePath)
 		}
 
 		if strings.HasSuffix(fileName, "-railsexpress") {

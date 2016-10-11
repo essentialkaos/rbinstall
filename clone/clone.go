@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v3/arg"
-	"pkg.re/essentialkaos/ek.v3/fmtc"
-	"pkg.re/essentialkaos/ek.v3/fmtutil"
-	"pkg.re/essentialkaos/ek.v3/fsutil"
-	"pkg.re/essentialkaos/ek.v3/httputil"
-	"pkg.re/essentialkaos/ek.v3/jsonutil"
-	"pkg.re/essentialkaos/ek.v3/path"
-	"pkg.re/essentialkaos/ek.v3/req"
-	"pkg.re/essentialkaos/ek.v3/terminal"
-	"pkg.re/essentialkaos/ek.v3/timeutil"
-	"pkg.re/essentialkaos/ek.v3/usage"
+	"pkg.re/essentialkaos/ek.v5/arg"
+	"pkg.re/essentialkaos/ek.v5/fmtc"
+	"pkg.re/essentialkaos/ek.v5/fmtutil"
+	"pkg.re/essentialkaos/ek.v5/fsutil"
+	"pkg.re/essentialkaos/ek.v5/httputil"
+	"pkg.re/essentialkaos/ek.v5/jsonutil"
+	"pkg.re/essentialkaos/ek.v5/path"
+	"pkg.re/essentialkaos/ek.v5/req"
+	"pkg.re/essentialkaos/ek.v5/terminal"
+	"pkg.re/essentialkaos/ek.v5/timeutil"
+	"pkg.re/essentialkaos/ek.v5/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.2.1"
+	VER  = "0.2.2"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -99,7 +99,8 @@ func Init() {
 	}
 
 	fmtutil.SizeSeparator = " "
-	req.UserAgent = "RBI-Cloner/" + VER
+
+	req.SetUserAgent("RBI-Cloner", VER)
 
 	url := args[0]
 	dir := args[1]

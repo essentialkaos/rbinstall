@@ -19,20 +19,20 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v3/arg"
-	"pkg.re/essentialkaos/ek.v3/crypto"
-	"pkg.re/essentialkaos/ek.v3/env"
-	"pkg.re/essentialkaos/ek.v3/fmtc"
-	"pkg.re/essentialkaos/ek.v3/fmtutil"
-	"pkg.re/essentialkaos/ek.v3/fsutil"
-	"pkg.re/essentialkaos/ek.v3/knf"
-	"pkg.re/essentialkaos/ek.v3/log"
-	"pkg.re/essentialkaos/ek.v3/req"
-	"pkg.re/essentialkaos/ek.v3/signal"
-	"pkg.re/essentialkaos/ek.v3/system"
-	"pkg.re/essentialkaos/ek.v3/terminal"
-	"pkg.re/essentialkaos/ek.v3/tmp"
-	"pkg.re/essentialkaos/ek.v3/usage"
+	"pkg.re/essentialkaos/ek.v5/arg"
+	"pkg.re/essentialkaos/ek.v5/env"
+	"pkg.re/essentialkaos/ek.v5/fmtc"
+	"pkg.re/essentialkaos/ek.v5/fmtutil"
+	"pkg.re/essentialkaos/ek.v5/fsutil"
+	"pkg.re/essentialkaos/ek.v5/hash"
+	"pkg.re/essentialkaos/ek.v5/knf"
+	"pkg.re/essentialkaos/ek.v5/log"
+	"pkg.re/essentialkaos/ek.v5/req"
+	"pkg.re/essentialkaos/ek.v5/signal"
+	"pkg.re/essentialkaos/ek.v5/system"
+	"pkg.re/essentialkaos/ek.v5/terminal"
+	"pkg.re/essentialkaos/ek.v5/tmp"
+	"pkg.re/essentialkaos/ek.v5/usage"
 
 	"pkg.re/essentialkaos/z7.v2"
 
@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.2"
+	VER  = "0.8.3"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -221,9 +221,7 @@ func Init() {
 
 // prepare do some preparations for installing ruby
 func prepare() {
-	req.UserAgent = fmtc.Sprintf("%s/%s (go; %s; %s-%s)",
-		APP, VER, runtime.Version(),
-		runtime.GOARCH, runtime.GOOS)
+	req.SetUserAgent(APP, VER)
 
 	loadConfig()
 	validateConfig()
@@ -541,13 +539,13 @@ func getVersionFromFile() (string, error) {
 }
 
 func checkHashTaskHandler(args ...string) (string, error) {
-	file := args[0]
-	hash := args[1]
+	filePath := args[0]
+	fileHash := args[1]
 
-	fileHash := crypto.FileHash(file)
+	curHash := hash.FileHash(filePath)
 
-	if hash != fileHash {
-		return "", fmtc.Errorf("Wrong file hash %s ≠ %s", hash, fileHash)
+	if fileHash != curHash {
+		return "", fmtc.Errorf("Wrong file hash %s ≠ %s", fileHash, curHash)
 	}
 
 	return "", nil
