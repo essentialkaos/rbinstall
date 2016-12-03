@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.4"
+	VER  = "0.8.5"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -116,13 +116,13 @@ type PassThru struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var argMap = arg.Map{
-	ARG_GEMS_UPDATE:   &arg.V{Type: arg.BOOL},
-	ARG_GEMS_INSECURE: &arg.V{Type: arg.BOOL},
-	ARG_RUBY_VERSION:  &arg.V{Type: arg.BOOL},
-	ARG_NO_COLOR:      &arg.V{Type: arg.BOOL},
-	ARG_NO_PROGRESS:   &arg.V{Type: arg.BOOL},
-	ARG_HELP:          &arg.V{Type: arg.BOOL, Alias: "u:usage"},
-	ARG_VER:           &arg.V{Type: arg.BOOL, Alias: "ver"},
+	ARG_GEMS_UPDATE:   {Type: arg.BOOL},
+	ARG_GEMS_INSECURE: {Type: arg.BOOL},
+	ARG_RUBY_VERSION:  {Type: arg.BOOL},
+	ARG_NO_COLOR:      {Type: arg.BOOL},
+	ARG_NO_PROGRESS:   {Type: arg.BOOL},
+	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
+	ARG_VER:           {Type: arg.BOOL, Alias: "ver"},
 }
 
 var (
@@ -558,9 +558,14 @@ func unpackTaskHandler(args ...string) (string, error) {
 	output, err := z7.Extract(&z7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
+		unpackError := err
 		actionLog, err := logFailedAction([]byte(output))
 
-		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
+		if err != nil {
+			return "", fmtc.Errorf("7za return error: %s", unpackError.Error())
+		}
+
+		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", unpackError.Error(), actionLog)
 	}
 
 	return "", nil
