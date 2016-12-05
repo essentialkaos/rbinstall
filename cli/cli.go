@@ -827,7 +827,7 @@ func printRubyVersion(category, name string) {
 func configureCategorySizes(data map[string]index.CategoryData) {
 	terminalWidth, _ := terminal.GetSize()
 
-	if terminalWidth == -1 || terminalWidth >= 140 {
+	if terminalWidth == -1 || terminalWidth > 150 {
 		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_REE] = DEFAULT_CATEGORY_SIZE
