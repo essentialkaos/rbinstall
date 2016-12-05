@@ -56,6 +56,7 @@ const (
 	ARG_GEMS_UPDATE   = "g:gems-update"
 	ARG_GEMS_INSECURE = "S:gems-insecure"
 	ARG_RUBY_VERSION  = "r:ruby-version"
+	ARG_REINSTALL     = "R:reinstall"
 	ARG_NO_COLOR      = "nc:no-color"
 	ARG_NO_PROGRESS   = "np:no-progress"
 	ARG_HELP          = "h:help"
@@ -119,6 +120,7 @@ var argMap = arg.Map{
 	ARG_GEMS_UPDATE:   {Type: arg.BOOL},
 	ARG_GEMS_INSECURE: {Type: arg.BOOL},
 	ARG_RUBY_VERSION:  {Type: arg.BOOL},
+	ARG_REINSTALL:     {Type: arg.BOOL},
 	ARG_NO_COLOR:      {Type: arg.BOOL},
 	ARG_NO_PROGRESS:   {Type: arg.BOOL},
 	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
@@ -161,7 +163,7 @@ func Init() {
 	if len(errs) != 0 {
 		fmtc.NewLine()
 
-		for _, err := range errs {
+		for _, err = range errs {
 			terminal.PrintErrorMessage(err.Error())
 		}
 
@@ -186,35 +188,7 @@ func Init() {
 
 	prepare()
 	fetchIndex()
-
-	var rubyVersion string
-
-	if len(args) != 0 {
-		rubyVersion = args[0]
-	} else if arg.GetB(ARG_RUBY_VERSION) {
-		rubyVersion, err = getVersionFromFile()
-
-		if err != nil {
-			terminal.PrintErrorMessage(err.Error())
-			exit(1)
-		}
-
-		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
-	}
-
-	if rubyVersion != "" {
-		checkPerms()
-		setupLogger()
-		setupTemp()
-
-		if arg.GetB(ARG_GEMS_UPDATE) {
-			updateGems(rubyVersion)
-		} else {
-			installCommand(rubyVersion)
-		}
-	} else {
-		listCommand()
-	}
+	process(args)
 
 	exit(0)
 }
@@ -332,6 +306,39 @@ func fetchIndex() {
 	repoIndex.Sort()
 }
 
+// process process command
+func process(args []string) {
+	var err error
+	var rubyVersion string
+
+	if len(args) != 0 {
+		rubyVersion = args[0]
+	} else if arg.GetB(ARG_RUBY_VERSION) {
+		rubyVersion, err = getVersionFromFile()
+
+		if err != nil {
+			terminal.PrintErrorMessage(err.Error())
+			exit(1)
+		}
+
+		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
+	}
+
+	if rubyVersion != "" {
+		checkPerms()
+		setupLogger()
+		setupTemp()
+
+		if arg.GetB(ARG_GEMS_UPDATE) {
+			updateGems(rubyVersion)
+		} else {
+			installCommand(rubyVersion)
+		}
+	} else {
+		listCommand()
+	}
+}
+
 // listCommand show list of all available versions
 func listCommand() {
 	osName, archName, err := getSystemInfo()
@@ -422,8 +429,9 @@ func installCommand(rubyVersion string) {
 	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
 			os.RemoveAll(getVersionPath(info.Name))
+			fmtc.Printf("{s}Reinstalling %s...{!}\n\n", info.Name)
 		} else {
 			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
@@ -1117,9 +1125,10 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 func showUsage() {
 	info := usage.NewInfo("", "version")
 
-	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version")
+	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
+	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
 	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(ARG_HELP, "Show this help message")
@@ -1128,6 +1137,7 @@ func showUsage() {
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -g", "Update gems installed on 2.0.0-p598")
+	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
 	info.AddExample("-r", "Install version defined in .ruby-version file")
 
 	info.Render()
@@ -1140,7 +1150,7 @@ func showAbout() {
 		Desc:    DESC,
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>",
+		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol>",
 	}
 
 	about.Render()
