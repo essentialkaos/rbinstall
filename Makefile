@@ -32,13 +32,13 @@ install:
 	cp rbinstall $(DESTDIR)$(PREFIX)/bin/
 	cp rbinstall-gen $(DESTDIR)$(PREFIX)/bin/
 	cp rbinstall-clone $(DESTDIR)$(PREFIX)/bin/
-	cp common/rbinstall.conf $(DESTDIR)/etc/
+	cp common/rbinstall.knf $(DESTDIR)/etc/
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/rbinstall
 	rm -f $(DESTDIR)$(PREFIX)/bin/rbinstall-gen
 	rm -f $(DESTDIR)$(PREFIX)/bin/rbinstall-clone
-	rm -f $(DESTDIR)/etc/rbinstall.conf
+	rm -f $(DESTDIR)/etc/rbinstall.knf
 
 clean:
 	rm -f rbinstall

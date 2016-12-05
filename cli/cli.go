@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.5"
+	VER  = "0.9.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -88,7 +88,7 @@ const (
 )
 
 // Path to config file
-const CONFIG_FILE = "/etc/rbinstall.conf"
+const CONFIG_FILE = "/etc/rbinstall.knf"
 
 // Name of log with failed actions (gem install)
 const FAIL_LOG_NAME = "rbinstall-fail.log"
