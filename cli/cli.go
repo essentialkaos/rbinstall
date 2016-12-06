@@ -33,6 +33,7 @@ import (
 	"pkg.re/essentialkaos/ek.v5/terminal"
 	"pkg.re/essentialkaos/ek.v5/tmp"
 	"pkg.re/essentialkaos/ek.v5/usage"
+	"pkg.re/essentialkaos/ek.v5/version"
 
 	"pkg.re/essentialkaos/z7.v2"
 
@@ -287,10 +288,15 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Get()
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't fetch repo index: %v", err)
+		terminal.PrintErrorMessage("Can't fetch repository index: %v", err)
+		exit(1)
+	}
+
+	if resp.StatusCode != 200 {
+		terminal.PrintErrorMessage("Can't fetch repository index: CDN return status code %d", resp.StatusCode)
 		exit(1)
 	}
 
@@ -299,7 +305,7 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't decode repo index json: %v", err)
+		terminal.PrintErrorMessage("Can't decode repository index json: %v", err)
 		exit(1)
 	}
 
@@ -430,12 +436,22 @@ func installCommand(rubyVersion string) {
 
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
-			os.RemoveAll(getVersionPath(info.Name))
-			fmtc.Printf("{s}Reinstalling %s...{!}\n\n", info.Name)
+			fmtc.Printf("{y}Reinstalling %s...{!}\n\n", info.Name)
 		} else {
 			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
 		}
+	}
+
+	if !fsutil.IsExist(getUnpackDirPath()) {
+		err = os.Mkdir(getUnpackDirPath(), 0770)
+
+		if err != nil {
+			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err.Error())
+			exit(1)
+		}
+	} else {
+		os.Remove(getUnpackDirPath() + "/" + info.Name)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -471,10 +487,30 @@ func installCommand(rubyVersion string) {
 		Handler: unpackTaskHandler,
 	}
 
-	_, err = unpackTask.Start(file, getRBEnvVersionsPath())
+	_, err = unpackTask.Start(file, getUnpackDirPath())
 
 	if err != nil {
 		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	if isVersionInstalled(info.Name) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
+			err = os.RemoveAll(getVersionPath(info.Name))
+
+			if err != nil {
+				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err.Error())
+				exit(1)
+			}
+		}
+	}
+
+	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
+
+	if err != nil {
+		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err.Error())
 		exit(1)
 	}
 
@@ -986,6 +1022,11 @@ func getRBEnvVersionsPath() string {
 	return knf.GetS(RBENV_DIR) + "/versions"
 }
 
+// getUnpackDirPath return path to directory for unpacking data
+func getUnpackDirPath() string {
+	return getRBEnvVersionsPath() + "/.rbinstall"
+}
+
 // getAlignSpaces return spaces for message align
 func getAlignSpaces(t string, l int) string {
 	spaces := "                                    "
@@ -1055,12 +1096,17 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Architecture %s is not supported yet", systemInfo.Arch)
 	}
 
-	switch strings.ToLower(systemInfo.OS) {
-	case "linux", "darwin", "freebsd":
-		os = strings.ToLower(systemInfo.OS)
-	default:
+	if strings.ToLower(systemInfo.OS) != "linux" {
 		return "", "", fmt.Errorf("%s is not supported yet", systemInfo.OS)
 	}
+
+	distVersion, err := version.Parse(systemInfo.Version)
+
+	if err != nil {
+		return "", "", fmt.Errorf("Can't parse OS version")
+	}
+
+	os = fmt.Sprintf("%s-%d", systemInfo.Distribution, distVersion.Major())
 
 	return os, arch, nil
 }
