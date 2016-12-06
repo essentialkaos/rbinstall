@@ -33,7 +33,7 @@
 
 <details>
 <summary><strong>Using install.sh</strong></summary>
-We provide simple bash script `script.sh` for installing app from the sources.
+We provide simple bash script `install.sh` for installing app from the sources.
 
 ```
 ... install rbenv, golang and latest 7zip
