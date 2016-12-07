@@ -271,8 +271,8 @@ func validateConfig() {
 	}
 
 	errs := knf.Validate([]*knf.Validator{
-		&knf.Validator{MAIN_TMP_DIR, permsChecker, "DWX"},
-		&knf.Validator{STORAGE_URL, knf.Empty, nil},
+		{MAIN_TMP_DIR, permsChecker, "DWX"},
+		{STORAGE_URL, knf.Empty, nil},
 	})
 
 	if len(errs) != 0 {

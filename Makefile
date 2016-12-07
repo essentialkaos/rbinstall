@@ -5,7 +5,7 @@ PREFIX?=/usr
 
 ########################################################################################
 
-.PHONY = all clean install uninstall deps
+.PHONY = all clean install uninstall deps fmt
 
 ########################################################################################
 
@@ -16,6 +16,9 @@ deps:
 	go get -v pkg.re/essentialkaos/z7.v2
 	go get -v pkg.re/essentialkaos/go-linenoise.v3
 	go get -v github.com/cheggaaa/pb
+
+fmt:
+	find . -name "*.go" -exec gofmt -s -w {} \;
 
 rbinstall:
 	go build rbinstall.go
