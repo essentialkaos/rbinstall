@@ -29,6 +29,7 @@ import (
 	"pkg.re/essentialkaos/ek.v5/log"
 	"pkg.re/essentialkaos/ek.v5/req"
 	"pkg.re/essentialkaos/ek.v5/signal"
+	"pkg.re/essentialkaos/ek.v5/sortutil"
 	"pkg.re/essentialkaos/ek.v5/system"
 	"pkg.re/essentialkaos/ek.v5/terminal"
 	"pkg.re/essentialkaos/ek.v5/tmp"
@@ -37,7 +38,7 @@ import (
 
 	"pkg.re/essentialkaos/z7.v2"
 
-	"github.com/cheggaaa/pb"
+	"gopkg.in/cheggaaa/pb.v1"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -88,6 +89,9 @@ const (
 	CATEGORY_RUBINIUS = "rubinius"
 	CATEGORY_OTHER    = "other"
 )
+
+// Name of index file
+const INDEX_NAME = "index.json"
 
 // Path to config file
 const CONFIG_FILE = "/etc/rbinstall.knf"
@@ -151,6 +155,8 @@ var categorySize = map[string]int{
 	CATEGORY_OTHER:    0,
 }
 
+var useRawOuput = false
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
@@ -171,9 +177,7 @@ func Init() {
 		exit(1)
 	}
 
-	if arg.GetB(ARG_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
+	configureUI()
 
 	if arg.GetB(ARG_VER) {
 		showAbout()
@@ -185,13 +189,35 @@ func Init() {
 		return
 	}
 
-	fmtc.NewLine()
+	if !useRawOuput {
+		fmtc.NewLine()
+	}
 
 	prepare()
 	fetchIndex()
 	process(args)
 
 	exit(0)
+}
+
+// configureUI configure user interface
+func configureUI() {
+	envVars := env.Get()
+
+	if arg.GetB(ARG_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	term := envVars.GetS("TERM")
+
+	if term == "" || !strings.Contains(term, "xterm") {
+		fmtc.DisableColors = true
+	}
+
+	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+		fmtc.DisableColors = true
+		useRawOuput = true
+	}
 }
 
 // prepare do some preparations for installing ruby
@@ -288,7 +314,7 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Get()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
 
 	if err != nil {
 		terminal.PrintErrorMessage("Can't fetch repository index: %v", err)
@@ -347,24 +373,33 @@ func process(args []string) {
 
 // listCommand show list of all available versions
 func listCommand() {
-	osName, archName, err := getSystemInfo()
+	dist, arch, err := getSystemInfo()
 
 	if err != nil {
 		terminal.PrintErrorMessage("%v", err)
 		exit(1)
 	}
 
-	if !repoIndex.HasData(osName, archName) {
+	if !repoIndex.HasData(dist, arch) {
 		terminal.PrintWarnMessage("Prebuilt binaries not found for this system")
 		exit(0)
 	}
 
+	if useRawOuput {
+		printRawListing(dist, arch)
+	} else {
+		printPrettyListing(dist, arch)
+	}
+}
+
+// printPrettyListing print info about listing with colors in table view
+func printPrettyListing(dist, arch string) {
 	var (
-		ruby     = repoIndex.Data[osName][archName][CATEGORY_RUBY]
-		jruby    = repoIndex.Data[osName][archName][CATEGORY_JRUBY]
-		ree      = repoIndex.Data[osName][archName][CATEGORY_REE]
-		rubinius = repoIndex.Data[osName][archName][CATEGORY_RUBINIUS]
-		other    = repoIndex.Data[osName][archName][CATEGORY_OTHER]
+		ruby     = repoIndex.Data[dist][arch][CATEGORY_RUBY]
+		jruby    = repoIndex.Data[dist][arch][CATEGORY_JRUBY]
+		ree      = repoIndex.Data[dist][arch][CATEGORY_REE]
+		rubinius = repoIndex.Data[dist][arch][CATEGORY_RUBINIUS]
+		other    = repoIndex.Data[dist][arch][CATEGORY_OTHER]
 
 		installed = getInstalledVersionsMap()
 	)
@@ -413,6 +448,28 @@ func listCommand() {
 
 		index++
 	}
+}
+
+// printRawListing just print version names
+func printRawListing(dist, arch string) {
+	var result []string
+
+	for _, category := range repoIndex.Data[dist][arch] {
+		for _, version := range category {
+
+			result = append(result, version.Name)
+
+			if len(version.Variations) != 0 {
+				for _, variation := range version.Variations {
+					result = append(result, variation.Name)
+				}
+			}
+		}
+	}
+
+	sortutil.Versions(result)
+
+	fmt.Printf(strings.Join(result, "\n"))
 }
 
 // installCommand install some version of ruby
