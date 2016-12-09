@@ -15,7 +15,7 @@ deps:
 	go get -v pkg.re/essentialkaos/ek.v5
 	go get -v pkg.re/essentialkaos/z7.v2
 	go get -v pkg.re/essentialkaos/go-linenoise.v3
-	go get -v github.com/cheggaaa/pb
+	go get -v gopkg.in/cheggaaa/pb.v1
 
 fmt:
 	find . -name "*.go" -exec gofmt -s -w {} \;
