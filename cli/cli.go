@@ -38,7 +38,7 @@ import (
 
 	"pkg.re/essentialkaos/z7.v2"
 
-	"gopkg.in/cheggaaa/pb.v1"
+	"pkg.re/cheggaaa/pb.v1"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -47,7 +47,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.9.0"
+	VER  = "0.9.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 

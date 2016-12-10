@@ -134,13 +134,16 @@ doInstall() {
          "cp" "-r" "*" "$install_dir/"
 
   action "Installed ek package" \
-         "go" "get" "pkg.re/essentialkaos/ek.v1"
-
-  action "Installed pb package" \
-         "go" "get" "github.com/cheggaaa/pb"
+         "go" "get" "pkg.re/essentialkaos/ek.v5"
 
   action "Installed z7 package" \
-         "go" "get" "pkg.re/essentialkaos/z7.v1"
+         "go" "get" "pkg.re/essentialkaos/z7.v2"
+
+  action "Installed go-linenoise package" \
+         "go" "get" "pkg.re/essentialkaos/go-linenoise.v3"
+
+  action "Installed pb package" \
+         "go" "get" "pkg.re/cheggaaa/pb.v1"
 
   action "RBInstall compiled" \
          "go" "build" "$install_dir/rbinstall.go"
