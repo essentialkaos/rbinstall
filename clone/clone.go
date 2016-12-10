@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.2.2"
+	VER  = "0.2.3"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -369,7 +369,7 @@ func showUsage() {
 	info.AddOption(ARG_HELP, "Show this help message")
 	info.AddOption(ARG_VER, "Show version")
 
-	info.AddExample("https://rbrepo.kaos.io /path/to/clone", "Clone EK repository to /path/to/clone")
+	info.AddExample("https://rbinstall.kaos.io /path/to/clone", "Clone EK repository to /path/to/clone")
 
 	info.Render()
 }

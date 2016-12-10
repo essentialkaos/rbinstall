@@ -20,8 +20,8 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type Index struct {
-	Meta *Metadata         `json:"meta"`
-	Data map[string]OSData `json:"data"`
+	Meta *Metadata           `json:"meta"`
+	Data map[string]DistData `json:"data"`
 }
 
 type Metadata struct {
@@ -30,7 +30,7 @@ type Metadata struct {
 	Items   int   `json:"items"`   // Total number of items in repo
 }
 
-type OSData map[string]ArchData
+type DistData map[string]ArchData
 
 type ArchData map[string]CategoryData
 
@@ -68,43 +68,43 @@ func (s versionInfoSlice) Less(i, j int) bool {
 func NewIndex() *Index {
 	return &Index{
 		Meta: &Metadata{},
-		Data: make(map[string]OSData),
+		Data: make(map[string]DistData),
 	}
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Add used for adding info about some ruby version
-func (i *Index) Add(osName, archName, categoryName string, info *VersionInfo) {
+func (i *Index) Add(dist, arch, category string, info *VersionInfo) {
 	if i == nil {
 		return
 	}
 
-	if i.Data[osName] == nil {
-		i.Data[osName] = make(OSData)
+	if i.Data[dist] == nil {
+		i.Data[dist] = make(DistData)
 	}
 
-	if i.Data[osName][archName] == nil {
-		i.Data[osName][archName] = make(ArchData)
+	if i.Data[dist][arch] == nil {
+		i.Data[dist][arch] = make(ArchData)
 	}
 
-	if i.Data[osName][archName][categoryName] == nil {
-		i.Data[osName][archName][categoryName] = make(CategoryData, 0)
+	if i.Data[dist][arch][category] == nil {
+		i.Data[dist][arch][category] = make(CategoryData, 0)
 	}
 
-	i.Data[osName][archName][categoryName] = append(
-		i.Data[osName][archName][categoryName], info,
+	i.Data[dist][arch][category] = append(
+		i.Data[dist][arch][category], info,
 	)
 }
 
 // HasData return true if index contains data for
-// some os + arch
-func (i *Index) HasData(osName, archName string) bool {
-	if i.Data[osName] == nil {
+// some dist + arch
+func (i *Index) HasData(dist, arch string) bool {
+	if i.Data[dist] == nil {
 		return false
 	}
 
-	if i.Data[osName][archName] == nil {
+	if i.Data[dist][arch] == nil {
 		return false
 	}
 
@@ -136,8 +136,8 @@ func (i *Index) UpdateMetadata() {
 		return
 	}
 
-	for _, os := range i.Data {
-		for _, arch := range os {
+	for _, dist := range i.Data {
+		for _, arch := range dist {
 			for _, category := range arch {
 				for _, version := range category {
 
@@ -164,8 +164,8 @@ func (i *Index) Sort() {
 		return
 	}
 
-	for _, os := range i.Data {
-		for _, arch := range os {
+	for _, dist := range i.Data {
+		for _, arch := range dist {
 			for _, category := range arch {
 				sort.Sort(versionInfoSlice(category))
 			}
@@ -174,20 +174,20 @@ func (i *Index) Sort() {
 }
 
 // Find try to find info about version by name
-func (i *Index) Find(os, arch, name string) (*VersionInfo, string) {
+func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 	if i == nil {
 		return nil, ""
 	}
 
-	if i.Data[os] == nil {
+	if i.Data[dist] == nil {
 		return nil, ""
 	}
 
-	if i.Data[os][arch] == nil {
+	if i.Data[dist][arch] == nil {
 		return nil, ""
 	}
 
-	for categoryName, category := range i.Data[os][arch] {
+	for categoryName, category := range i.Data[dist][arch] {
 		for _, version := range category {
 			if version.Name == name {
 				return version, categoryName

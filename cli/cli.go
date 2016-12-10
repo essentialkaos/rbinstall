@@ -29,14 +29,16 @@ import (
 	"pkg.re/essentialkaos/ek.v5/log"
 	"pkg.re/essentialkaos/ek.v5/req"
 	"pkg.re/essentialkaos/ek.v5/signal"
+	"pkg.re/essentialkaos/ek.v5/sortutil"
 	"pkg.re/essentialkaos/ek.v5/system"
 	"pkg.re/essentialkaos/ek.v5/terminal"
 	"pkg.re/essentialkaos/ek.v5/tmp"
 	"pkg.re/essentialkaos/ek.v5/usage"
+	"pkg.re/essentialkaos/ek.v5/version"
 
 	"pkg.re/essentialkaos/z7.v2"
 
-	"github.com/cheggaaa/pb"
+	"gopkg.in/cheggaaa/pb.v1"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -45,7 +47,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.8.4"
+	VER  = "0.9.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -56,6 +58,7 @@ const (
 	ARG_GEMS_UPDATE   = "g:gems-update"
 	ARG_GEMS_INSECURE = "S:gems-insecure"
 	ARG_RUBY_VERSION  = "r:ruby-version"
+	ARG_REINSTALL     = "R:reinstall"
 	ARG_NO_COLOR      = "nc:no-color"
 	ARG_NO_PROGRESS   = "np:no-progress"
 	ARG_HELP          = "h:help"
@@ -87,8 +90,11 @@ const (
 	CATEGORY_OTHER    = "other"
 )
 
+// Name of index file
+const INDEX_NAME = "index.json"
+
 // Path to config file
-const CONFIG_FILE = "/etc/rbinstall.conf"
+const CONFIG_FILE = "/etc/rbinstall.knf"
 
 // Name of log with failed actions (gem install)
 const FAIL_LOG_NAME = "rbinstall-fail.log"
@@ -116,13 +122,14 @@ type PassThru struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var argMap = arg.Map{
-	ARG_GEMS_UPDATE:   &arg.V{Type: arg.BOOL},
-	ARG_GEMS_INSECURE: &arg.V{Type: arg.BOOL},
-	ARG_RUBY_VERSION:  &arg.V{Type: arg.BOOL},
-	ARG_NO_COLOR:      &arg.V{Type: arg.BOOL},
-	ARG_NO_PROGRESS:   &arg.V{Type: arg.BOOL},
-	ARG_HELP:          &arg.V{Type: arg.BOOL, Alias: "u:usage"},
-	ARG_VER:           &arg.V{Type: arg.BOOL, Alias: "ver"},
+	ARG_GEMS_UPDATE:   {Type: arg.BOOL},
+	ARG_GEMS_INSECURE: {Type: arg.BOOL},
+	ARG_RUBY_VERSION:  {Type: arg.BOOL},
+	ARG_REINSTALL:     {Type: arg.BOOL},
+	ARG_NO_COLOR:      {Type: arg.BOOL},
+	ARG_NO_PROGRESS:   {Type: arg.BOOL},
+	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
+	ARG_VER:           {Type: arg.BOOL, Alias: "ver"},
 }
 
 var (
@@ -148,6 +155,8 @@ var categorySize = map[string]int{
 	CATEGORY_OTHER:    0,
 }
 
+var useRawOuput = false
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init() {
@@ -161,16 +170,14 @@ func Init() {
 	if len(errs) != 0 {
 		fmtc.NewLine()
 
-		for _, err := range errs {
+		for _, err = range errs {
 			terminal.PrintErrorMessage(err.Error())
 		}
 
 		exit(1)
 	}
 
-	if arg.GetB(ARG_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
+	configureUI()
 
 	if arg.GetB(ARG_VER) {
 		showAbout()
@@ -182,41 +189,35 @@ func Init() {
 		return
 	}
 
-	fmtc.NewLine()
+	if !useRawOuput {
+		fmtc.NewLine()
+	}
 
 	prepare()
 	fetchIndex()
-
-	var rubyVersion string
-
-	if len(args) != 0 {
-		rubyVersion = args[0]
-	} else if arg.GetB(ARG_RUBY_VERSION) {
-		rubyVersion, err = getVersionFromFile()
-
-		if err != nil {
-			terminal.PrintErrorMessage(err.Error())
-			exit(1)
-		}
-
-		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
-	}
-
-	if rubyVersion != "" {
-		checkPerms()
-		setupLogger()
-		setupTemp()
-
-		if arg.GetB(ARG_GEMS_UPDATE) {
-			updateGems(rubyVersion)
-		} else {
-			installCommand(rubyVersion)
-		}
-	} else {
-		listCommand()
-	}
+	process(args)
 
 	exit(0)
+}
+
+// configureUI configure user interface
+func configureUI() {
+	envVars := env.Get()
+
+	if arg.GetB(ARG_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	term := envVars.GetS("TERM")
+
+	if term == "" || !strings.Contains(term, "xterm") {
+		fmtc.DisableColors = true
+	}
+
+	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+		fmtc.DisableColors = true
+		useRawOuput = true
+	}
 }
 
 // prepare do some preparations for installing ruby
@@ -296,8 +297,8 @@ func validateConfig() {
 	}
 
 	errs := knf.Validate([]*knf.Validator{
-		&knf.Validator{MAIN_TMP_DIR, permsChecker, "DWX"},
-		&knf.Validator{STORAGE_URL, knf.Empty, nil},
+		{MAIN_TMP_DIR, permsChecker, "DWX"},
+		{STORAGE_URL, knf.Empty, nil},
 	})
 
 	if len(errs) != 0 {
@@ -313,10 +314,15 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/index.json"}.Do()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't fetch repo index: %v", err)
+		terminal.PrintErrorMessage("Can't fetch repository index: %v", err)
+		exit(1)
+	}
+
+	if resp.StatusCode != 200 {
+		terminal.PrintErrorMessage("Can't fetch repository index: CDN return status code %d", resp.StatusCode)
 		exit(1)
 	}
 
@@ -325,33 +331,75 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't decode repo index json: %v", err)
+		terminal.PrintErrorMessage("Can't decode repository index json: %v", err)
 		exit(1)
 	}
 
 	repoIndex.Sort()
 }
 
+// process process command
+func process(args []string) {
+	var err error
+	var rubyVersion string
+
+	if len(args) != 0 {
+		rubyVersion = args[0]
+	} else if arg.GetB(ARG_RUBY_VERSION) {
+		rubyVersion, err = getVersionFromFile()
+
+		if err != nil {
+			terminal.PrintErrorMessage(err.Error())
+			exit(1)
+		}
+
+		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
+	}
+
+	if rubyVersion != "" {
+		checkPerms()
+		setupLogger()
+		setupTemp()
+
+		if arg.GetB(ARG_GEMS_UPDATE) {
+			updateGems(rubyVersion)
+		} else {
+			installCommand(rubyVersion)
+		}
+	} else {
+		listCommand()
+	}
+}
+
 // listCommand show list of all available versions
 func listCommand() {
-	osName, archName, err := getSystemInfo()
+	dist, arch, err := getSystemInfo()
 
 	if err != nil {
 		terminal.PrintErrorMessage("%v", err)
 		exit(1)
 	}
 
-	if !repoIndex.HasData(osName, archName) {
+	if !repoIndex.HasData(dist, arch) {
 		terminal.PrintWarnMessage("Prebuilt binaries not found for this system")
 		exit(0)
 	}
 
+	if useRawOuput {
+		printRawListing(dist, arch)
+	} else {
+		printPrettyListing(dist, arch)
+	}
+}
+
+// printPrettyListing print info about listing with colors in table view
+func printPrettyListing(dist, arch string) {
 	var (
-		ruby     = repoIndex.Data[osName][archName][CATEGORY_RUBY]
-		jruby    = repoIndex.Data[osName][archName][CATEGORY_JRUBY]
-		ree      = repoIndex.Data[osName][archName][CATEGORY_REE]
-		rubinius = repoIndex.Data[osName][archName][CATEGORY_RUBINIUS]
-		other    = repoIndex.Data[osName][archName][CATEGORY_OTHER]
+		ruby     = repoIndex.Data[dist][arch][CATEGORY_RUBY]
+		jruby    = repoIndex.Data[dist][arch][CATEGORY_JRUBY]
+		ree      = repoIndex.Data[dist][arch][CATEGORY_REE]
+		rubinius = repoIndex.Data[dist][arch][CATEGORY_RUBINIUS]
+		other    = repoIndex.Data[dist][arch][CATEGORY_OTHER]
 
 		installed = getInstalledVersionsMap()
 	)
@@ -402,6 +450,28 @@ func listCommand() {
 	}
 }
 
+// printRawListing just print version names
+func printRawListing(dist, arch string) {
+	var result []string
+
+	for _, category := range repoIndex.Data[dist][arch] {
+		for _, version := range category {
+
+			result = append(result, version.Name)
+
+			if len(version.Variations) != 0 {
+				for _, variation := range version.Variations {
+					result = append(result, variation.Name)
+				}
+			}
+		}
+	}
+
+	sortutil.Versions(result)
+
+	fmt.Printf(strings.Join(result, "\n"))
+}
+
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
 	osName, archName, err := getSystemInfo()
@@ -422,12 +492,23 @@ func installCommand(rubyVersion string) {
 	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) {
-			os.RemoveAll(getVersionPath(info.Name))
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
+			fmtc.Printf("{y}Reinstalling %s...{!}\n\n", info.Name)
 		} else {
 			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
 		}
+	}
+
+	if !fsutil.IsExist(getUnpackDirPath()) {
+		err = os.Mkdir(getUnpackDirPath(), 0770)
+
+		if err != nil {
+			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err.Error())
+			exit(1)
+		}
+	} else {
+		os.Remove(getUnpackDirPath() + "/" + info.Name)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -463,10 +544,30 @@ func installCommand(rubyVersion string) {
 		Handler: unpackTaskHandler,
 	}
 
-	_, err = unpackTask.Start(file, getRBEnvVersionsPath())
+	_, err = unpackTask.Start(file, getUnpackDirPath())
 
 	if err != nil {
 		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	if isVersionInstalled(info.Name) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
+			err = os.RemoveAll(getVersionPath(info.Name))
+
+			if err != nil {
+				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err.Error())
+				exit(1)
+			}
+		}
+	}
+
+	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
+
+	if err != nil {
+		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err.Error())
 		exit(1)
 	}
 
@@ -558,9 +659,14 @@ func unpackTaskHandler(args ...string) (string, error) {
 	output, err := z7.Extract(&z7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
+		unpackError := err
 		actionLog, err := logFailedAction([]byte(output))
 
-		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", err.Error(), actionLog)
+		if err != nil {
+			return "", fmtc.Errorf("7za return error: %s", unpackError.Error())
+		}
+
+		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", unpackError.Error(), actionLog)
 	}
 
 	return "", nil
@@ -822,7 +928,7 @@ func printRubyVersion(category, name string) {
 func configureCategorySizes(data map[string]index.CategoryData) {
 	terminalWidth, _ := terminal.GetSize()
 
-	if terminalWidth == -1 || terminalWidth >= 140 {
+	if terminalWidth == -1 || terminalWidth > 150 {
 		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_REE] = DEFAULT_CATEGORY_SIZE
@@ -973,6 +1079,11 @@ func getRBEnvVersionsPath() string {
 	return knf.GetS(RBENV_DIR) + "/versions"
 }
 
+// getUnpackDirPath return path to directory for unpacking data
+func getUnpackDirPath() string {
+	return getRBEnvVersionsPath() + "/.rbinstall"
+}
+
 // getAlignSpaces return spaces for message align
 func getAlignSpaces(t string, l int) string {
 	spaces := "                                    "
@@ -1042,12 +1153,17 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Architecture %s is not supported yet", systemInfo.Arch)
 	}
 
-	switch strings.ToLower(systemInfo.OS) {
-	case "linux", "darwin", "freebsd":
-		os = strings.ToLower(systemInfo.OS)
-	default:
+	if strings.ToLower(systemInfo.OS) != "linux" {
 		return "", "", fmt.Errorf("%s is not supported yet", systemInfo.OS)
 	}
+
+	distVersion, err := version.Parse(systemInfo.Version)
+
+	if err != nil {
+		return "", "", fmt.Errorf("Can't parse OS version")
+	}
+
+	os = fmt.Sprintf("%s-%d", systemInfo.Distribution, distVersion.Major())
 
 	return os, arch, nil
 }
@@ -1112,9 +1228,10 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 func showUsage() {
 	info := usage.NewInfo("", "version")
 
-	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version")
+	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
+	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
 	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(ARG_HELP, "Show this help message")
@@ -1123,6 +1240,7 @@ func showUsage() {
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -g", "Update gems installed on 2.0.0-p598")
+	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
 	info.AddExample("-r", "Install version defined in .ruby-version file")
 
 	info.Render()
@@ -1135,7 +1253,7 @@ func showAbout() {
 		Desc:    DESC,
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>",
+		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol>",
 	}
 
 	about.Render()

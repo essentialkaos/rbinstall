@@ -164,7 +164,7 @@ doInstall() {
          "rm" "-f" "rbinstall" "rbinstall-gen"
 
   action "Copied config file to /etc" \
-         "install" "-pm 644" "common/rbinstall.conf" "/etc/rbinstall.conf"
+         "install" "-pm 644" "common/rbinstall.knf" "/etc/rbinstall.knf"
 
   congratulate "RBInstall"
 }

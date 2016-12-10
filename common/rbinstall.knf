@@ -1,4 +1,4 @@
-# Configuration file for rbrepo
+# Configuration file for rbinstall
 
 [main]
 
@@ -7,7 +7,7 @@
 
 [storage]
 
-  # URL of rbrepo storage
+  # URL of rbinstall storage
   url: https://rbinstall.kaos.io
 
 [rbenv]
@@ -16,7 +16,7 @@
   dir: /usr/local/rbenv
 
   # Allow version overwriting
-  allow-overwrite: false
+  allow-overwrite: true
 
 [gems]
 

@@ -14,16 +14,26 @@
 
 ## Installation
 
-#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
+<details>
+<summary><strong>From ESSENTIAL KAOS Public repo for RHEL6/CentOS6</strong></summary>
 ```
-yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
-yum install rbinstall
+[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install rbinstall
 ```
+</details>
 
-#### Using install.sh
+<details>
+<summary><strong>From ESSENTIAL KAOS Public repo for RHEL7/CentOS7</strong></summary>
+```
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install rbinstall
+```
+</details>
 
-We provide simple bash script `script.sh` for installing app from the sources.
+<details>
+<summary><strong>Using install.sh</strong></summary>
+We provide simple bash script `install.sh` for installing app from the sources.
 
 ```
 ... install rbenv, golang and latest 7zip
@@ -32,14 +42,15 @@ We provide simple bash script `script.sh` for installing app from the sources.
 git clone https://github.com/essentialkaos/rbinstall.git
 cd rbinstall
 
-sudo ./install.sh
+[sudo] ./install.sh
 ```
 
 If you have some issues with installing, try to use script in debug mode:
 
 ```
-sudo ./install.sh --debug
+[sudo] ./install.sh --debug
 ```
+</details>
 
 ## Usage
 ```
@@ -47,15 +58,16 @@ Usage: rbinstall {options} version
 
 Options
 
-  --gems-update, -g       Update gems for some version
+  --gems-update, -g       Update gems for some version (if allowed in config)
   --gems-insecure, -S     Use http instead https for installing gems
   --ruby-version, -r      Install version defined in version file
+  --reinstall, -R         Reinstall already installed version (if allowed in config)
   --no-color, -nc         Disable colors in output
   --no-progress, -np      Disable progress bar and spinner
   --help, -h              Show this help message
   --version, -v           Show version
 
-Examples:
+Examples
 
   rbinstall 2.0.0-p598
   Install 2.0.0-p598
@@ -66,8 +78,12 @@ Examples:
   rbinstall 2.0.0-p598 -g
   Update gems installed on 2.0.0-p598
 
+  rbinstall 2.0.0-p598 --reinstall
+  Reinstall 2.0.0-p598
+
   rbinstall -r
   Install version defined in .ruby-version file
+
 
 ```
 
