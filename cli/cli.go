@@ -47,7 +47,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.9.1"
+	VER  = "0.9.2"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -832,12 +832,7 @@ func downloadFile(url, fileName string) (string, error) {
 	if arg.GetB(ARG_NO_PROGRESS) {
 		_, err = io.Copy(fd, resp.Body)
 	} else {
-		bar := pb.New64(resp.ContentLength)
-
-		bar.ShowCounters = false
-		bar.Format("——→  ")
-		bar.SetMaxWidth(80)
-		bar.SetRefreshRate(50 * time.Millisecond)
+		bar := makeProgressBar(resp.ContentLength)
 
 		defer bar.Finish()
 
@@ -912,6 +907,23 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 	printSized(" %%-%ds ", categorySize[category], "")
 
 	return false
+}
+
+// makeProgressBar create and configure progress bar instance
+func makeProgressBar(total int64) *pb.ProgressBar {
+	bar := pb.New64(total)
+
+	bar.ShowCounters = false
+	bar.BarStart = "—"
+	bar.BarEnd = " "
+	bar.Empty = " "
+	bar.Current = "—"
+	bar.CurrentN = "→"
+	bar.Width = 80
+	bar.ForceWidth = false
+	bar.RefreshRate = 50 * time.Millisecond
+
+	return bar
 }
 
 // printSized render format with given size and print text with give arguments
