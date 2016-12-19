@@ -47,7 +47,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.9.2"
+	VER  = "0.9.3"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -203,14 +203,20 @@ func Init() {
 // configureUI configure user interface
 func configureUI() {
 	envVars := env.Get()
-
-	if arg.GetB(ARG_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
-
 	term := envVars.GetS("TERM")
 
-	if term == "" || !strings.Contains(term, "xterm") {
+	fmtc.DisableColors = true
+
+	if term != "" {
+		switch {
+		case strings.Contains(term, "xterm"),
+			strings.Contains(term, "color"),
+			term == "screen":
+			fmtc.DisableColors = false
+		}
+	}
+
+	if arg.GetB(ARG_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
