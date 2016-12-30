@@ -20,6 +20,9 @@
 
 [gems]
 
+  # Update rubygems gem to latest version
+  rubygems-update: true
+
   # Allow gems update
   allow-update: true
 
