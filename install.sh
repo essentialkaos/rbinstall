@@ -134,7 +134,7 @@ doInstall() {
          "cp" "-r" "*" "$install_dir/"
 
   action "Installed ek package" \
-         "go" "get" "pkg.re/essentialkaos/ek.v5"
+         "go" "get" "pkg.re/essentialkaos/ek.v6"
 
   action "Installed z7 package" \
          "go" "get" "pkg.re/essentialkaos/z7.v2"

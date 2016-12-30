@@ -12,7 +12,7 @@ PREFIX?=/usr
 all: rbinstall rbinstall-gen rbinstall-clone
 
 deps:
-	go get -v pkg.re/essentialkaos/ek.v5
+	go get -v pkg.re/essentialkaos/ek.v6
 	go get -v pkg.re/essentialkaos/z7.v2
 	go get -v pkg.re/essentialkaos/go-linenoise.v3
 	go get -v pkg.re/cheggaaa/pb.v1

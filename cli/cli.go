@@ -19,22 +19,22 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v5/arg"
-	"pkg.re/essentialkaos/ek.v5/env"
-	"pkg.re/essentialkaos/ek.v5/fmtc"
-	"pkg.re/essentialkaos/ek.v5/fmtutil"
-	"pkg.re/essentialkaos/ek.v5/fsutil"
-	"pkg.re/essentialkaos/ek.v5/hash"
-	"pkg.re/essentialkaos/ek.v5/knf"
-	"pkg.re/essentialkaos/ek.v5/log"
-	"pkg.re/essentialkaos/ek.v5/req"
-	"pkg.re/essentialkaos/ek.v5/signal"
-	"pkg.re/essentialkaos/ek.v5/sortutil"
-	"pkg.re/essentialkaos/ek.v5/system"
-	"pkg.re/essentialkaos/ek.v5/terminal"
-	"pkg.re/essentialkaos/ek.v5/tmp"
-	"pkg.re/essentialkaos/ek.v5/usage"
-	"pkg.re/essentialkaos/ek.v5/version"
+	"pkg.re/essentialkaos/ek.v6/arg"
+	"pkg.re/essentialkaos/ek.v6/env"
+	"pkg.re/essentialkaos/ek.v6/fmtc"
+	"pkg.re/essentialkaos/ek.v6/fmtutil"
+	"pkg.re/essentialkaos/ek.v6/fsutil"
+	"pkg.re/essentialkaos/ek.v6/hash"
+	"pkg.re/essentialkaos/ek.v6/knf"
+	"pkg.re/essentialkaos/ek.v6/log"
+	"pkg.re/essentialkaos/ek.v6/req"
+	"pkg.re/essentialkaos/ek.v6/signal"
+	"pkg.re/essentialkaos/ek.v6/sortutil"
+	"pkg.re/essentialkaos/ek.v6/system"
+	"pkg.re/essentialkaos/ek.v6/terminal"
+	"pkg.re/essentialkaos/ek.v6/tmp"
+	"pkg.re/essentialkaos/ek.v6/usage"
+	"pkg.re/essentialkaos/ek.v6/version"
 
 	"pkg.re/essentialkaos/z7.v2"
 
@@ -1181,7 +1181,7 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Can't parse OS version")
 	}
 
-	os = fmt.Sprintf("%s-%d", systemInfo.Distribution, distVersion.Major())
+	os = fmt.Sprintf("%s-%d", strings.ToLower(systemInfo.Distribution), distVersion.Major())
 
 	return os, arch, nil
 }
