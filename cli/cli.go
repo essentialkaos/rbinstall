@@ -36,7 +36,7 @@ import (
 	"pkg.re/essentialkaos/ek.v6/usage"
 	"pkg.re/essentialkaos/ek.v6/version"
 
-	"pkg.re/essentialkaos/z7.v2"
+	"pkg.re/essentialkaos/z7.v3"
 
 	"pkg.re/cheggaaa/pb.v1"
 
