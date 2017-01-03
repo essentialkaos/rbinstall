@@ -60,7 +60,7 @@ func (t *Task) showSpinner() {
 SPINNERLOOP:
 	for {
 		for i, frame := range spinnerFrames {
-			fmtc.Printf("{y}%s {!}%s", frame, t.Desc)
+			fmtc.Printf("{y}%s {!}%s...", frame, t.Desc)
 			time.Sleep(framesDelay[i] * time.Millisecond)
 			fmtc.Printf("\r")
 
