@@ -59,6 +59,7 @@ const (
 	ARG_GEMS_INSECURE = "S:gems-insecure"
 	ARG_RUBY_VERSION  = "r:ruby-version"
 	ARG_REINSTALL     = "R:reinstall"
+	ARG_REHASH        = "H:rehash"
 	ARG_NO_COLOR      = "nc:no-color"
 	ARG_NO_PROGRESS   = "np:no-progress"
 	ARG_HELP          = "h:help"
@@ -128,6 +129,7 @@ var argMap = arg.Map{
 	ARG_GEMS_INSECURE: {Type: arg.BOOL},
 	ARG_RUBY_VERSION:  {Type: arg.BOOL},
 	ARG_REINSTALL:     {Type: arg.BOOL},
+	ARG_REHASH:        {Type: arg.BOOL},
 	ARG_NO_COLOR:      {Type: arg.BOOL},
 	ARG_NO_PROGRESS:   {Type: arg.BOOL},
 	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
@@ -195,9 +197,13 @@ func Init() {
 		fmtc.NewLine()
 	}
 
-	prepare()
-	fetchIndex()
-	process(args)
+	if arg.GetB(ARG_REHASH) {
+		rehashShims()
+	} else {
+		prepare()
+		fetchIndex()
+		process(args)
+	}
 
 	exit(0)
 }
@@ -614,18 +620,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashTask := &Task{
-		Desc:    "Rehashing",
-		Handler: rehashTaskHandler,
-	}
-
-	_, err = rehashTask.Start()
-
-	if err != nil {
-		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
-	}
+	rehashShims()
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
@@ -633,6 +628,22 @@ func installCommand(rubyVersion string) {
 
 	fmtc.NewLine()
 	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
+}
+
+// rehashShims
+func rehashShims() {
+	rehashTask := &Task{
+		Desc:    "Rehashing",
+		Handler: rehashTaskHandler,
+	}
+
+	_, err := rehashTask.Start()
+
+	if err != nil {
+		fmtc.NewLine()
+		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
 }
 
 // getVersionFromFile try to read version file and return defined version
@@ -722,8 +733,6 @@ func rehashTaskHandler(args ...string) (string, error) {
 
 // updateGems update gems installed by rbinstall on defined version
 func updateGems(rubyVersion string) {
-	var err error
-
 	if !knf.GetB(GEMS_ALLOW_UPDATE, true) {
 		terminal.PrintErrorMessage("Gems update is disabled in configuration file")
 		exit(1)
@@ -788,18 +797,7 @@ func updateGems(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashTask := &Task{
-		Desc:    "Rehashing",
-		Handler: rehashTaskHandler,
-	}
-
-	_, err = rehashTask.Start()
-
-	if err != nil {
-		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
-	}
+	rehashShims()
 
 	fmtc.NewLine()
 	fmtc.Println("{g}All gems successfully updated!{!}")
@@ -1314,12 +1312,15 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func showUsage() {
+	usage.Breadcrumbs = true
+
 	info := usage.NewInfo("", "version")
 
 	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
+	info.AddOption(ARG_REHASH, "Rehash rbenv shims")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
 	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(ARG_HELP, "Show this help message")
