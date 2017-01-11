@@ -10,7 +10,7 @@
 
 ## Usage demo
 
-[![demo](https://gh.kaos.io/rbinstall-082.gif)](#usage-demo)
+[![demo](https://gh.kaos.io/rbinstall-0100.gif)](#usage-demo)
 
 ## Installation
 
