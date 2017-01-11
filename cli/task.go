@@ -2,17 +2,17 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2016 Essential Kaos                         //
-//      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
+//                     Copyright (c) 2009-2017 ESSENTIAL KAOS                         //
+//        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
 	"time"
 
-	"pkg.re/essentialkaos/ek.v5/arg"
-	"pkg.re/essentialkaos/ek.v5/fmtc"
-	"pkg.re/essentialkaos/ek.v5/timeutil"
+	"pkg.re/essentialkaos/ek.v6/arg"
+	"pkg.re/essentialkaos/ek.v6/fmtc"
+	"pkg.re/essentialkaos/ek.v6/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -60,7 +60,7 @@ func (t *Task) showSpinner() {
 SPINNERLOOP:
 	for {
 		for i, frame := range spinnerFrames {
-			fmtc.Printf("{y}%s {!}%s", frame, t.Desc)
+			fmtc.Printf("{y}%s {!}%s...", frame, t.Desc)
 			time.Sleep(framesDelay[i] * time.Millisecond)
 			fmtc.Printf("\r")
 
@@ -84,6 +84,6 @@ func (t *Task) hideSpinner(ok bool) {
 	if ok {
 		fmtc.Printf("{g}✔ {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	} else {
-		fmtc.Printf("{r}✖ {!}%s {s-}(%s){!}\n\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
+		fmtc.Printf("{r}✖ {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	}
 }

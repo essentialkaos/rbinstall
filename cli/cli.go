@@ -2,8 +2,8 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2016 Essential Kaos                         //
-//      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
+//                     Copyright (c) 2009-2017 ESSENTIAL KAOS                         //
+//        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -19,24 +19,24 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v5/arg"
-	"pkg.re/essentialkaos/ek.v5/env"
-	"pkg.re/essentialkaos/ek.v5/fmtc"
-	"pkg.re/essentialkaos/ek.v5/fmtutil"
-	"pkg.re/essentialkaos/ek.v5/fsutil"
-	"pkg.re/essentialkaos/ek.v5/hash"
-	"pkg.re/essentialkaos/ek.v5/knf"
-	"pkg.re/essentialkaos/ek.v5/log"
-	"pkg.re/essentialkaos/ek.v5/req"
-	"pkg.re/essentialkaos/ek.v5/signal"
-	"pkg.re/essentialkaos/ek.v5/sortutil"
-	"pkg.re/essentialkaos/ek.v5/system"
-	"pkg.re/essentialkaos/ek.v5/terminal"
-	"pkg.re/essentialkaos/ek.v5/tmp"
-	"pkg.re/essentialkaos/ek.v5/usage"
-	"pkg.re/essentialkaos/ek.v5/version"
+	"pkg.re/essentialkaos/ek.v6/arg"
+	"pkg.re/essentialkaos/ek.v6/env"
+	"pkg.re/essentialkaos/ek.v6/fmtc"
+	"pkg.re/essentialkaos/ek.v6/fmtutil"
+	"pkg.re/essentialkaos/ek.v6/fsutil"
+	"pkg.re/essentialkaos/ek.v6/hash"
+	"pkg.re/essentialkaos/ek.v6/knf"
+	"pkg.re/essentialkaos/ek.v6/log"
+	"pkg.re/essentialkaos/ek.v6/req"
+	"pkg.re/essentialkaos/ek.v6/signal"
+	"pkg.re/essentialkaos/ek.v6/sortutil"
+	"pkg.re/essentialkaos/ek.v6/system"
+	"pkg.re/essentialkaos/ek.v6/terminal"
+	"pkg.re/essentialkaos/ek.v6/tmp"
+	"pkg.re/essentialkaos/ek.v6/usage"
+	"pkg.re/essentialkaos/ek.v6/version"
 
-	"pkg.re/essentialkaos/z7.v2"
+	"pkg.re/essentialkaos/z7.v3"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -47,7 +47,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.9.2"
+	VER  = "0.10.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -59,6 +59,7 @@ const (
 	ARG_GEMS_INSECURE = "S:gems-insecure"
 	ARG_RUBY_VERSION  = "r:ruby-version"
 	ARG_REINSTALL     = "R:reinstall"
+	ARG_REHASH        = "H:rehash"
 	ARG_NO_COLOR      = "nc:no-color"
 	ARG_NO_PROGRESS   = "np:no-progress"
 	ARG_HELP          = "h:help"
@@ -71,6 +72,8 @@ const (
 	STORAGE_URL           = "storage:url"
 	RBENV_DIR             = "rbenv:dir"
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
+	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
+	GEMS_ALLOW_UPDATE     = "gems:allow-update"
 	GEMS_NO_RI            = "gems:no-ri"
 	GEMS_NO_RDOC          = "gems:no-rdoc"
 	GEMS_SOURCE           = "gems:source"
@@ -126,6 +129,7 @@ var argMap = arg.Map{
 	ARG_GEMS_INSECURE: {Type: arg.BOOL},
 	ARG_RUBY_VERSION:  {Type: arg.BOOL},
 	ARG_REINSTALL:     {Type: arg.BOOL},
+	ARG_REHASH:        {Type: arg.BOOL},
 	ARG_NO_COLOR:      {Type: arg.BOOL},
 	ARG_NO_PROGRESS:   {Type: arg.BOOL},
 	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
@@ -193,9 +197,13 @@ func Init() {
 		fmtc.NewLine()
 	}
 
-	prepare()
-	fetchIndex()
-	process(args)
+	if arg.GetB(ARG_REHASH) {
+		rehashShims()
+	} else {
+		prepare()
+		fetchIndex()
+		process(args)
+	}
 
 	exit(0)
 }
@@ -203,14 +211,21 @@ func Init() {
 // configureUI configure user interface
 func configureUI() {
 	envVars := env.Get()
-
-	if arg.GetB(ARG_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
-
 	term := envVars.GetS("TERM")
 
-	if term == "" || !strings.Contains(term, "xterm") {
+	fmtc.DisableColors = true
+	fmtutil.SizeSeparator = " "
+
+	if term != "" {
+		switch {
+		case strings.Contains(term, "xterm"),
+			strings.Contains(term, "color"),
+			term == "screen":
+			fmtc.DisableColors = false
+		}
+	}
+
+	if arg.GetB(ARG_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
@@ -533,6 +548,7 @@ func installCommand(rubyVersion string) {
 	_, err = checkHashTask.Start(file, info.Hash)
 
 	if err != nil {
+		fmtc.NewLine()
 		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
@@ -547,6 +563,7 @@ func installCommand(rubyVersion string) {
 	_, err = unpackTask.Start(file, getUnpackDirPath())
 
 	if err != nil {
+		fmtc.NewLine()
 		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
@@ -573,6 +590,17 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
+	if knf.GetB(GEMS_RUBYGEMS_UPDATE, true) {
+		updRubygemsTask := &Task{
+			Desc:    "Updating RubyGems",
+			Handler: updateRubygemsTaskHandler,
+		}
+
+		updRubygemsTask.Start(rubyVersion)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemInstallTask := &Task{
@@ -583,6 +611,7 @@ func installCommand(rubyVersion string) {
 			_, err = gemInstallTask.Start(info.Name, gem)
 
 			if err != nil {
+				fmtc.NewLine()
 				terminal.PrintErrorMessage(err.Error())
 				exit(1)
 			}
@@ -591,17 +620,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashTask := &Task{
-		Desc:    "Rehashing",
-		Handler: rehashTaskHandler,
-	}
-
-	_, err = rehashTask.Start()
-
-	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
-	}
+	rehashShims()
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
@@ -609,6 +628,22 @@ func installCommand(rubyVersion string) {
 
 	fmtc.NewLine()
 	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
+}
+
+// rehashShims
+func rehashShims() {
+	rehashTask := &Task{
+		Desc:    "Rehashing",
+		Handler: rehashTaskHandler,
+	}
+
+	_, err := rehashTask.Start()
+
+	if err != nil {
+		fmtc.NewLine()
+		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
 }
 
 // getVersionFromFile try to read version file and return defined version
@@ -686,6 +721,11 @@ func updateGemTaskHandler(args ...string) (string, error) {
 	return runGemCmd(version, "update", gem)
 }
 
+func updateRubygemsTaskHandler(args ...string) (string, error) {
+	version := args[0]
+	return "", updateRubygems(version)
+}
+
 func rehashTaskHandler(args ...string) (string, error) {
 	rehashCmd := exec.Command("rbenv", "rehash")
 	return "", rehashCmd.Run()
@@ -693,6 +733,11 @@ func rehashTaskHandler(args ...string) (string, error) {
 
 // updateGems update gems installed by rbinstall on defined version
 func updateGems(rubyVersion string) {
+	if !knf.GetB(GEMS_ALLOW_UPDATE, true) {
+		terminal.PrintErrorMessage("Gems update is disabled in configuration file")
+		exit(1)
+	}
+
 	fullPath := getVersionPath(rubyVersion)
 
 	if !fsutil.IsExist(fullPath) {
@@ -705,6 +750,17 @@ func updateGems(rubyVersion string) {
 	runDate = time.Now()
 
 	fmtc.Printf("Updating gems for {c}%s{!}...\n\n", rubyVersion)
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	if knf.GetB(GEMS_RUBYGEMS_UPDATE, true) {
+		updRubygemsTask := &Task{
+			Desc:    "Updating RubyGems",
+			Handler: updateRubygemsTaskHandler,
+		}
+
+		updRubygemsTask.Start(rubyVersion)
+	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
@@ -733,6 +789,7 @@ func updateGems(rubyVersion string) {
 				)
 			}
 		} else {
+			fmtc.NewLine()
 			terminal.PrintErrorMessage(err.Error())
 			exit(1)
 		}
@@ -740,17 +797,7 @@ func updateGems(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashTask := &Task{
-		Desc:    "Rehashing",
-		Handler: rehashTaskHandler,
-	}
-
-	_, err := rehashTask.Start()
-
-	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
-	}
+	rehashShims()
 
 	fmtc.NewLine()
 	fmtc.Println("{g}All gems successfully updated!{!}")
@@ -759,8 +806,8 @@ func updateGems(rubyVersion string) {
 // runGemCmd run some gem command for some version
 func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	start := time.Now()
-	path := getVersionPath(rubyVersion)
-	gemCmd := exec.Command(path+"/bin/ruby", path+"/bin/gem", cmd, gem)
+	rubyPath := getVersionPath(rubyVersion)
+	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
 
 	if knf.GetB(GEMS_NO_RI) {
 		gemCmd.Args = append(gemCmd.Args, "--no-ri")
@@ -795,10 +842,37 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		default:
 			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
 		}
-
 	}
 
-	return "", nil
+	switch cmd {
+	case "update":
+		return "", fmtc.Errorf("Can't update gem %s", gem)
+	default:
+		return "", fmtc.Errorf("Can't install gem %s", gem)
+	}
+}
+
+func updateRubygems(version string) error {
+	rubyPath := getVersionPath(version)
+	gemCmd := exec.Command(
+		rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
+		"update", "--system", "--no-ri", "--no-rdoc",
+		"--source", getGemSourceURL(),
+	)
+
+	output, err := gemCmd.Output()
+
+	if err == nil {
+		return nil
+	}
+
+	actionLog, err := logFailedAction(output)
+
+	if err == nil {
+		return fmt.Errorf("Can't update rubygems. Update command output saved as %s", actionLog)
+	}
+
+	return fmt.Errorf("Can't update rubygems")
 }
 
 // downloadFile download file from remote host
@@ -1175,7 +1249,7 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Can't parse OS version")
 	}
 
-	os = fmt.Sprintf("%s-%d", systemInfo.Distribution, distVersion.Major())
+	os = fmt.Sprintf("%s-%d", strings.ToLower(systemInfo.Distribution), distVersion.Major())
 
 	return os, arch, nil
 }
@@ -1238,12 +1312,15 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func showUsage() {
+	usage.Breadcrumbs = true
+
 	info := usage.NewInfo("", "version")
 
 	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
+	info.AddOption(ARG_REHASH, "Rehash rbenv shims")
 	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
 	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(ARG_HELP, "Show this help message")
@@ -1251,7 +1328,7 @@ func showUsage() {
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
-	info.AddExample("2.0.0-p598 -g", "Update gems installed on 2.0.0-p598")
+	info.AddExample("2.0.0-p598 -g", "Update gems installed for 2.0.0-p598")
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
 	info.AddExample("-r", "Install version defined in .ruby-version file")
 

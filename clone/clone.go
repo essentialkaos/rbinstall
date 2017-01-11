@@ -2,8 +2,8 @@ package clone
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2016 Essential Kaos                         //
-//      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
+//                     Copyright (c) 2009-2017 ESSENTIAL KAOS                         //
+//        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v5/arg"
-	"pkg.re/essentialkaos/ek.v5/fmtc"
-	"pkg.re/essentialkaos/ek.v5/fmtutil"
-	"pkg.re/essentialkaos/ek.v5/fsutil"
-	"pkg.re/essentialkaos/ek.v5/httputil"
-	"pkg.re/essentialkaos/ek.v5/jsonutil"
-	"pkg.re/essentialkaos/ek.v5/path"
-	"pkg.re/essentialkaos/ek.v5/req"
-	"pkg.re/essentialkaos/ek.v5/terminal"
-	"pkg.re/essentialkaos/ek.v5/timeutil"
-	"pkg.re/essentialkaos/ek.v5/usage"
+	"pkg.re/essentialkaos/ek.v6/arg"
+	"pkg.re/essentialkaos/ek.v6/fmtc"
+	"pkg.re/essentialkaos/ek.v6/fmtutil"
+	"pkg.re/essentialkaos/ek.v6/fsutil"
+	"pkg.re/essentialkaos/ek.v6/httputil"
+	"pkg.re/essentialkaos/ek.v6/jsonutil"
+	"pkg.re/essentialkaos/ek.v6/path"
+	"pkg.re/essentialkaos/ek.v6/req"
+	"pkg.re/essentialkaos/ek.v6/terminal"
+	"pkg.re/essentialkaos/ek.v6/timeutil"
+	"pkg.re/essentialkaos/ek.v6/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
