@@ -10,6 +10,14 @@
   # URL of rbinstall storage
   url: https://rbinstall.kaos.io
 
+[proxy]
+
+  # Enable HTTP proxy here
+  enabled: false
+
+  # HTTP proxy URL
+  url: 
+
 [rbenv]
 
   # Path to rbenv main directory
