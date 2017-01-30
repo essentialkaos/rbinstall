@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -47,7 +49,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.10.0"
+	VER  = "0.11.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -70,6 +72,8 @@ const (
 const (
 	MAIN_TMP_DIR          = "main:tmp-dir"
 	STORAGE_URL           = "storage:url"
+	PROXY_ENABLED         = "proxy:enabled"
+	PROXY_URL             = "proxy:url"
 	RBENV_DIR             = "rbenv:dir"
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
@@ -241,10 +245,32 @@ func prepare() {
 
 	loadConfig()
 	validateConfig()
+	configureProxy()
 
 	signal.Handlers{
 		signal.INT: intSignalHandler,
 	}.TrackAsync()
+}
+
+// configureProxy configure proxy settings
+func configureProxy() {
+	if !knf.GetB(PROXY_ENABLED, false) || !knf.HasProp(PROXY_URL) {
+		return
+	}
+
+	proxyUrl, err := url.Parse(knf.GetS(PROXY_URL))
+
+	if err != nil {
+		terminal.PrintErrorMessage("Can't parse proxy URL: %v", err)
+		exit(1)
+	}
+
+	os.Setenv("http_proxy", knf.GetS(PROXY_URL))
+	os.Setenv("https_proxy", knf.GetS(PROXY_URL))
+	os.Setenv("HTTP_PROXY", knf.GetS(PROXY_URL))
+	os.Setenv("HTTPS_PROXY", knf.GetS(PROXY_URL))
+
+	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
 }
 
 // checkPerms check user for sudo
