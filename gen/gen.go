@@ -15,15 +15,15 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v6/arg"
-	"pkg.re/essentialkaos/ek.v6/fmtc"
-	"pkg.re/essentialkaos/ek.v6/fsutil"
-	"pkg.re/essentialkaos/ek.v6/hash"
-	"pkg.re/essentialkaos/ek.v6/jsonutil"
-	"pkg.re/essentialkaos/ek.v6/path"
-	"pkg.re/essentialkaos/ek.v6/sortutil"
-	"pkg.re/essentialkaos/ek.v6/timeutil"
-	"pkg.re/essentialkaos/ek.v6/usage"
+	"pkg.re/essentialkaos/ek.v7/arg"
+	"pkg.re/essentialkaos/ek.v7/fmtc"
+	"pkg.re/essentialkaos/ek.v7/fsutil"
+	"pkg.re/essentialkaos/ek.v7/hash"
+	"pkg.re/essentialkaos/ek.v7/jsonutil"
+	"pkg.re/essentialkaos/ek.v7/path"
+	"pkg.re/essentialkaos/ek.v7/sortutil"
+	"pkg.re/essentialkaos/ek.v7/timeutil"
+	"pkg.re/essentialkaos/ek.v7/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.5.2"
+	VER  = "0.6.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -126,7 +126,7 @@ func checkDir(dataDir string) {
 	}
 
 	if !fsutil.IsExist(dataDir) {
-		printError("Directory %s is not exist", dataDir)
+		printError("Directory %s does not exist", dataDir)
 		os.Exit(1)
 	}
 
@@ -152,7 +152,7 @@ func buildIndex(dataDir string) {
 
 	fileList := fsutil.ListAllFiles(
 		dataDir, true,
-		&fsutil.ListingFilter{
+		fsutil.ListingFilter{
 			Perms:         "FR",
 			MatchPatterns: []string{"*.7z"},
 		})

@@ -11,15 +11,6 @@ PREFIX?=/usr
 
 all: rbinstall rbinstall-gen rbinstall-clone
 
-deps:
-	go get -v pkg.re/essentialkaos/ek.v6
-	go get -v pkg.re/essentialkaos/z7.v3
-	go get -v pkg.re/essentialkaos/go-linenoise.v3
-	go get -v pkg.re/cheggaaa/pb.v1
-
-fmt:
-	find . -name "*.go" -exec gofmt -s -w {} \;
-
 rbinstall:
 	go build rbinstall.go
 
@@ -28,6 +19,15 @@ rbinstall-gen:
 
 rbinstall-clone:
 	go build rbinstall-clone.go
+
+deps:
+	go get -v pkg.re/essentialkaos/ek.v7
+	go get -v pkg.re/essentialkaos/z7.v4
+	go get -v pkg.re/essentialkaos/go-linenoise.v3
+	go get -v pkg.re/cheggaaa/pb.v1
+
+fmt:
+	find . -name "*.go" -exec gofmt -s -w {} \;
 
 install:
 	mkdir -p $(DESTDIR)$(PREFIX)/bin

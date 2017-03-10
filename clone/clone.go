@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v6/arg"
-	"pkg.re/essentialkaos/ek.v6/fmtc"
-	"pkg.re/essentialkaos/ek.v6/fmtutil"
-	"pkg.re/essentialkaos/ek.v6/fsutil"
-	"pkg.re/essentialkaos/ek.v6/httputil"
-	"pkg.re/essentialkaos/ek.v6/jsonutil"
-	"pkg.re/essentialkaos/ek.v6/path"
-	"pkg.re/essentialkaos/ek.v6/req"
-	"pkg.re/essentialkaos/ek.v6/terminal"
-	"pkg.re/essentialkaos/ek.v6/timeutil"
-	"pkg.re/essentialkaos/ek.v6/usage"
+	"pkg.re/essentialkaos/ek.v7/arg"
+	"pkg.re/essentialkaos/ek.v7/fmtc"
+	"pkg.re/essentialkaos/ek.v7/fmtutil"
+	"pkg.re/essentialkaos/ek.v7/fsutil"
+	"pkg.re/essentialkaos/ek.v7/httputil"
+	"pkg.re/essentialkaos/ek.v7/jsonutil"
+	"pkg.re/essentialkaos/ek.v7/path"
+	"pkg.re/essentialkaos/ek.v7/req"
+	"pkg.re/essentialkaos/ek.v7/terminal"
+	"pkg.re/essentialkaos/ek.v7/timeutil"
+	"pkg.re/essentialkaos/ek.v7/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.2.3"
+	VER  = "0.3.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -117,7 +117,7 @@ func checkArguments(url, dir string) {
 	}
 
 	if !fsutil.IsExist(dir) {
-		printError("\nDirectory %s is not exist\n", dir)
+		printError("\nDirectory %s does not exist\n", dir)
 		os.Exit(1)
 	}
 

@@ -21,24 +21,25 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v6/arg"
-	"pkg.re/essentialkaos/ek.v6/env"
-	"pkg.re/essentialkaos/ek.v6/fmtc"
-	"pkg.re/essentialkaos/ek.v6/fmtutil"
-	"pkg.re/essentialkaos/ek.v6/fsutil"
-	"pkg.re/essentialkaos/ek.v6/hash"
-	"pkg.re/essentialkaos/ek.v6/knf"
-	"pkg.re/essentialkaos/ek.v6/log"
-	"pkg.re/essentialkaos/ek.v6/req"
-	"pkg.re/essentialkaos/ek.v6/signal"
-	"pkg.re/essentialkaos/ek.v6/sortutil"
-	"pkg.re/essentialkaos/ek.v6/system"
-	"pkg.re/essentialkaos/ek.v6/terminal"
-	"pkg.re/essentialkaos/ek.v6/tmp"
-	"pkg.re/essentialkaos/ek.v6/usage"
-	"pkg.re/essentialkaos/ek.v6/version"
+	"pkg.re/essentialkaos/ek.v7/arg"
+	"pkg.re/essentialkaos/ek.v7/env"
+	"pkg.re/essentialkaos/ek.v7/fmtc"
+	"pkg.re/essentialkaos/ek.v7/fmtutil"
+	"pkg.re/essentialkaos/ek.v7/fsutil"
+	"pkg.re/essentialkaos/ek.v7/hash"
+	"pkg.re/essentialkaos/ek.v7/knf"
+	"pkg.re/essentialkaos/ek.v7/log"
+	"pkg.re/essentialkaos/ek.v7/req"
+	"pkg.re/essentialkaos/ek.v7/signal"
+	"pkg.re/essentialkaos/ek.v7/sortutil"
+	"pkg.re/essentialkaos/ek.v7/system"
+	"pkg.re/essentialkaos/ek.v7/terminal"
+	"pkg.re/essentialkaos/ek.v7/tmp"
+	"pkg.re/essentialkaos/ek.v7/usage"
+	"pkg.re/essentialkaos/ek.v7/usage/update"
+	"pkg.re/essentialkaos/ek.v7/version"
 
-	"pkg.re/essentialkaos/z7.v3"
+	"pkg.re/essentialkaos/z7.v4"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -49,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.11.0"
+	VER  = "0.12.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -1150,7 +1151,7 @@ func getInstalledVersionsMap() map[string]bool {
 	result := make(map[string]bool)
 	versions := fsutil.List(
 		getRBEnvVersionsPath(), true,
-		&fsutil.ListingFilter{Perms: "D"},
+		fsutil.ListingFilter{Perms: "D"},
 	)
 
 	if len(versions) == 0 {
@@ -1338,8 +1339,6 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func showUsage() {
-	usage.Breadcrumbs = true
-
 	info := usage.NewInfo("", "version")
 
 	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
@@ -1363,12 +1362,13 @@ func showUsage() {
 
 func showAbout() {
 	about := &usage.About{
-		App:     APP,
-		Version: VER,
-		Desc:    DESC,
-		Year:    2006,
-		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol>",
+		App:           APP,
+		Version:       VER,
+		Desc:          DESC,
+		Year:          2006,
+		Owner:         "ESSENTIAL KAOS",
+		License:       "Essential Kaos Open Source License <https://essentialkaos.com/ekol>",
+		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
 	}
 
 	about.Render()
