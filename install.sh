@@ -152,10 +152,10 @@ doInstall() {
          "cp" "-r" "*" "$install_dir/"
 
   action "Installed ek package" \
-         "go" "get" "pkg.re/essentialkaos/ek.v6"
+         "go" "get" "pkg.re/essentialkaos/ek.v7"
 
   action "Installed z7 package" \
-         "go" "get" "pkg.re/essentialkaos/z7.v3"
+         "go" "get" "pkg.re/essentialkaos/z7.v5"
 
   action "Installed go-linenoise package" \
          "go" "get" "pkg.re/essentialkaos/go-linenoise.v3"
