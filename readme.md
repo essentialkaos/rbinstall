@@ -6,7 +6,7 @@
 <img width="300" height="150" src="https://gh.kaos.io/rbinstall.png"/>
 </p>
 
-`rbinstall` is utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
+`rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
 ## Usage demo
 
@@ -33,7 +33,7 @@
 
 <details>
 <summary><strong>Using install.sh</strong></summary>
-We provide simple bash script `install.sh` for installing app from the sources.
+We provide simple bash script `install.sh` for installing the application from the sources.
 
 ```
 ... install rbenv, golang and latest 7zip
@@ -59,7 +59,7 @@ Usage: rbinstall {options} version
 Options
 
   --gems-update, -g      Update gems for some version (if allowed in config)
-  --gems-insecure, -S    Use http instead https for installing gems
+  --gems-insecure, -S    Use HTTP instead of HTTPS for installing gems
   --ruby-version, -r     Install version defined in version file
   --reinstall, -R        Reinstall already installed version (if allowed in config)
   --rehash, -H           Rehash rbenv shims

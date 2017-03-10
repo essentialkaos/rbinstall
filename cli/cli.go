@@ -50,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.12.0"
+	VER  = "0.12.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -1342,7 +1342,7 @@ func showUsage() {
 	info := usage.NewInfo("", "version")
 
 	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
-	info.AddOption(ARG_GEMS_INSECURE, "Use http instead https for installing gems")
+	info.AddOption(ARG_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(ARG_REHASH, "Rehash rbenv shims")
