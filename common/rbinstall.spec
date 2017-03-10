@@ -143,6 +143,7 @@ rm -rf %{buildroot}
 %changelog
 * Fri Mar 10 2017 Anton Novojilov <andy@essentialkaos.com> - 0.12.0-0
 - [cli|gen|clone] EK package updated to v7
+- [cli] z7 package updated to v4
 
 * Mon Jan 30 2017 Anton Novojilov <andy@essentialkaos.com> - 0.11.0-0
 - HTTP proxy configuration in config file
