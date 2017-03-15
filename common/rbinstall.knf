@@ -8,7 +8,7 @@
 [storage]
 
   # URL of rbinstall storage
-  url: https://rbinstall.kaos.io
+  url: http://rbinstall.kaos.io
 
 [proxy]
 
