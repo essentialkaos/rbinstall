@@ -45,7 +45,7 @@
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
 Version:         0.12.1
-Release:         0%{?dist}
+Release:         1%{?dist}
 Group:           Applications/System
 License:         EKOL
 URL:             https://github.com/essentialkaos/rbinstall
@@ -141,6 +141,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Mar 15 2017 Anton Novojilov <andy@essentialkaos.com> - 0.12.1-1
+- [cli] Using HTTP instead of HTTPS by default
+
 * Sat Mar 11 2017 Anton Novojilov <andy@essentialkaos.com> - 0.12.1-0
 - [cli] Minor help content improvement
 
