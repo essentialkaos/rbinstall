@@ -129,6 +129,7 @@ doInstall() {
 
   confirmInstall "RBInstall"
 
+  require "git"
   require "rbenv"
   require "golang"
   require "p7zip"
@@ -144,6 +145,8 @@ doInstall() {
   fi
 
   local install_dir="$GOPATH/src/github.com/essentialkaos/rbinstall"
+
+  git config http.https://pkg.re.followRedirects true &>/dev/null
 
   action "Created directory for sources in GOPATH" \
          "mkdir" "-p" "$install_dir"

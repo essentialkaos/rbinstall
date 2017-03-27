@@ -21,6 +21,7 @@ rbinstall-clone:
 	go build rbinstall-clone.go
 
 deps:
+	git config --global http.https://pkg.re.followRedirects true
 	go get -v pkg.re/essentialkaos/ek.v7
 	go get -v pkg.re/essentialkaos/z7.v4
 	go get -v pkg.re/essentialkaos/go-linenoise.v3
