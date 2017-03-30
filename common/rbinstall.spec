@@ -44,8 +44,8 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.12.1
-Release:         1%{?dist}
+Version:         0.13.0
+Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
 URL:             https://github.com/essentialkaos/rbinstall
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.7
+BuildRequires:   golang >= 1.8
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -141,6 +141,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Mar 30 2017 Anton Novojilov <andy@essentialkaos.com> - 0.13.0-0
+- [cli] Added support for names without patch level
+- [cli] Automatic aliases creation for versions which contains -p0 in the name
+
 * Wed Mar 15 2017 Anton Novojilov <andy@essentialkaos.com> - 0.12.1-1
 - [cli] Using HTTP instead of HTTPS by default
 
