@@ -77,6 +77,7 @@ const (
 	PROXY_URL             = "proxy:url"
 	RBENV_DIR             = "rbenv:dir"
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
+	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
 	GEMS_ALLOW_UPDATE     = "gems:allow-update"
 	GEMS_NO_RI            = "gems:no-ri"
@@ -84,6 +85,7 @@ const (
 	GEMS_SOURCE           = "gems:source"
 	GEMS_SOURCE_SECURE    = "gems:source-secure"
 	GEMS_INSTALL          = "gems:install"
+	LOG_DIR               = "log:dir"
 	LOG_FILE              = "log:file"
 	LOG_PERMS             = "log:perms"
 	LOG_LEVEL             = "log:level"
@@ -546,7 +548,7 @@ func installCommand(rubyVersion string) {
 		err = os.Mkdir(getUnpackDirPath(), 0770)
 
 		if err != nil {
-			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err.Error())
+			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err)
 			exit(1)
 		}
 	} else {
@@ -602,7 +604,7 @@ func installCommand(rubyVersion string) {
 			err = os.RemoveAll(getVersionPath(info.Name))
 
 			if err != nil {
-				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err.Error())
+				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err)
 				exit(1)
 			}
 		}
@@ -611,7 +613,7 @@ func installCommand(rubyVersion string) {
 	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err.Error())
+		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err)
 		exit(1)
 	}
 
@@ -623,7 +625,11 @@ func installCommand(rubyVersion string) {
 			Handler: updateRubygemsTaskHandler,
 		}
 
-		updRubygemsTask.Start(rubyVersion)
+		_, err := updRubygemsTask.Start(info.Name)
+
+		if err != nil {
+			terminal.PrintWarnMessage(err.Error())
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -647,14 +653,38 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashShims()
+	var cleanVersionName string
+	var aliasCreated bool
+
+	if strings.Contains(info.Name, "-p0") {
+		cleanVersionName = getNameWithoutPatchLevel(info.Name)
+
+		if knf.GetB(RBENV_MAKE_ALIAS, false) && !fsutil.IsExist(getVersionPath(cleanVersionName)) {
+			err = os.Symlink(getVersionPath(info.Name), getVersionPath(cleanVersionName))
+
+			if err != nil {
+				fmtc.Println("{r}✖ {!}Creating alias")
+				terminal.PrintWarnMessage(err.Error())
+			} else {
+				fmtc.Println("{g}✔ {!}Creating alias")
+				aliasCreated = true
+			}
+		}
+	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	log.Info("[%s] %s %s", currentUser.RealName, "Installed version", info.Name)
+	rehashShims()
 
 	fmtc.NewLine()
-	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
+
+	if aliasCreated {
+		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
+		fmtc.Printf("{g}Version {g*}%s{g} successfully installed as {g*}%s{g}.{!}\n", info.Name, cleanVersionName)
+	} else {
+		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
+		fmtc.Printf("{g}Version {g*}%s{g} successfully installed.{!}\n", info.Name)
+	}
 }
 
 // rehashShims
@@ -865,9 +895,9 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s.", gem, actionLog)
 		default:
-			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s.", gem, actionLog)
 		}
 	}
 
@@ -1279,6 +1309,11 @@ func getSystemInfo() (string, string, error) {
 	os = fmt.Sprintf("%s-%d", strings.ToLower(systemInfo.Distribution), distVersion.Major())
 
 	return os, arch, nil
+}
+
+// getNameWithoutPatchLevel return name without -p0
+func getNameWithoutPatchLevel(name string) string {
+	return strings.Replace(name, "-p0", "", -1)
 }
 
 // logFailedAction save data to temporary log file and return path
