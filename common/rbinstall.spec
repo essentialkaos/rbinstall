@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.6.0
+Version:         0.6.1
 Release:         0%{?dist}
 
 %description gen
@@ -144,6 +144,7 @@ rm -rf %{buildroot}
 * Thu Mar 30 2017 Anton Novojilov <andy@essentialkaos.com> - 0.13.0-0
 - [cli] Added support for names without patch level
 - [cli] Automatic aliases creation for versions which contains -p0 in the name
+- [cli|gen] Minor improvements
 
 * Wed Mar 15 2017 Anton Novojilov <andy@essentialkaos.com> - 0.12.1-1
 - [cli] Using HTTP instead of HTTPS by default

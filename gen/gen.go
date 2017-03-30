@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.6.0"
+	VER  = "0.6.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -74,14 +74,11 @@ func (s fileInfoSlice) Less(i, j int) bool {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var argMap = arg.Map{
-	ARG_OUTPUT:   &arg.V{},
-	ARG_NO_COLOR: &arg.V{Type: arg.BOOL},
-	ARG_HELP:     &arg.V{Type: arg.BOOL, Alias: "u:usage"},
-	ARG_VER:      &arg.V{Type: arg.BOOL, Alias: "ver"},
+	ARG_OUTPUT:   {},
+	ARG_NO_COLOR: {Type: arg.BOOL},
+	ARG_HELP:     {Type: arg.BOOL, Alias: "u:usage"},
+	ARG_VER:      {Type: arg.BOOL, Alias: "ver"},
 }
-
-var archList = []string{"x32", "x64"}
-var osList = []string{"linux", "darwin", "freebsd"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -300,17 +297,6 @@ func guessCategory(name string) string {
 	}
 
 	return CATEGORY_OTHER
-}
-
-// findInfo search version info struct in given slice
-func findInfo(infoList []*index.VersionInfo, version string) *index.VersionInfo {
-	for _, info := range infoList {
-		if info.Name == version {
-			return info
-		}
-	}
-
-	return nil
 }
 
 // getOutputFile return path to output file

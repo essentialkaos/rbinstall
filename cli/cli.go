@@ -261,7 +261,7 @@ func configureProxy() {
 		return
 	}
 
-	proxyUrl, err := url.Parse(knf.GetS(PROXY_URL))
+	proxyURL, err := url.Parse(knf.GetS(PROXY_URL))
 
 	if err != nil {
 		terminal.PrintErrorMessage("Can't parse proxy URL: %v", err)
@@ -273,7 +273,7 @@ func configureProxy() {
 	os.Setenv("HTTP_PROXY", knf.GetS(PROXY_URL))
 	os.Setenv("HTTPS_PROXY", knf.GetS(PROXY_URL))
 
-	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 }
 
 // checkPerms check user for sudo
@@ -513,7 +513,7 @@ func printRawListing(dist, arch string) {
 
 	sortutil.Versions(result)
 
-	fmt.Printf(strings.Join(result, "\n"))
+	fmt.Print(strings.Join(result, "\n"))
 }
 
 // installCommand install some version of ruby
@@ -625,7 +625,7 @@ func installCommand(rubyVersion string) {
 			Handler: updateRubygemsTaskHandler,
 		}
 
-		_, err := updRubygemsTask.Start(info.Name)
+		_, err = updRubygemsTask.Start(info.Name)
 
 		if err != nil {
 			terminal.PrintWarnMessage(err.Error())
