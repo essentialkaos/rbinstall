@@ -50,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.12.1"
+	VER  = "0.13.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -77,6 +77,7 @@ const (
 	PROXY_URL             = "proxy:url"
 	RBENV_DIR             = "rbenv:dir"
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
+	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
 	GEMS_ALLOW_UPDATE     = "gems:allow-update"
 	GEMS_NO_RI            = "gems:no-ri"
@@ -84,6 +85,7 @@ const (
 	GEMS_SOURCE           = "gems:source"
 	GEMS_SOURCE_SECURE    = "gems:source-secure"
 	GEMS_INSTALL          = "gems:install"
+	LOG_DIR               = "log:dir"
 	LOG_FILE              = "log:file"
 	LOG_PERMS             = "log:perms"
 	LOG_LEVEL             = "log:level"
@@ -259,7 +261,7 @@ func configureProxy() {
 		return
 	}
 
-	proxyUrl, err := url.Parse(knf.GetS(PROXY_URL))
+	proxyURL, err := url.Parse(knf.GetS(PROXY_URL))
 
 	if err != nil {
 		terminal.PrintErrorMessage("Can't parse proxy URL: %v", err)
@@ -271,7 +273,7 @@ func configureProxy() {
 	os.Setenv("HTTP_PROXY", knf.GetS(PROXY_URL))
 	os.Setenv("HTTPS_PROXY", knf.GetS(PROXY_URL))
 
-	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 }
 
 // checkPerms check user for sudo
@@ -511,7 +513,7 @@ func printRawListing(dist, arch string) {
 
 	sortutil.Versions(result)
 
-	fmt.Printf(strings.Join(result, "\n"))
+	fmt.Print(strings.Join(result, "\n"))
 }
 
 // installCommand install some version of ruby
@@ -546,7 +548,7 @@ func installCommand(rubyVersion string) {
 		err = os.Mkdir(getUnpackDirPath(), 0770)
 
 		if err != nil {
-			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err.Error())
+			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err)
 			exit(1)
 		}
 	} else {
@@ -602,7 +604,7 @@ func installCommand(rubyVersion string) {
 			err = os.RemoveAll(getVersionPath(info.Name))
 
 			if err != nil {
-				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err.Error())
+				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err)
 				exit(1)
 			}
 		}
@@ -611,7 +613,7 @@ func installCommand(rubyVersion string) {
 	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err.Error())
+		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err)
 		exit(1)
 	}
 
@@ -623,7 +625,11 @@ func installCommand(rubyVersion string) {
 			Handler: updateRubygemsTaskHandler,
 		}
 
-		updRubygemsTask.Start(rubyVersion)
+		_, err = updRubygemsTask.Start(info.Name)
+
+		if err != nil {
+			terminal.PrintWarnMessage(err.Error())
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -647,14 +653,38 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashShims()
+	var cleanVersionName string
+	var aliasCreated bool
+
+	if strings.Contains(info.Name, "-p0") {
+		cleanVersionName = getNameWithoutPatchLevel(info.Name)
+
+		if knf.GetB(RBENV_MAKE_ALIAS, false) && !fsutil.IsExist(getVersionPath(cleanVersionName)) {
+			err = os.Symlink(getVersionPath(info.Name), getVersionPath(cleanVersionName))
+
+			if err != nil {
+				fmtc.Println("{r}✖ {!}Creating alias")
+				terminal.PrintWarnMessage(err.Error())
+			} else {
+				fmtc.Println("{g}✔ {!}Creating alias")
+				aliasCreated = true
+			}
+		}
+	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	log.Info("[%s] %s %s", currentUser.RealName, "Installed version", info.Name)
+	rehashShims()
 
 	fmtc.NewLine()
-	fmtc.Printf("{g}Version {g*}%s{g} successfully installed!{!}\n", info.Name)
+
+	if aliasCreated {
+		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
+		fmtc.Printf("{g}Version {g*}%s{g} successfully installed as {g*}%s{g}.{!}\n", info.Name, cleanVersionName)
+	} else {
+		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
+		fmtc.Printf("{g}Version {g*}%s{g} successfully installed.{!}\n", info.Name)
+	}
 }
 
 // rehashShims
@@ -865,9 +895,9 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s.", gem, actionLog)
 		default:
-			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s", gem, actionLog)
+			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s.", gem, actionLog)
 		}
 	}
 
@@ -1281,6 +1311,11 @@ func getSystemInfo() (string, string, error) {
 	return os, arch, nil
 }
 
+// getNameWithoutPatchLevel return name without -p0
+func getNameWithoutPatchLevel(name string) string {
+	return strings.Replace(name, "-p0", "", -1)
+}
+
 // logFailedAction save data to temporary log file and return path
 // to this log file
 func logFailedAction(data []byte) (string, error) {
@@ -1352,6 +1387,7 @@ func showUsage() {
 	info.AddOption(ARG_VER, "Show version")
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
+	info.AddExample("2.0.0", "Install latest available release in 2.0.0")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -g", "Update gems installed for 2.0.0-p598")
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")

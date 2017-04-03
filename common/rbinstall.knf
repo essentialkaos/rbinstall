@@ -26,6 +26,9 @@
   # Allow version overwriting
   allow-overwrite: true
 
+  # Make alias for versions with -p0 suffix
+  make-alias: true
+
 [gems]
 
   # Update rubygems gem to latest version

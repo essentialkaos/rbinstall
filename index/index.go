@@ -188,14 +188,16 @@ func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 	}
 
 	for categoryName, category := range i.Data[dist][arch] {
-		for _, version := range category {
-			if version.Name == name {
+		for i := len(category) - 1; i >= 0; i-- {
+			version := category[i]
+
+			if isSameName(version.Name, name) {
 				return version, categoryName
 			}
 
 			if len(version.Variations) != 0 {
 				for _, variation := range version.Variations {
-					if variation.Name == name {
+					if isSameName(variation.Name, name) {
 						return variation, categoryName
 					}
 				}
@@ -207,3 +209,22 @@ func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+func isSameName(name1, name2 string) bool {
+	if name1 == name2 {
+		return true
+	}
+
+	if strings.Contains(name1, "-p") {
+		nameSlice := strings.Split(name1, "-")
+
+		switch len(nameSlice) {
+		case 3:
+			return nameSlice[0]+"-"+nameSlice[2] == name2
+		case 2:
+			return nameSlice[0] == name2
+		}
+	}
+
+	return false
+}
