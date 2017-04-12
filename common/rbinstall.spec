@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.13.0
+Version:         0.13.1
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -141,6 +141,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Apr 12 2017 Anton Novojilov <andy@essentialkaos.com> - 0.13.1-0
+- [cli] Minor improvement in config validation
+
 * Thu Mar 30 2017 Anton Novojilov <andy@essentialkaos.com> - 0.13.0-0
 - [cli] Added support for names without patch level
 - [cli] Automatic aliases creation for versions which contains -p0 in the name
