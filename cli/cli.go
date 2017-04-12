@@ -50,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.13.0"
+	VER  = "0.13.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -333,7 +333,7 @@ func validateConfig() {
 		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
 			switch value.(string) {
 			case "DWX":
-				return fmtc.Errorf("Property %s must be path to writable directory.", prop)
+				return fmtc.Errorf("Property %s must be path to writable directory", prop)
 			}
 		}
 
@@ -346,7 +346,7 @@ func validateConfig() {
 	})
 
 	if len(errs) != 0 {
-		terminal.PrintErrorMessage("Error while knf.validation:")
+		terminal.PrintErrorMessage("Error while config validation:")
 
 		for _, err := range errs {
 			terminal.PrintErrorMessage("  %v", err)
