@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v7/arg"
-	"pkg.re/essentialkaos/ek.v7/fmtc"
-	"pkg.re/essentialkaos/ek.v7/fmtutil"
-	"pkg.re/essentialkaos/ek.v7/fsutil"
-	"pkg.re/essentialkaos/ek.v7/httputil"
-	"pkg.re/essentialkaos/ek.v7/jsonutil"
-	"pkg.re/essentialkaos/ek.v7/path"
-	"pkg.re/essentialkaos/ek.v7/req"
-	"pkg.re/essentialkaos/ek.v7/terminal"
-	"pkg.re/essentialkaos/ek.v7/timeutil"
-	"pkg.re/essentialkaos/ek.v7/usage"
+	"pkg.re/essentialkaos/ek.v8/arg"
+	"pkg.re/essentialkaos/ek.v8/fmtc"
+	"pkg.re/essentialkaos/ek.v8/fmtutil"
+	"pkg.re/essentialkaos/ek.v8/fsutil"
+	"pkg.re/essentialkaos/ek.v8/httputil"
+	"pkg.re/essentialkaos/ek.v8/jsonutil"
+	"pkg.re/essentialkaos/ek.v8/path"
+	"pkg.re/essentialkaos/ek.v8/req"
+	"pkg.re/essentialkaos/ek.v8/terminal"
+	"pkg.re/essentialkaos/ek.v8/timeutil"
+	"pkg.re/essentialkaos/ek.v8/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.3.0"
+	VER  = "0.4.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 

@@ -21,25 +21,25 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v7/arg"
-	"pkg.re/essentialkaos/ek.v7/env"
-	"pkg.re/essentialkaos/ek.v7/fmtc"
-	"pkg.re/essentialkaos/ek.v7/fmtutil"
-	"pkg.re/essentialkaos/ek.v7/fsutil"
-	"pkg.re/essentialkaos/ek.v7/hash"
-	"pkg.re/essentialkaos/ek.v7/knf"
-	"pkg.re/essentialkaos/ek.v7/log"
-	"pkg.re/essentialkaos/ek.v7/req"
-	"pkg.re/essentialkaos/ek.v7/signal"
-	"pkg.re/essentialkaos/ek.v7/sortutil"
-	"pkg.re/essentialkaos/ek.v7/system"
-	"pkg.re/essentialkaos/ek.v7/terminal"
-	"pkg.re/essentialkaos/ek.v7/tmp"
-	"pkg.re/essentialkaos/ek.v7/usage"
-	"pkg.re/essentialkaos/ek.v7/usage/update"
-	"pkg.re/essentialkaos/ek.v7/version"
+	"pkg.re/essentialkaos/ek.v8/arg"
+	"pkg.re/essentialkaos/ek.v8/env"
+	"pkg.re/essentialkaos/ek.v8/fmtc"
+	"pkg.re/essentialkaos/ek.v8/fmtutil"
+	"pkg.re/essentialkaos/ek.v8/fsutil"
+	"pkg.re/essentialkaos/ek.v8/hash"
+	"pkg.re/essentialkaos/ek.v8/knf"
+	"pkg.re/essentialkaos/ek.v8/log"
+	"pkg.re/essentialkaos/ek.v8/req"
+	"pkg.re/essentialkaos/ek.v8/signal"
+	"pkg.re/essentialkaos/ek.v8/sortutil"
+	"pkg.re/essentialkaos/ek.v8/system"
+	"pkg.re/essentialkaos/ek.v8/terminal"
+	"pkg.re/essentialkaos/ek.v8/tmp"
+	"pkg.re/essentialkaos/ek.v8/usage"
+	"pkg.re/essentialkaos/ek.v8/usage/update"
+	"pkg.re/essentialkaos/ek.v8/version"
 
-	"pkg.re/essentialkaos/z7.v4"
+	"pkg.re/essentialkaos/z7.v5"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -50,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.13.1"
+	VER  = "0.14.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
