@@ -10,9 +10,9 @@ package cli
 import (
 	"time"
 
-	"pkg.re/essentialkaos/ek.v7/arg"
-	"pkg.re/essentialkaos/ek.v7/fmtc"
-	"pkg.re/essentialkaos/ek.v7/timeutil"
+	"pkg.re/essentialkaos/ek.v8/arg"
+	"pkg.re/essentialkaos/ek.v8/fmtc"
+	"pkg.re/essentialkaos/ek.v8/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //

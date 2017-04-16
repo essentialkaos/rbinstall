@@ -15,15 +15,15 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v7/arg"
-	"pkg.re/essentialkaos/ek.v7/fmtc"
-	"pkg.re/essentialkaos/ek.v7/fsutil"
-	"pkg.re/essentialkaos/ek.v7/hash"
-	"pkg.re/essentialkaos/ek.v7/jsonutil"
-	"pkg.re/essentialkaos/ek.v7/path"
-	"pkg.re/essentialkaos/ek.v7/sortutil"
-	"pkg.re/essentialkaos/ek.v7/timeutil"
-	"pkg.re/essentialkaos/ek.v7/usage"
+	"pkg.re/essentialkaos/ek.v8/arg"
+	"pkg.re/essentialkaos/ek.v8/fmtc"
+	"pkg.re/essentialkaos/ek.v8/fsutil"
+	"pkg.re/essentialkaos/ek.v8/hash"
+	"pkg.re/essentialkaos/ek.v8/jsonutil"
+	"pkg.re/essentialkaos/ek.v8/path"
+	"pkg.re/essentialkaos/ek.v8/sortutil"
+	"pkg.re/essentialkaos/ek.v8/timeutil"
+	"pkg.re/essentialkaos/ek.v8/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.6.1"
+	VER  = "0.7.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
