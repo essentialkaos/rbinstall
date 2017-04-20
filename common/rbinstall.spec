@@ -143,6 +143,7 @@ rm -rf %{buildroot}
 %changelog
 * Thu Apr 20 2017 Anton Novojilov <andy@essentialkaos.com> - 0.14.1-0
 - [cli] Typo fixed
+- [cli|gen|clone] Added build tags
 
 * Sun Apr 16 2017 Anton Novojilov <andy@essentialkaos.com> - 0.14.0-0
 - [cli|gen|clone] ek package updated to v8
