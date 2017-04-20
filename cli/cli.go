@@ -50,7 +50,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.14.0"
+	VER  = "0.14.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -166,7 +166,7 @@ var categorySize = map[string]int{
 	CATEGORY_OTHER:    0,
 }
 
-var useRawOuput = false
+var useRawOutput = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -200,7 +200,7 @@ func Init() {
 		return
 	}
 
-	if !useRawOuput {
+	if !useRawOutput {
 		fmtc.NewLine()
 	}
 
@@ -238,7 +238,7 @@ func configureUI() {
 
 	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
 		fmtc.DisableColors = true
-		useRawOuput = true
+		useRawOutput = true
 	}
 }
 
@@ -429,7 +429,7 @@ func listCommand() {
 		exit(0)
 	}
 
-	if useRawOuput {
+	if useRawOutput {
 		printRawListing(dist, arch)
 	} else {
 		printPrettyListing(dist, arch)
