@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v8/sortutil"
+	"pkg.re/essentialkaos/ek.v9/sortutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
