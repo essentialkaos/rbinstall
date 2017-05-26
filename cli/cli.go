@@ -21,25 +21,26 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"pkg.re/essentialkaos/ek.v8/arg"
-	"pkg.re/essentialkaos/ek.v8/env"
-	"pkg.re/essentialkaos/ek.v8/fmtc"
-	"pkg.re/essentialkaos/ek.v8/fmtutil"
-	"pkg.re/essentialkaos/ek.v8/fsutil"
-	"pkg.re/essentialkaos/ek.v8/hash"
-	"pkg.re/essentialkaos/ek.v8/knf"
-	"pkg.re/essentialkaos/ek.v8/log"
-	"pkg.re/essentialkaos/ek.v8/req"
-	"pkg.re/essentialkaos/ek.v8/signal"
-	"pkg.re/essentialkaos/ek.v8/sortutil"
-	"pkg.re/essentialkaos/ek.v8/system"
-	"pkg.re/essentialkaos/ek.v8/terminal"
-	"pkg.re/essentialkaos/ek.v8/tmp"
-	"pkg.re/essentialkaos/ek.v8/usage"
-	"pkg.re/essentialkaos/ek.v8/usage/update"
-	"pkg.re/essentialkaos/ek.v8/version"
+	"pkg.re/essentialkaos/ek.v9/env"
+	"pkg.re/essentialkaos/ek.v9/fmtc"
+	"pkg.re/essentialkaos/ek.v9/fmtutil"
+	"pkg.re/essentialkaos/ek.v9/fsutil"
+	"pkg.re/essentialkaos/ek.v9/hash"
+	"pkg.re/essentialkaos/ek.v9/knf"
+	"pkg.re/essentialkaos/ek.v9/log"
+	"pkg.re/essentialkaos/ek.v9/options"
+	"pkg.re/essentialkaos/ek.v9/req"
+	"pkg.re/essentialkaos/ek.v9/signal"
+	"pkg.re/essentialkaos/ek.v9/sortutil"
+	"pkg.re/essentialkaos/ek.v9/system"
+	"pkg.re/essentialkaos/ek.v9/terminal"
+	"pkg.re/essentialkaos/ek.v9/terminal/window"
+	"pkg.re/essentialkaos/ek.v9/tmp"
+	"pkg.re/essentialkaos/ek.v9/usage"
+	"pkg.re/essentialkaos/ek.v9/usage/update"
+	"pkg.re/essentialkaos/ek.v9/version"
 
-	"pkg.re/essentialkaos/z7.v5"
+	"pkg.re/essentialkaos/z7.v6"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -50,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.14.1"
+	VER  = "0.15.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -58,15 +59,15 @@ const (
 
 // List of supported command-line arguments
 const (
-	ARG_GEMS_UPDATE   = "g:gems-update"
-	ARG_GEMS_INSECURE = "S:gems-insecure"
-	ARG_RUBY_VERSION  = "r:ruby-version"
-	ARG_REINSTALL     = "R:reinstall"
-	ARG_REHASH        = "H:rehash"
-	ARG_NO_COLOR      = "nc:no-color"
-	ARG_NO_PROGRESS   = "np:no-progress"
-	ARG_HELP          = "h:help"
-	ARG_VER           = "v:version"
+	OPT_GEMS_UPDATE   = "g:gems-update"
+	OPT_GEMS_INSECURE = "S:gems-insecure"
+	OPT_RUBY_VERSION  = "r:ruby-version"
+	OPT_REINSTALL     = "R:reinstall"
+	OPT_REHASH        = "H:rehash"
+	OPT_NO_COLOR      = "nc:no-color"
+	OPT_NO_PROGRESS   = "np:no-progress"
+	OPT_HELP          = "h:help"
+	OPT_VER           = "v:version"
 )
 
 // List of supported config values
@@ -131,16 +132,16 @@ type PassThru struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-var argMap = arg.Map{
-	ARG_GEMS_UPDATE:   {Type: arg.BOOL},
-	ARG_GEMS_INSECURE: {Type: arg.BOOL},
-	ARG_RUBY_VERSION:  {Type: arg.BOOL},
-	ARG_REINSTALL:     {Type: arg.BOOL},
-	ARG_REHASH:        {Type: arg.BOOL},
-	ARG_NO_COLOR:      {Type: arg.BOOL},
-	ARG_NO_PROGRESS:   {Type: arg.BOOL},
-	ARG_HELP:          {Type: arg.BOOL, Alias: "u:usage"},
-	ARG_VER:           {Type: arg.BOOL, Alias: "ver"},
+var optMap = options.Map{
+	OPT_GEMS_UPDATE:   {Type: options.BOOL},
+	OPT_GEMS_INSECURE: {Type: options.BOOL},
+	OPT_RUBY_VERSION:  {Type: options.BOOL},
+	OPT_REINSTALL:     {Type: options.BOOL},
+	OPT_REHASH:        {Type: options.BOOL},
+	OPT_NO_COLOR:      {Type: options.BOOL},
+	OPT_NO_PROGRESS:   {Type: options.BOOL},
+	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
+	OPT_VER:           {Type: options.BOOL, Alias: "ver"},
 }
 
 var (
@@ -176,7 +177,7 @@ func Init() {
 
 	runtime.GOMAXPROCS(2)
 
-	args, errs := arg.Parse(argMap)
+	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
 		fmtc.NewLine()
@@ -190,12 +191,12 @@ func Init() {
 
 	configureUI()
 
-	if arg.GetB(ARG_VER) {
+	if options.GetB(OPT_VER) {
 		showAbout()
 		return
 	}
 
-	if arg.GetB(ARG_HELP) {
+	if options.GetB(OPT_HELP) {
 		showUsage()
 		return
 	}
@@ -204,7 +205,7 @@ func Init() {
 		fmtc.NewLine()
 	}
 
-	if arg.GetB(ARG_REHASH) {
+	if options.GetB(OPT_REHASH) {
 		rehashShims()
 	} else {
 		prepare()
@@ -232,7 +233,7 @@ func configureUI() {
 		}
 	}
 
-	if arg.GetB(ARG_NO_COLOR) {
+	if options.GetB(OPT_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
@@ -389,7 +390,7 @@ func process(args []string) {
 
 	if len(args) != 0 {
 		rubyVersion = args[0]
-	} else if arg.GetB(ARG_RUBY_VERSION) {
+	} else if options.GetB(OPT_RUBY_VERSION) {
 		rubyVersion, err = getVersionFromFile()
 
 		if err != nil {
@@ -405,7 +406,7 @@ func process(args []string) {
 		setupLogger()
 		setupTemp()
 
-		if arg.GetB(ARG_GEMS_UPDATE) {
+		if options.GetB(OPT_GEMS_UPDATE) {
 			updateGems(rubyVersion)
 		} else {
 			installCommand(rubyVersion)
@@ -536,7 +537,7 @@ func installCommand(rubyVersion string) {
 	checkDependencies(category)
 
 	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
 			fmtc.Printf("{y}Reinstalling %s...{!}\n\n", info.Name)
 		} else {
 			terminal.PrintWarnMessage("Version %s already installed", info.Name)
@@ -600,7 +601,7 @@ func installCommand(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) && arg.GetB(ARG_REINSTALL) {
+		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
 			err = os.RemoveAll(getVersionPath(info.Name))
 
 			if err != nil {
@@ -960,7 +961,7 @@ func downloadFile(url, fileName string) (string, error) {
 		return "", fmtc.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
-	if arg.GetB(ARG_NO_PROGRESS) {
+	if options.GetB(OPT_NO_PROGRESS) {
 		_, err = io.Copy(fd, resp.Body)
 	} else {
 		bar := makeProgressBar(resp.ContentLength)
@@ -991,7 +992,7 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 			// Currently subversion is only one - railsexpress
 			subVerName := versions[index].Variations[0].Name
 
-			if arg.GetB(ARG_NO_COLOR) {
+			if options.GetB(OPT_NO_COLOR) {
 				switch {
 				case installed[curName] && installed[subVerName]:
 					prettyName = fmt.Sprintf("%s-railsexpress ••", curName)
@@ -1069,7 +1070,7 @@ func printRubyVersion(category, name string) {
 
 // configureCategorySizes configure column size for each category
 func configureCategorySizes(data map[string]index.CategoryData) {
-	terminalWidth, _ := terminal.GetSize()
+	terminalWidth := window.GetWidth()
 
 	if terminalWidth == -1 || terminalWidth > 150 {
 		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
@@ -1235,7 +1236,7 @@ func getAlignSpaces(t string, l int) string {
 
 // getGemSourceURL return url of gem source
 func getGemSourceURL() string {
-	if !arg.GetB(ARG_GEMS_INSECURE) && knf.GetB(GEMS_SOURCE_SECURE, false) {
+	if !options.GetB(OPT_GEMS_INSECURE) && knf.GetB(GEMS_SOURCE_SECURE, false) {
 		return "https://" + knf.GetS(GEMS_SOURCE)
 	}
 
@@ -1376,15 +1377,15 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 func showUsage() {
 	info := usage.NewInfo("", "version")
 
-	info.AddOption(ARG_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
-	info.AddOption(ARG_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
-	info.AddOption(ARG_RUBY_VERSION, "Install version defined in version file")
-	info.AddOption(ARG_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
-	info.AddOption(ARG_REHASH, "Rehash rbenv shims")
-	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
-	info.AddOption(ARG_NO_PROGRESS, "Disable progress bar and spinner")
-	info.AddOption(ARG_HELP, "Show this help message")
-	info.AddOption(ARG_VER, "Show version")
+	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
+	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
+	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
+	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
+	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
+	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
+	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
+	info.AddOption(OPT_HELP, "Show this help message")
+	info.AddOption(OPT_VER, "Show version")
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0", "Install latest available release in 2.0.0")

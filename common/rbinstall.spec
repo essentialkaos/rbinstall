@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.14.1
+Version:         0.15.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -70,8 +70,9 @@ Utility for installing different prebuilt versions of ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.7.0
+Version:         0.8.0
 Release:         0%{?dist}
+Group:           Development/Tools
 
 %description gen
 Utility for generating RBInstall index.
@@ -81,8 +82,9 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         0.4.0
+Version:         0.5.0
 Release:         0%{?dist}
+Group:           Development/Tools
 
 %description clone
 Utility for cloning RBInstall repository.
@@ -141,6 +143,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu May 25 2017 Anton Novojilov <andy@essentialkaos.com> - 0.15.0-0
+- [cli|gen|clone] ek package updated to v9
+- [cli] z7 package updated to v6
+
 * Thu Apr 20 2017 Anton Novojilov <andy@essentialkaos.com> - 0.14.1-0
 - [cli] Typo fixed
 - [cli|gen|clone] Added build tags

@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v8/arg"
-	"pkg.re/essentialkaos/ek.v8/fmtc"
-	"pkg.re/essentialkaos/ek.v8/fmtutil"
-	"pkg.re/essentialkaos/ek.v8/fsutil"
-	"pkg.re/essentialkaos/ek.v8/httputil"
-	"pkg.re/essentialkaos/ek.v8/jsonutil"
-	"pkg.re/essentialkaos/ek.v8/path"
-	"pkg.re/essentialkaos/ek.v8/req"
-	"pkg.re/essentialkaos/ek.v8/terminal"
-	"pkg.re/essentialkaos/ek.v8/timeutil"
-	"pkg.re/essentialkaos/ek.v8/usage"
+	"pkg.re/essentialkaos/ek.v9/fmtc"
+	"pkg.re/essentialkaos/ek.v9/fmtutil"
+	"pkg.re/essentialkaos/ek.v9/fsutil"
+	"pkg.re/essentialkaos/ek.v9/httputil"
+	"pkg.re/essentialkaos/ek.v9/jsonutil"
+	"pkg.re/essentialkaos/ek.v9/options"
+	"pkg.re/essentialkaos/ek.v9/path"
+	"pkg.re/essentialkaos/ek.v9/req"
+	"pkg.re/essentialkaos/ek.v9/terminal"
+	"pkg.re/essentialkaos/ek.v9/timeutil"
+	"pkg.re/essentialkaos/ek.v9/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -32,14 +32,14 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.4.0"
+	VER  = "0.5.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
 const (
-	ARG_NO_COLOR = "nc:no-color"
-	ARG_HELP     = "h:help"
-	ARG_VER      = "v:version"
+	OPT_NO_COLOR = "nc:no-color"
+	OPT_HELP     = "h:help"
+	OPT_VER      = "v:version"
 )
 
 const (
@@ -62,10 +62,10 @@ type FileInfo struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-var argList = arg.Map{
-	ARG_NO_COLOR: &arg.V{Type: arg.BOOL},
-	ARG_HELP:     &arg.V{Type: arg.BOOL, Alias: "u:usage"},
-	ARG_VER:      &arg.V{Type: arg.BOOL, Alias: "ver"},
+var optMap = options.Map{
+	OPT_NO_COLOR: {Type: options.BOOL},
+	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
+	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -74,7 +74,7 @@ var argList = arg.Map{
 func Init() {
 	runtime.GOMAXPROCS(1)
 
-	args, errs := arg.Parse(argList)
+	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
 		for _, err := range errs {
@@ -84,16 +84,16 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if arg.GetB(ARG_NO_COLOR) {
+	if options.GetB(OPT_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
-	if arg.GetB(ARG_VER) {
+	if options.GetB(OPT_VER) {
 		showAbout()
 		return
 	}
 
-	if arg.GetB(ARG_HELP) || len(args) != 2 {
+	if options.GetB(OPT_HELP) || len(args) != 2 {
 		showUsage()
 		return
 	}
@@ -365,9 +365,9 @@ func printWarn(f string, a ...interface{}) {
 func showUsage() {
 	info := usage.NewInfo("", "url", "path")
 
-	info.AddOption(ARG_NO_COLOR, "Disable colors in output")
-	info.AddOption(ARG_HELP, "Show this help message")
-	info.AddOption(ARG_VER, "Show version")
+	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
+	info.AddOption(OPT_HELP, "Show this help message")
+	info.AddOption(OPT_VER, "Show version")
 
 	info.AddExample("https://rbinstall.kaos.io /path/to/clone", "Clone EK repository to /path/to/clone")
 
