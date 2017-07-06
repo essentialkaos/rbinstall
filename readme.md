@@ -8,27 +8,27 @@
 
 `rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
-## Usage demo
+### Usage demo
 
 [![demo](https://gh.kaos.io/rbinstall-0100.gif)](#usage-demo)
 
-## Installation
+### Installation
 
-### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```bash
 [sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
-### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
+#### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 
 ```bash
 [sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
-### Using `install.sh`
+#### Using `install.sh`
 We provide simple bash script `install.sh` for installing the application from the sources.
 
 ```bash
@@ -47,7 +47,7 @@ If you have some issues with installing, try to use script in debug mode:
 [sudo] ./install.sh --debug
 ```
 
-## Usage
+### Usage
 ```
 Usage: rbinstall {options} version
 
@@ -82,17 +82,19 @@ Examples
 
 ```
 
-## Build Status
+### Build Status
 
 | Branch | Status |
-|------------|--------|
+|--------|--------|
 | `master` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
 | `develop` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
 
-## Contributing
+### Contributing
 
 Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).
 
-## License
+### License
 
 [EKOL](https://essentialkaos.com/ekol)
+
+<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.io/ekgh.svg"/></a></p>
