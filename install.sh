@@ -11,7 +11,7 @@
 # /$$$$$$| $$ \  $$|  $$$$$$/   | $$  | $$  | $$| $$$$$$$$| $$$$$$$$| $$$$$$$$| $$  | $$
 #|______/|__/  \__/ \______/    |__/  |__/  |__/|________/|________/|________/|__/  |__/
 #
-#                            EK UTILITY INSTALLER v1.1.0
+#                            EK UTILITY INSTALLER v1.1.1
 #
 ########################################################################################
 
@@ -215,7 +215,7 @@ action() {
 
   if [[ $? -ne 0 ]] ; then
     show "${CL_RED}+${CL_NORM} $desc"
-    error "\nError occured with last action. Install process will be interrupted.\n"
+    error "\nError occurred with last action. Install process will be interrupted.\n"
     exit 1
   else
     show "${CL_GREEN}+${CL_NORM} $desc"
@@ -282,13 +282,13 @@ requireDEB() {
   fi
 }
 
-# Require root priveleges
+# Require root privileges
 #
 # Code: No
 # Echo: No
 requireRoot() {
   if [[ $(id -u) != "0" ]] ; then
-    error "Superuser priveleges is required for install"
+    error "Superuser privileges is required for install"
     exit 1
   fi
 }
