@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.15.0"
+	VER  = "0.16.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -250,6 +250,7 @@ func prepare() {
 	loadConfig()
 	validateConfig()
 	configureProxy()
+	setEnvVars()
 
 	signal.Handlers{
 		signal.INT: intSignalHandler,
@@ -275,6 +276,23 @@ func configureProxy() {
 	os.Setenv("HTTPS_PROXY", knf.GetS(PROXY_URL))
 
 	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+}
+
+// setEnvVars set environment variables if rbenv is not initialized
+func setEnvVars() {
+	ev := env.Get()
+
+	if ev.GetS("RBENV_ROOT") != "" {
+		return
+	}
+
+	rbenvDir := knf.GetS(RBENV_DIR)
+	newPath := rbenvDir + "/bin:"
+	newPath += rbenvDir + "/libexec:"
+	newPath += ev.GetS("PATH")
+
+	os.Setenv("RBENV_ROOT", rbenvDir)
+	os.Setenv("PATH", newPath)
 }
 
 // checkPerms check user for sudo
