@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.8.0"
+	VER  = "0.8.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
