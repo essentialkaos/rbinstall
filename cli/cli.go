@@ -618,6 +618,21 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
+	checkBinaryTask := &Task{
+		Desc:    "Checking binary",
+		Handler: checkBinaryTaskHandler,
+	}
+
+	_, err = checkBinaryTask.Start(info.Name, getUnpackDirPath())
+
+	if err != nil {
+		fmtc.NewLine()
+		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
 			err = os.RemoveAll(getVersionPath(info.Name))
@@ -781,6 +796,17 @@ func unpackTaskHandler(args ...string) (string, error) {
 	}
 
 	return "", nil
+}
+
+func checkBinaryTaskHandler(args ...string) (string, error) {
+	version := args[0]
+	unpackDir := args[1]
+
+	binary := unpackDir + "/" + version + "/bin/ruby"
+
+	err := exec.Command(binary, "--version").Start()
+
+	return "", err
 }
 
 func installGemTaskHandler(args ...string) (string, error) {

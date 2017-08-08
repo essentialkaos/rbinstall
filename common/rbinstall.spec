@@ -145,6 +145,7 @@ rm -rf %{buildroot}
 %changelog
 * Fri Aug 04 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.0-0
 - [cli] Added rehash support for uninitialized rbenv
+- [cli] Checking Ruby binary after unpacking
 - [cli|gen|clone] ek package updated to latest version
 
 * Thu May 25 2017 Anton Novojilov <andy@essentialkaos.com> - 0.15.0-0
