@@ -205,10 +205,11 @@ func Init() {
 		fmtc.NewLine()
 	}
 
+	prepare()
+
 	if options.GetB(OPT_REHASH) {
 		rehashShims()
 	} else {
-		prepare()
 		fetchIndex()
 		process(args)
 	}
