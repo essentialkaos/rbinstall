@@ -2,9 +2,7 @@
 <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
 </p>
 
-<p align="center">
-<img width="300" height="150" src="https://gh.kaos.io/rbinstall.png"/>
-</p>
+<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rbinstall.svg"/></a></p>
 
 `rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
@@ -17,14 +15,14 @@
 #### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```bash
-[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
 #### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 
 ```bash
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
