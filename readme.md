@@ -2,9 +2,7 @@
 <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
 </p>
 
-<p align="center">
-<img width="300" height="150" src="https://gh.kaos.io/rbinstall.png"/>
-</p>
+<p align="center"><img src="https://gh.kaos.io/rbinstall.svg"/></p>
 
 `rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
