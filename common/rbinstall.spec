@@ -145,6 +145,7 @@ rm -rf %{buildroot}
 %changelog
 * Wed Oct 11 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.1-0
 - [cli] Fixed output for 'rbenv rehash' errors
+- [cli] Improved commands errors logging
 
 * Fri Aug 04 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.0-0
 - [cli] Added rehash support for uninitialized rbenv

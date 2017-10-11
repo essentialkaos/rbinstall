@@ -831,7 +831,7 @@ func updateRubygemsTaskHandler(args ...string) (string, error) {
 
 func rehashTaskHandler(args ...string) (string, error) {
 	rehashCmd := exec.Command("rbenv", "rehash")
-	output, err := rehashCmd.Output()
+	output, err := rehashCmd.CombinedOutput()
 
 	if err != nil {
 		return "", errors.New(string(output))
@@ -930,7 +930,7 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		gemCmd.Args = append(gemCmd.Args, "--source", getGemSourceURL())
 	}
 
-	output, err := gemCmd.Output()
+	output, err := gemCmd.CombinedOutput()
 
 	if err == nil {
 		version := getInstalledGemVersion(rubyVersion, gem, start)
@@ -969,7 +969,7 @@ func updateRubygems(version string) error {
 		"--source", getGemSourceURL(),
 	)
 
-	output, err := gemCmd.Output()
+	output, err := gemCmd.CombinedOutput()
 
 	if err == nil {
 		return nil
