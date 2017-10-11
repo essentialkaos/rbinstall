@@ -722,7 +722,7 @@ func installCommand(rubyVersion string) {
 	}
 }
 
-// rehashShims
+// rehashShims run 'rbenv rehash' command
 func rehashShims() {
 	rehashTask := &Task{
 		Desc:    "Rehashing",
@@ -766,6 +766,7 @@ func getVersionFromFile() (string, error) {
 	return versionName, nil
 }
 
+// checkHashTaskHandler check archive checksum
 func checkHashTaskHandler(args ...string) (string, error) {
 	filePath := args[0]
 	fileHash := args[1]
@@ -779,6 +780,7 @@ func checkHashTaskHandler(args ...string) (string, error) {
 	return "", nil
 }
 
+// unpackTaskHandler run unpacking command
 func unpackTaskHandler(args ...string) (string, error) {
 	file := args[0]
 	outputDir := args[1]
@@ -799,6 +801,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	return "", nil
 }
 
+// checkBinaryTaskHandler run and check installer binary
 func checkBinaryTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	unpackDir := args[1]
@@ -810,6 +813,7 @@ func checkBinaryTaskHandler(args ...string) (string, error) {
 	return "", err
 }
 
+// installGemTaskHandler run gems installing command
 func installGemTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	gem := args[1]
@@ -817,6 +821,7 @@ func installGemTaskHandler(args ...string) (string, error) {
 	return runGemCmd(version, "install", gem)
 }
 
+// updateGemTaskHandler run gems update command
 func updateGemTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	gem := args[1]
@@ -824,11 +829,13 @@ func updateGemTaskHandler(args ...string) (string, error) {
 	return runGemCmd(version, "update", gem)
 }
 
+// updateRubygemsTaskHandler run rubygems update command
 func updateRubygemsTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	return "", updateRubygems(version)
 }
 
+// rehashTaskHandler run 'rbenv rehash' command
 func rehashTaskHandler(args ...string) (string, error) {
 	rehashCmd := exec.Command("rbenv", "rehash")
 	output, err := rehashCmd.CombinedOutput()
