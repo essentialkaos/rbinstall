@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.16.0"
+	VER  = "0.16.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -831,7 +831,13 @@ func updateRubygemsTaskHandler(args ...string) (string, error) {
 
 func rehashTaskHandler(args ...string) (string, error) {
 	rehashCmd := exec.Command("rbenv", "rehash")
-	return "", rehashCmd.Run()
+	output, err := rehashCmd.Output()
+
+	if err != nil {
+		return "", errors.New(string(output))
+	}
+
+	return "", nil
 }
 
 // updateGems update gems installed by rbinstall on defined version

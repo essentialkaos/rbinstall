@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.16.0
+Version:         0.16.1
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Oct 11 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.1-0
+- [cli] Fixed output for 'rbenv rehash' errors
+
 * Fri Aug 04 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.0-0
 - [cli] Added rehash support for uninitialized rbenv
 - [cli] Checking Ruby binary after unpacking
