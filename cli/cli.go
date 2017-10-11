@@ -789,7 +789,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 
 	if err != nil {
 		unpackError := err
-		actionLog, err := logFailedAction([]byte(output))
+		actionLog, err := logFailedAction(output)
 
 		if err != nil {
 			return "", fmtc.Errorf("7za return error: %s", unpackError.Error())
@@ -1377,8 +1377,8 @@ func getNameWithoutPatchLevel(name string) string {
 
 // logFailedAction save data to temporary log file and return path
 // to this log file
-func logFailedAction(data []byte) (string, error) {
-	if len(data) == 0 {
+func logFailedAction(message string) (string, error) {
+	if len(message) == 0 {
 		return "", errors.New("Output data is empty")
 	}
 
@@ -1388,7 +1388,7 @@ func logFailedAction(data []byte) (string, error) {
 		os.Remove(tmpName)
 	}
 
-	data = append(data, []byte("\n\n")...)
+	data := append([]byte(message), []byte("\n\n")...)
 
 	err := ioutil.WriteFile(tmpName, data, 0666)
 
