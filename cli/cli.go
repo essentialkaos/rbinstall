@@ -841,7 +841,7 @@ func rehashTaskHandler(args ...string) (string, error) {
 	output, err := rehashCmd.CombinedOutput()
 
 	if err != nil {
-		return "", errors.New(string(output))
+		return "", errors.New(strings.TrimRight(string(output), "\r\n"))
 	}
 
 	return "", nil
@@ -949,7 +949,7 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		return version, nil
 	}
 
-	actionLog, err := logFailedAction(output)
+	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		switch cmd {
@@ -982,7 +982,7 @@ func updateRubygems(version string) error {
 		return nil
 	}
 
-	actionLog, err := logFailedAction(output)
+	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		return fmt.Errorf("Can't update rubygems. Update command output saved as %s", actionLog)
