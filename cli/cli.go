@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.16.0"
+	VER  = "0.16.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -722,7 +722,7 @@ func installCommand(rubyVersion string) {
 	}
 }
 
-// rehashShims
+// rehashShims run 'rbenv rehash' command
 func rehashShims() {
 	rehashTask := &Task{
 		Desc:    "Rehashing",
@@ -766,6 +766,7 @@ func getVersionFromFile() (string, error) {
 	return versionName, nil
 }
 
+// checkHashTaskHandler check archive checksum
 func checkHashTaskHandler(args ...string) (string, error) {
 	filePath := args[0]
 	fileHash := args[1]
@@ -779,6 +780,7 @@ func checkHashTaskHandler(args ...string) (string, error) {
 	return "", nil
 }
 
+// unpackTaskHandler run unpacking command
 func unpackTaskHandler(args ...string) (string, error) {
 	file := args[0]
 	outputDir := args[1]
@@ -787,7 +789,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 
 	if err != nil {
 		unpackError := err
-		actionLog, err := logFailedAction([]byte(output))
+		actionLog, err := logFailedAction(output)
 
 		if err != nil {
 			return "", fmtc.Errorf("7za return error: %s", unpackError.Error())
@@ -799,6 +801,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	return "", nil
 }
 
+// checkBinaryTaskHandler run and check installer binary
 func checkBinaryTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	unpackDir := args[1]
@@ -810,6 +813,7 @@ func checkBinaryTaskHandler(args ...string) (string, error) {
 	return "", err
 }
 
+// installGemTaskHandler run gems installing command
 func installGemTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	gem := args[1]
@@ -817,6 +821,7 @@ func installGemTaskHandler(args ...string) (string, error) {
 	return runGemCmd(version, "install", gem)
 }
 
+// updateGemTaskHandler run gems update command
 func updateGemTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	gem := args[1]
@@ -824,14 +829,22 @@ func updateGemTaskHandler(args ...string) (string, error) {
 	return runGemCmd(version, "update", gem)
 }
 
+// updateRubygemsTaskHandler run rubygems update command
 func updateRubygemsTaskHandler(args ...string) (string, error) {
 	version := args[0]
 	return "", updateRubygems(version)
 }
 
+// rehashTaskHandler run 'rbenv rehash' command
 func rehashTaskHandler(args ...string) (string, error) {
 	rehashCmd := exec.Command("rbenv", "rehash")
-	return "", rehashCmd.Run()
+	output, err := rehashCmd.CombinedOutput()
+
+	if err != nil {
+		return "", errors.New(strings.TrimRight(string(output), "\r\n"))
+	}
+
+	return "", nil
 }
 
 // updateGems update gems installed by rbinstall on defined version
@@ -924,7 +937,7 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		gemCmd.Args = append(gemCmd.Args, "--source", getGemSourceURL())
 	}
 
-	output, err := gemCmd.Output()
+	output, err := gemCmd.CombinedOutput()
 
 	if err == nil {
 		version := getInstalledGemVersion(rubyVersion, gem, start)
@@ -936,7 +949,7 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		return version, nil
 	}
 
-	actionLog, err := logFailedAction(output)
+	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		switch cmd {
@@ -963,13 +976,13 @@ func updateRubygems(version string) error {
 		"--source", getGemSourceURL(),
 	)
 
-	output, err := gemCmd.Output()
+	output, err := gemCmd.CombinedOutput()
 
 	if err == nil {
 		return nil
 	}
 
-	actionLog, err := logFailedAction(output)
+	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		return fmt.Errorf("Can't update rubygems. Update command output saved as %s", actionLog)
@@ -1364,8 +1377,8 @@ func getNameWithoutPatchLevel(name string) string {
 
 // logFailedAction save data to temporary log file and return path
 // to this log file
-func logFailedAction(data []byte) (string, error) {
-	if len(data) == 0 {
+func logFailedAction(message string) (string, error) {
+	if len(message) == 0 {
 		return "", errors.New("Output data is empty")
 	}
 
@@ -1375,7 +1388,7 @@ func logFailedAction(data []byte) (string, error) {
 		os.Remove(tmpName)
 	}
 
-	data = append(data, []byte("\n\n")...)
+	data := append([]byte(message), []byte("\n\n")...)
 
 	err := ioutil.WriteFile(tmpName, data, 0666)
 
