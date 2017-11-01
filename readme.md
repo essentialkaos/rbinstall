@@ -1,8 +1,15 @@
+<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rbinstall.svg"/></a></p>
+
 <p align="center">
-<a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
+  <a href="https://travis-ci.org/essentialkaos/rbinstall"><img src="https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master" /></a>
+  <a href="https://goreportcard.com/report/github.com/essentialkaos/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" /></a>
+  <a href="https://codebeat.co/projects/github-com-essentialkaos-rbinstall-master"><img alt="codebeat badge" src="https://codebeat.co/badges/b78de32a-6867-4bd3-9135-8244d4813531" /></a>
+  <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.io/ekol.svg" /></a>
 </p>
 
-<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rbinstall.svg"/></a></p>
+<p align="center">
+  <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
+</p>
 
 `rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
 
