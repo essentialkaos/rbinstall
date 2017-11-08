@@ -144,8 +144,10 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue Nov 07 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.0-0
-- [cli] Deprecated 'no-ri' and 'no-rdoc' in configuration file
-- [cli] Fixed compatibility with latest version of RubyGems gem
+- [cli] Now required version of rubygems gem can be defined through 
+  configuration file
+- [cli] 'gems:no-ri' and 'gems:no-rdoc' options replaced by 'gems:no-document'
+- [cli] Minor UI improvements
 - [cli] Code refactoring
 
 * Wed Oct 11 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.1-0
