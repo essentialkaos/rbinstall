@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.16.1"
+	VER  = "0.17.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -80,9 +80,9 @@ const (
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
 	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
+	GEMS_RUBYGEMS_VERSION = "gems:rubygems-version"
 	GEMS_ALLOW_UPDATE     = "gems:allow-update"
-	GEMS_NO_RI            = "gems:no-ri"
-	GEMS_NO_RDOC          = "gems:no-rdoc"
+	GEMS_NO_DOCUMENT      = "gems:no-document"
 	GEMS_SOURCE           = "gems:source"
 	GEMS_SOURCE_SECURE    = "gems:source-secure"
 	GEMS_INSTALL          = "gems:install"
@@ -654,13 +654,14 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if knf.GetB(GEMS_RUBYGEMS_UPDATE, true) {
+	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
+		rgVersion := knf.GetS(GEMS_RUBYGEMS_VERSION, "latest")
 		updRubygemsTask := &Task{
-			Desc:    "Updating RubyGems",
+			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
 			Handler: updateRubygemsTaskHandler,
 		}
 
-		_, err = updRubygemsTask.Start(info.Name)
+		_, err = updRubygemsTask.Start(info.Name, rgVersion)
 
 		if err != nil {
 			terminal.PrintWarnMessage(err.Error())
@@ -832,7 +833,9 @@ func updateGemTaskHandler(args ...string) (string, error) {
 // updateRubygemsTaskHandler run rubygems update command
 func updateRubygemsTaskHandler(args ...string) (string, error) {
 	version := args[0]
-	return "", updateRubygems(version)
+	rgVersion := args[1]
+
+	return "", updateRubygems(version, rgVersion)
 }
 
 // rehashTaskHandler run 'rbenv rehash' command
@@ -864,59 +867,72 @@ func updateGems(rubyVersion string) {
 	checkRBEnv()
 
 	runDate = time.Now()
+	installed := false
 
 	fmtc.Printf("Updating gems for {c}%s{!}...\n\n", rubyVersion)
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if knf.GetB(GEMS_RUBYGEMS_UPDATE, true) {
+	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
+		rgVersion := knf.GetS(GEMS_RUBYGEMS_VERSION, "latest")
 		updRubygemsTask := &Task{
-			Desc:    "Updating RubyGems",
+			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
 			Handler: updateRubygemsTaskHandler,
 		}
 
-		updRubygemsTask.Start(rubyVersion)
+		updRubygemsTask.Start(rubyVersion, rgVersion)
+
+		installed = true
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
-		var updateGemTask *Task
+	if knf.GetS(GEMS_INSTALL) != "" {
+		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
+			var updateGemTask *Task
 
-		if isGemInstalled(rubyVersion, gem) {
-			updateGemTask = &Task{
-				Desc:    fmtc.Sprintf("Updating %s", gem),
-				Handler: updateGemTaskHandler,
+			if isGemInstalled(rubyVersion, gem) {
+				updateGemTask = &Task{
+					Desc:    fmtc.Sprintf("Updating %s", gem),
+					Handler: updateGemTaskHandler,
+				}
+			} else {
+				updateGemTask = &Task{
+					Desc:    fmtc.Sprintf("Installing %s", gem),
+					Handler: installGemTaskHandler,
+				}
 			}
-		} else {
-			updateGemTask = &Task{
-				Desc:    fmtc.Sprintf("Installing %s", gem),
-				Handler: installGemTaskHandler,
+
+			installedVersion, err := updateGemTask.Start(rubyVersion, gem)
+
+			if err == nil {
+				if installedVersion != "" {
+					log.Info(
+						"[%s] Updated gem %s to version %s for %s",
+						currentUser.RealName, gem, installedVersion, rubyVersion,
+					)
+				}
+			} else {
+				fmtc.NewLine()
+				terminal.PrintErrorMessage(err.Error())
+				exit(1)
 			}
 		}
 
-		installedVersion, err := updateGemTask.Start(rubyVersion, gem)
-
-		if err == nil {
-			if installedVersion != "" {
-				log.Info(
-					"[%s] Updated gem %s to version %s for %s",
-					currentUser.RealName, gem, installedVersion, rubyVersion,
-				)
-			}
-		} else {
-			fmtc.NewLine()
-			terminal.PrintErrorMessage(err.Error())
-			exit(1)
-		}
+		installed = true
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	rehashShims()
+	if installed {
+		rehashShims()
 
-	fmtc.NewLine()
-	fmtc.Println("{g}All gems successfully updated!{!}")
+		fmtc.NewLine()
+		fmtc.Println("{g}All gems successfully updated!{!}")
+	} else {
+		fmtc.NewLine()
+		fmtc.Println("{y}There is nothing to update{!}")
+	}
 }
 
 // runGemCmd run some gem command for some version
@@ -925,12 +941,8 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	rubyPath := getVersionPath(rubyVersion)
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
 
-	if knf.GetB(GEMS_NO_RI) {
-		gemCmd.Args = append(gemCmd.Args, "--no-ri")
-	}
-
-	if knf.GetB(GEMS_NO_RDOC) {
-		gemCmd.Args = append(gemCmd.Args, "--no-rdoc")
+	if knf.GetB(GEMS_NO_DOCUMENT) {
+		gemCmd.Args = append(gemCmd.Args, "--no-document")
 	}
 
 	if knf.GetS(GEMS_SOURCE) != "" {
@@ -968,13 +980,25 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 	}
 }
 
-func updateRubygems(version string) error {
+// updateRubygems update rubygems to defined version
+func updateRubygems(version, rgVersion string) error {
+	var gemCmd *exec.Cmd
+
 	rubyPath := getVersionPath(version)
-	gemCmd := exec.Command(
-		rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-		"update", "--system", "--no-ri", "--no-rdoc",
-		"--source", getGemSourceURL(),
-	)
+
+	if rgVersion == "latest" {
+		gemCmd = exec.Command(
+			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
+			"update", "--system", "--no-document",
+			"--source", getGemSourceURL(),
+		)
+	} else {
+		gemCmd = exec.Command(
+			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
+			"update", "--system", rgVersion,
+			"--no-document", "--source", getGemSourceURL(),
+		)
+	}
 
 	output, err := gemCmd.CombinedOutput()
 

@@ -31,17 +31,17 @@
 
 [gems]
 
-  # Update rubygems gem to latest version
+  # Update rubygems gem
   rubygems-update: true
+
+  # Update rubygems gem to given version
+  rubygems-version: 2.6.14
 
   # Allow gems update
   allow-update: true
 
-  # Add --no-ri to install command
-  no-ri: true
-
-  # Add --no-rdoc to install command
-  no-rdoc: true
+  # Add --no-document to install/update command
+  no-document: true
 
   # Source for gem install without scheme
   source: gems.kaos.io

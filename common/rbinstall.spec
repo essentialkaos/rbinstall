@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.16.1
+Version:         0.17.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.8
+BuildRequires:   golang >= 1.9
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -143,6 +143,14 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Tue Nov 07 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.0-0
+- [cli] Fixed bug with updating gems with empty gem list
+- [cli] Now required version of rubygems gem can be defined through 
+  configuration file
+- [cli] 'gems:no-ri' and 'gems:no-rdoc' options replaced by 'gems:no-document'
+- [cli] Minor UI improvements
+- [cli] Code refactoring
+
 * Wed Oct 11 2017 Anton Novojilov <andy@essentialkaos.com> - 0.16.1-0
 - [cli] Fixed output for 'rbenv rehash' errors
 - [cli] Improved commands errors logging
