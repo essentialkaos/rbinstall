@@ -144,6 +144,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue Nov 07 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.0-0
+- [cli] Fixed bug with updating gems with empty gem list
 - [cli] Now required version of rubygems gem can be defined through 
   configuration file
 - [cli] 'gems:no-ri' and 'gems:no-rdoc' options replaced by 'gems:no-document'
