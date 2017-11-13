@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.17.0"
+	VER  = "0.17.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -989,14 +989,14 @@ func updateRubygems(version, rgVersion string) error {
 	if rgVersion == "latest" {
 		gemCmd = exec.Command(
 			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system", "--no-document",
+			"update", "--system", "--no-ri", "--no-rdoc",
 			"--source", getGemSourceURL(),
 		)
 	} else {
 		gemCmd = exec.Command(
 			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system", rgVersion,
-			"--no-document", "--source", getGemSourceURL(),
+			"update", "--system", rgVersion, "--no-ri", "--no-rdoc",
+			"--source", getGemSourceURL(),
 		)
 	}
 
