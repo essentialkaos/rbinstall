@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.17.1"
+	VER  = "0.17.2"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -477,7 +477,7 @@ func printPrettyListing(dist, arch string) {
 	})
 
 	headerTemplate := fmt.Sprintf(
-		"{dY} %%-%ds{!} {dC} %%-%ds{!} {dG} %%-%ds{!} {dM} %%-%ds{!} {dS} %%-%ds{!}\n\n",
+		"{*@y} %%-%ds{!} {*@c} %%-%ds{!} {*@g} %%-%ds{!} {*@m} %%-%ds{!} {*@s} %%-%ds{!}\n\n",
 		categorySize[CATEGORY_RUBY], categorySize[CATEGORY_JRUBY],
 		categorySize[CATEGORY_REE], categorySize[CATEGORY_RUBINIUS],
 		categorySize[CATEGORY_OTHER],

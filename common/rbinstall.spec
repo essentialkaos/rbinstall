@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.17.1
+Version:         0.17.2
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Sun Dec 31 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.2-0
+- [cli] Minor UI improvements
+
 * Mon Nov 13 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.1-0
 - [cli] Fixed bug with updating RubyGems gems for old Ruby
   versions (<= 1.9.3-p551)
