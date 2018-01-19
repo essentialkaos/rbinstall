@@ -58,10 +58,11 @@ Usage: rbinstall {options} version
 
 Options
 
+  --reinstall, -R        Reinstall already installed version (if allowed in config)
+  --uninstall, -U        Uninstall already installed version (if allowed in config)
   --gems-update, -g      Update gems for some version (if allowed in config)
   --gems-insecure, -S    Use HTTP instead of HTTPS for installing gems
   --ruby-version, -r     Install version defined in version file
-  --reinstall, -R        Reinstall already installed version (if allowed in config)
   --rehash, -H           Rehash rbenv shims
   --no-color, -nc        Disable colors in output
   --no-progress, -np     Disable progress bar and spinner
@@ -72,6 +73,9 @@ Examples
 
   rbinstall 2.0.0-p598
   Install 2.0.0-p598
+
+  rbinstall 2.0.0
+  Install latest available release in 2.0.0
 
   rbinstall 2.0.0-p598-railsexpress
   Install 2.0.0-p598 with railsexpress patches
@@ -84,6 +88,7 @@ Examples
 
   rbinstall -r
   Install version defined in .ruby-version file
+
 
 ```
 
