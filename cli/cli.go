@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.17.2"
+	VER  = "0.18.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -59,10 +59,11 @@ const (
 
 // List of supported command-line arguments
 const (
+	OPT_REINSTALL     = "R:reinstall"
+	OPT_UNINSTALL     = "U:uninstall"
 	OPT_GEMS_UPDATE   = "g:gems-update"
 	OPT_GEMS_INSECURE = "S:gems-insecure"
 	OPT_RUBY_VERSION  = "r:ruby-version"
-	OPT_REINSTALL     = "R:reinstall"
 	OPT_REHASH        = "H:rehash"
 	OPT_NO_COLOR      = "nc:no-color"
 	OPT_NO_PROGRESS   = "np:no-progress"
@@ -78,6 +79,7 @@ const (
 	PROXY_URL             = "proxy:url"
 	RBENV_DIR             = "rbenv:dir"
 	RBENV_ALLOW_OVERWRITE = "rbenv:allow-overwrite"
+	RBENV_ALLOW_UNINSTALL = "rbenv:allow-uninstall"
 	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
 	GEMS_RUBYGEMS_VERSION = "gems:rubygems-version"
@@ -133,10 +135,11 @@ type PassThru struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var optMap = options.Map{
+	OPT_REINSTALL:     {Type: options.BOOL, Conflicts: OPT_UNINSTALL},
+	OPT_UNINSTALL:     {Type: options.BOOL, Conflicts: OPT_REINSTALL},
 	OPT_GEMS_UPDATE:   {Type: options.BOOL},
 	OPT_GEMS_INSECURE: {Type: options.BOOL},
 	OPT_RUBY_VERSION:  {Type: options.BOOL},
-	OPT_REINSTALL:     {Type: options.BOOL},
 	OPT_REHASH:        {Type: options.BOOL},
 	OPT_NO_COLOR:      {Type: options.BOOL},
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
@@ -427,6 +430,8 @@ func process(args []string) {
 
 		if options.GetB(OPT_GEMS_UPDATE) {
 			updateGems(rubyVersion)
+		} else if options.GetB(OPT_UNINSTALL) {
+			unistallCommand(rubyVersion)
 		} else {
 			installCommand(rubyVersion)
 		}
@@ -716,11 +721,62 @@ func installCommand(rubyVersion string) {
 
 	if aliasCreated {
 		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
-		fmtc.Printf("{g}Version {g*}%s{g} successfully installed as {g*}%s{g}.{!}\n", info.Name, cleanVersionName)
+		fmtc.Printf("{g}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
 	} else {
 		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
-		fmtc.Printf("{g}Version {g*}%s{g} successfully installed.{!}\n", info.Name)
+		fmtc.Printf("{g}Version {*}%s{!*} successfully installed{!}\n", info.Name)
 	}
+}
+
+// unistallCommand unistall some version of ruby
+func unistallCommand(rubyVersion string) {
+	if !knf.GetB(RBENV_ALLOW_UNINSTALL, false) {
+		terminal.PrintErrorMessage("Uninstalling is not allowed")
+		exit(1)
+	}
+
+	osName, archName, err := getSystemInfo()
+
+	if err != nil {
+		terminal.PrintErrorMessage("%v", err)
+		exit(1)
+	}
+
+	info, _ := repoIndex.Find(osName, archName, rubyVersion)
+
+	if info == nil {
+		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
+		exit(1)
+	}
+
+	if !isVersionInstalled(info.Name) {
+		terminal.PrintWarnMessage("Version %s is not installed", rubyVersion)
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	unistallTask := &Task{
+		Desc:    fmt.Sprintf("Unistalling %s", rubyVersion),
+		Handler: unistallTaskHandler,
+	}
+
+	_, err = unistallTask.Start(info.Name)
+
+	if err != nil {
+		fmtc.NewLine()
+		terminal.PrintErrorMessage(err.Error())
+		exit(1)
+	}
+
+	// //////////////////////////////////////////////////////////////////////////////// //
+
+	rehashShims()
+
+	fmtc.NewLine()
+
+	log.Info("[%s] Uninstalled version %s", currentUser.RealName, info.Name)
+	fmtc.Printf("{g}Version {*}%s{!*} successfully uninstalled{!}\n", rubyVersion)
 }
 
 // rehashShims run 'rbenv rehash' command
@@ -737,6 +793,36 @@ func rehashShims() {
 		terminal.PrintErrorMessage(err.Error())
 		exit(1)
 	}
+}
+
+// checkHashTaskHandler check archive checksum
+func unistallTaskHandler(args ...string) (string, error) {
+	versionName := args[0]
+
+	versionsDir := getRBEnvVersionsPath()
+	cleanVersionName := getNameWithoutPatchLevel(versionName)
+
+	var err error
+
+	// Remove symlink
+	if fsutil.IsExist(versionsDir + "/" + cleanVersionName) {
+		err = os.Remove(versionsDir + "/" + cleanVersionName)
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Remove directory with files
+	if fsutil.IsExist(versionsDir + "/" + versionName) {
+		err = os.RemoveAll(versionsDir + "/" + versionName)
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return "", nil
 }
 
 // getVersionFromFile try to read version file and return defined version
@@ -1459,10 +1545,11 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 func showUsage() {
 	info := usage.NewInfo("", "version")
 
+	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
+	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
-	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")

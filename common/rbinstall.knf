@@ -23,8 +23,11 @@
   # Path to rbenv main directory
   dir: /usr/local/rbenv
 
-  # Allow version overwriting
+  # Allow version overwriting (reinstall)
   allow-overwrite: true
+
+  # Allow uninstalling
+  allow-uninstall: true
 
   # Make alias for versions with -p0 suffix
   make-alias: true

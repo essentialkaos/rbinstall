@@ -32,7 +32,7 @@ import (
 
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.5.1"
+	VER  = "0.5.2"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
