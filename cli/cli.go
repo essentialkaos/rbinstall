@@ -431,7 +431,7 @@ func process(args []string) {
 		if options.GetB(OPT_GEMS_UPDATE) {
 			updateGems(rubyVersion)
 		} else if options.GetB(OPT_UNINSTALL) {
-			unistallCommand(rubyVersion)
+			uninstallCommand(rubyVersion)
 		} else {
 			installCommand(rubyVersion)
 		}
@@ -728,8 +728,8 @@ func installCommand(rubyVersion string) {
 	}
 }
 
-// unistallCommand unistall some version of ruby
-func unistallCommand(rubyVersion string) {
+// uninstallCommand unistall some version of ruby
+func uninstallCommand(rubyVersion string) {
 	if !knf.GetB(RBENV_ALLOW_UNINSTALL, false) {
 		terminal.PrintErrorMessage("Uninstalling is not allowed")
 		exit(1)
@@ -795,7 +795,7 @@ func rehashShims() {
 	}
 }
 
-// checkHashTaskHandler check archive checksum
+// unistallTaskHandler remove data for given ruby version
 func unistallTaskHandler(args ...string) (string, error) {
 	versionName := args[0]
 
