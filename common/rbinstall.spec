@@ -45,12 +45,12 @@
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
 Version:         0.18.0
-Release:         0%{?dist}
+Release:         1%{?dist}
 Group:           Applications/System
 License:         EKOL
 URL:             https://github.com/essentialkaos/rbinstall
 
-Source0:         https://source.kaos.io/%{name}/%{name}-%{version}.tar.bz2
+Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Fri Feb 02 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.0-1
+- Migrated from kaos.io to kaos.st
+
 * Fri Jan 19 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.0-0
 - [cli] Added ability to delete some ruby version
 - [cli] Added error messages about used conflicts options

@@ -1,10 +1,10 @@
-<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rbinstall.svg"/></a></p>
+<p align="center"><a href="#readme"><img src="https://gh.kaos.st/rbinstall.svg"/></a></p>
 
 <p align="center">
   <a href="https://travis-ci.org/essentialkaos/rbinstall"><img src="https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master" /></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" /></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-rbinstall-master"><img alt="codebeat badge" src="https://codebeat.co/badges/b78de32a-6867-4bd3-9135-8244d4813531" /></a>
-  <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.io/ekol.svg" /></a>
+  <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg" /></a>
 </p>
 
 <p align="center">
@@ -15,21 +15,21 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.io/rbinstall-0100.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rbinstall-0100.gif)](#usage-demo)
 
 ### Installation
 
 #### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```bash
-[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
 #### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 
 ```bash
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
@@ -107,4 +107,4 @@ Before contributing to this project please read our [Contributing Guidelines](ht
 
 [EKOL](https://essentialkaos.com/ekol)
 
-<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.io/ekgh.svg"/></a></p>
+<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.st/ekgh.svg"/></a></p>
