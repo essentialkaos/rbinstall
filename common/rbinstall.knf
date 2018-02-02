@@ -8,7 +8,7 @@
 [storage]
 
   # URL of rbinstall storage
-  url: http://rbinstall.kaos.io
+  url: https://rbinstall.kaos.st
 
 [proxy]
 
@@ -47,7 +47,7 @@
   no-document: true
 
   # Source for gem install without scheme
-  source: gems.kaos.io
+  source: gems.kaos.st
 
   # If source support https this property must be set to true
   source-secure: true
