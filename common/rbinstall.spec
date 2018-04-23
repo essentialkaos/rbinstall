@@ -145,6 +145,8 @@ rm -rf %{buildroot}
 %changelog
 * Tue Apr 24 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.1-0
 - Fixed bug with using option '--no-document' for old rubygem versions
+- ek package updated to latest stable release
+- z7 package updated to v7
 
 * Fri Feb 02 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.0-1
 - Migrated from kaos.io to kaos.st

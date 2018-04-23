@@ -40,7 +40,7 @@ import (
 	"pkg.re/essentialkaos/ek.v9/usage/update"
 	"pkg.re/essentialkaos/ek.v9/version"
 
-	"pkg.re/essentialkaos/z7.v6"
+	"pkg.re/essentialkaos/z7.v7"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -872,7 +872,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	file := args[0]
 	outputDir := args[1]
 
-	output, err := z7.Extract(&z7.Props{File: file, OutputDir: outputDir})
+	output, err := z7.Extract(z7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
 		unpackError := err
