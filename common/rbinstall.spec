@@ -45,7 +45,7 @@
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
 Version:         0.18.0
-Release:         1%{?dist}
+Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
 URL:             https://github.com/essentialkaos/rbinstall
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Tue Apr 24 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.1-0
+- Fixed bug with using option '--no-document' for old rubygem versions
+
 * Fri Feb 02 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.0-1
 - Migrated from kaos.io to kaos.st
 

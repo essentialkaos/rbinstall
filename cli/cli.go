@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2017 ESSENTIAL KAOS                         //
+//                     Copyright (c) 2009-2018 ESSENTIAL KAOS                         //
 //        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.18.0"
+	VER  = "0.18.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -1075,13 +1075,13 @@ func updateRubygems(version, rgVersion string) error {
 	if rgVersion == "latest" {
 		gemCmd = exec.Command(
 			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system", "--no-ri", "--no-rdoc",
+			"update", "--system",
 			"--source", getGemSourceURL(),
 		)
 	} else {
 		gemCmd = exec.Command(
 			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system", rgVersion, "--no-ri", "--no-rdoc",
+			"update", "--system", rgVersion,
 			"--source", getGemSourceURL(),
 		)
 	}
