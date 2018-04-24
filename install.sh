@@ -158,7 +158,7 @@ doInstall() {
          "go" "get" "pkg.re/essentialkaos/ek.v9"
 
   action "Installed z7 package" \
-         "go" "get" "pkg.re/essentialkaos/z7.v6"
+         "go" "get" "pkg.re/essentialkaos/z7.v7"
 
   action "Installed go-linenoise package" \
          "go" "get" "pkg.re/essentialkaos/go-linenoise.v3"
