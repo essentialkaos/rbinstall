@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.18.0
+Version:         0.18.1
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
