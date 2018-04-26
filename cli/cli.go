@@ -51,7 +51,7 @@ import (
 
 const (
 	APP  = "RBInstall"
-	VER  = "0.18.1"
+	VER  = "0.18.2"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -562,7 +562,7 @@ func installCommand(rubyVersion string) {
 
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
-			fmtc.Printf("{y}Reinstalling %s...{!}\n\n", info.Name)
+			fmtc.Printf("{y}Reinstalling %s…{!}\n\n", info.Name)
 		} else {
 			terminal.PrintWarnMessage("Version %s already installed", info.Name)
 			exit(0)
@@ -582,7 +582,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s {s-}(%s){!}...\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {c}%s {s-}(%s){!}…\n", info.Name, fmtutil.PrettySize(info.Size))
 
 	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
 	file, err := downloadFile(url, info.File)
@@ -955,7 +955,7 @@ func updateGems(rubyVersion string) {
 	runDate = time.Now()
 	installed := false
 
-	fmtc.Printf("Updating gems for {c}%s{!}...\n\n", rubyVersion)
+	fmtc.Printf("Updating gems for {c}%s{!}…\n\n", rubyVersion)
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 

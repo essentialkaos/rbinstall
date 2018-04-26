@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.18.1
+Version:         0.18.2
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Apr 26 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.2-0
+- Minor UI improvements
+
 * Tue Apr 24 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.1-0
 - Fixed bug with using option '--no-document' for old rubygem versions
 - ek package updated to latest stable release
