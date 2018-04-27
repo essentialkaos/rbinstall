@@ -30,18 +30,21 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.5.2"
+	VER  = "0.6.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
+// Options
 const (
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
 )
 
+// Categories
 const (
 	CATEGORY_RUBY     = "ruby"
 	CATEGORY_JRUBY    = "jruby"
@@ -52,6 +55,7 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// FileInfo contains info about file with data
 type FileInfo struct {
 	File string
 	URL  string
@@ -112,28 +116,23 @@ func Init() {
 // checkArguments checks command line arguments
 func checkArguments(url, dir string) {
 	if !httputil.IsURL(url) {
-		printError("\nUrl %s doesn't looks like valid url\n", url)
-		os.Exit(1)
+		printErrorAndExit("\nUrl %s doesn't looks like valid url\n", url)
 	}
 
 	if !fsutil.IsExist(dir) {
-		printError("\nDirectory %s does not exist\n", dir)
-		os.Exit(1)
+		printErrorAndExit("\nDirectory %s does not exist\n", dir)
 	}
 
 	if !fsutil.IsDir(dir) {
-		printError("\nTarget %s is not a directory\n", dir)
-		os.Exit(1)
+		printErrorAndExit("\nTarget %s is not a directory\n", dir)
 	}
 
 	if !fsutil.IsReadable(dir) {
-		printError("\nDirectory %s is not readable\n", dir)
-		os.Exit(1)
+		printErrorAndExit("\nDirectory %s is not readable\n", dir)
 	}
 
 	if !fsutil.IsExecutable(dir) {
-		printError("\nDirectory %s is not exectable\n", dir)
-		os.Exit(1)
+		printErrorAndExit("\nDirectory %s is not exectable\n", dir)
 	}
 
 	if !fsutil.IsEmptyDir(dir) {
@@ -146,13 +145,11 @@ func cloneRepository(url, dir string) {
 	repoIndex, err := fetchIndex(url)
 
 	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	if repoIndex.Meta.Items == 0 {
-		printWarn("Repository is empty")
-		os.Exit(0)
+		printErrorAndExit("Repository is empty")
 	}
 
 	printRepositoryInfo(repoIndex)
@@ -225,8 +222,7 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 			err := os.MkdirAll(fileDir, 0755)
 
 			if err != nil {
-				printError("Can't create directory %s: %v", fileDir, err)
-				os.Exit(1)
+				printErrorAndExit("Can't create directory %s: %v", fileDir, err)
 			}
 		}
 
@@ -254,9 +250,7 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 
 		if err != nil {
 			fmtc.Println("{r}ERROR{!}\n")
-			printError("%v\n", err)
-
-			os.Exit(1)
+			printErrorAndExit("%v\n", err)
 		}
 
 		fmtc.Printf("{g}DONE{!} {s-}(%s){!}\n", timeutil.PrettyDuration(dlTime))
@@ -343,8 +337,7 @@ func saveIndex(repoIndex *index.Index, dir string) {
 
 	if err != nil {
 		fmtc.Println("{r}ERROR{!}")
-		printError("Can't save index as %s: %v", indexPath, err)
-		os.Exit(1)
+		printErrorAndExit("Can't save index as %s: %v", indexPath, err)
 	}
 
 	fmtc.Println("{g}DONE{!}")
@@ -352,12 +345,18 @@ func saveIndex(repoIndex *index.Index, dir string) {
 
 // printError prints error message to console
 func printError(f string, a ...interface{}) {
-	fmtc.Printf("{r}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
 }
 
 // printError prints warning message to console
 func printWarn(f string, a ...interface{}) {
-	fmtc.Printf("{y}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{y}"+f+"{!}\n", a...)
+}
+
+// printErrorAndExit print error message and exit with non-zero exit code
+func printErrorAndExit(f string, a ...interface{}) {
+	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
+	os.Exit(1)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //

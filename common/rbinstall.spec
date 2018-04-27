@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.18.2
+Version:         0.19.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.9
+BuildRequires:   golang >= 1.10
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.8.2
+Version:         0.9.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -82,7 +82,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         0.5.2
+Version:         0.6.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -143,8 +143,11 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
-* Thu Apr 26 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.2-0
-- Minor UI improvements
+* Thu Apr 26 2018 Anton Novojilov <andy@essentialkaos.com> - 0.19.0-0
+- [cli|gen] Added EOL info support (end-of-life)
+- [cli|gen|clone] Fixed bug with error output to stdout
+- [cli|gen|clone] Code refactoring
+- [cli] Minor UI improvements
 
 * Tue Apr 24 2018 Anton Novojilov <andy@essentialkaos.com> - 0.18.1-0
 - Fixed bug with using option '--no-document' for old rubygem versions

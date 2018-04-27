@@ -30,19 +30,23 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.8.2"
+	VER  = "0.9.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
+// Options
 const (
 	OPT_OUTPUT   = "o:output"
+	OPT_EOL      = "E:eol"
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
 )
 
+// Categories
 const (
 	CATEGORY_RUBY     = "ruby"
 	CATEGORY_JRUBY    = "jruby"
@@ -53,12 +57,15 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// FileInfo contains info about file
 type FileInfo struct {
 	OS       string
 	Arch     string
 	Category string
 	File     string
 }
+
+// ////////////////////////////////////////////////////////////////////////////////// //
 
 type fileInfoSlice []FileInfo
 
@@ -73,8 +80,11 @@ func (s fileInfoSlice) Less(i, j int) bool {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+var eolInfo map[string]bool
+
 var optMap = options.Map{
 	OPT_OUTPUT:   {},
+	OPT_EOL:      {},
 	OPT_NO_COLOR: {Type: options.BOOL},
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
@@ -82,6 +92,7 @@ var optMap = options.Map{
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Init is main func
 func Init() {
 	runtime.GOMAXPROCS(1)
 
@@ -111,35 +122,46 @@ func Init() {
 
 	dataDir := args[0]
 
+	loadEOLInfo()
 	checkDir(dataDir)
 	buildIndex(dataDir)
+}
+
+// loadEOLInfo load EOL info from file
+func loadEOLInfo() {
+	eolInfo = make(map[string]bool)
+
+	if !options.Has(OPT_EOL) {
+		return
+	}
+
+	err := jsonutil.DecodeFile(options.GetS(OPT_EOL), eolInfo)
+
+	if err != nil {
+		printErrorAndExit(err.Error())
+	}
 }
 
 // checkDir do some checks for provided dir
 func checkDir(dataDir string) {
 	if !fsutil.IsDir(dataDir) {
-		printError("Target %s is not a directory", dataDir)
-		os.Exit(1)
+		printErrorAndExit("Target %s is not a directory", dataDir)
 	}
 
 	if !fsutil.IsExist(dataDir) {
-		printError("Directory %s does not exist", dataDir)
-		os.Exit(1)
+		printErrorAndExit("Directory %s does not exist", dataDir)
 	}
 
 	if !fsutil.IsReadable(dataDir) {
-		printError("Directory %s is not readable", dataDir)
-		os.Exit(1)
+		printErrorAndExit("Directory %s is not readable", dataDir)
 	}
 
 	if !fsutil.IsExecutable(dataDir) {
-		printError("Directory %s is not exectable", dataDir)
-		os.Exit(1)
+		printErrorAndExit("Directory %s is not exectable", dataDir)
 	}
 
 	if options.GetS(OPT_OUTPUT) == "" && !fsutil.IsWritable(dataDir) {
-		printError("Directory %s is not writable", dataDir)
-		os.Exit(1)
+		printErrorAndExit("Directory %s is not writable", dataDir)
 	}
 }
 
@@ -155,8 +177,7 @@ func buildIndex(dataDir string) {
 		})
 
 	if len(fileList) == 0 {
-		printWarn("Can't find any data in given directory\n")
-		os.Exit(1)
+		printErrorAndExit("Can't find any data in given directory\n")
 	}
 
 	outputFile := getOutputFile(dataDir)
@@ -182,6 +203,7 @@ func buildIndex(dataDir string) {
 			Path:  path.Join(fileInfo.OS, fileInfo.Arch),
 			Size:  fileSize,
 			Added: fileAdded.Unix(),
+			EOL:   isEOLVersion(fileName),
 		}
 
 		oldVersionInfo, _ := oldIndex.Find(fileInfo.OS, fileInfo.Arch, fileName)
@@ -238,6 +260,21 @@ func buildIndex(dataDir string) {
 	)
 }
 
+// isEOLVersion return true if it EOL version
+func isEOLVersion(name string) bool {
+	if len(eolInfo) == 0 {
+		return false
+	}
+
+	for version := range eolInfo {
+		if strings.HasPrefix(name, version) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // processFiles parse file list to FileInfo slice
 func processFiles(files []string) []FileInfo {
 	var result []FileInfo
@@ -267,8 +304,7 @@ func saveIndex(outputFile string, i *index.Index) {
 	indexData, err := i.Encode()
 
 	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	if fsutil.IsExist(outputFile) {
@@ -278,8 +314,7 @@ func saveIndex(outputFile string, i *index.Index) {
 	err = ioutil.WriteFile(outputFile, indexData, 0644)
 
 	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
+		printErrorAndExit(err.Error())
 	}
 }
 
@@ -331,12 +366,18 @@ func getExistentIndex(file string) *index.Index {
 
 // printError prints error message to console
 func printError(f string, a ...interface{}) {
-	fmtc.Printf("{r}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
 }
 
 // printError prints warning message to console
 func printWarn(f string, a ...interface{}) {
-	fmtc.Printf("{y}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{y}"+f+"{!}\n", a...)
+}
+
+// printErrorAndExit print error message and exit with non-zero exit code
+func printErrorAndExit(f string, a ...interface{}) {
+	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
+	os.Exit(1)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -345,6 +386,7 @@ func showUsage() {
 	info := usage.NewInfo("", "dir")
 
 	info.AddOption(OPT_OUTPUT, "Custom index output", "file")
+	info.AddOption(OPT_OUTPUT, "File with EOL info", "file")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
 

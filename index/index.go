@@ -43,6 +43,7 @@ type VersionInfo struct {
 	Size  int64  `json:"size"`  // Size in bytes
 	Hash  string `json:"hash"`  // SHA-256 hash
 	Added int64  `json:"added"` // Timestamp with date when version was added to repo
+	EOL   bool   `json:"eol"`   // EOL marker
 
 	// Variations contains info about version variations (railsexpress version
 	// for example)

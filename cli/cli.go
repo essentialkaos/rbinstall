@@ -49,9 +49,10 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.18.2"
+	VER  = "0.19.0"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -65,6 +66,7 @@ const (
 	OPT_GEMS_INSECURE = "S:gems-insecure"
 	OPT_RUBY_VERSION  = "r:ruby-version"
 	OPT_REHASH        = "H:rehash"
+	OPT_EOL           = "E:eol"
 	OPT_NO_COLOR      = "nc:no-color"
 	OPT_NO_PROGRESS   = "np:no-progress"
 	OPT_HELP          = "h:help"
@@ -127,6 +129,7 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// PassThru is reader for progress bar
 type PassThru struct {
 	io.Reader
 	pb *pb.ProgressBar
@@ -141,6 +144,7 @@ var optMap = options.Map{
 	OPT_GEMS_INSECURE: {Type: options.BOOL},
 	OPT_RUBY_VERSION:  {Type: options.BOOL},
 	OPT_REHASH:        {Type: options.BOOL},
+	OPT_EOL:           {Type: options.BOOL},
 	OPT_NO_COLOR:      {Type: options.BOOL},
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
 	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
@@ -270,8 +274,7 @@ func configureProxy() {
 	proxyURL, err := url.Parse(knf.GetS(PROXY_URL))
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't parse proxy URL: %v", err)
-		exit(1)
+		printErrorAndExit("Can't parse proxy URL: %v", err)
 	}
 
 	os.Setenv("http_proxy", knf.GetS(PROXY_URL))
@@ -306,13 +309,11 @@ func checkPerms() {
 	currentUser, err = system.CurrentUser()
 
 	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	if !currentUser.IsRoot() {
-		terminal.PrintErrorMessage("This action requires superuser (root) privileges")
-		exit(1)
+		printErrorAndExit("This action requires superuser (root) privileges")
 	}
 }
 
@@ -321,8 +322,7 @@ func setupLogger() {
 	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
 
 	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	log.MinLevel(knf.GetI(LOG_LEVEL))
@@ -335,8 +335,7 @@ func setupTemp() {
 	temp, err = tmp.NewTemp(knf.GetS(MAIN_TMP_DIR, "/tmp"))
 
 	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 }
 
@@ -345,8 +344,7 @@ func loadConfig() {
 	err := knf.Global(CONFIG_FILE)
 
 	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 }
 
@@ -384,13 +382,11 @@ func fetchIndex() {
 	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't fetch repository index: %v", err)
-		exit(1)
+		printErrorAndExit("Can't fetch repository index: %v", err)
 	}
 
 	if resp.StatusCode != 200 {
-		terminal.PrintErrorMessage("Can't fetch repository index: CDN return status code %d", resp.StatusCode)
-		exit(1)
+		printErrorAndExit("Can't fetch repository index: CDN return status code %d", resp.StatusCode)
 	}
 
 	repoIndex = index.NewIndex()
@@ -398,8 +394,7 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't decode repository index json: %v", err)
-		exit(1)
+		printErrorAndExit("Can't decode repository index json: %v", err)
 	}
 
 	repoIndex.Sort()
@@ -416,8 +411,7 @@ func process(args []string) {
 		rubyVersion, err = getVersionFromFile()
 
 		if err != nil {
-			terminal.PrintErrorMessage(err.Error())
-			exit(1)
+			printErrorAndExit(err.Error())
 		}
 
 		fmtc.Printf("{s}Installing version {s*}%s{s} from version file{!}\n\n", rubyVersion)
@@ -445,8 +439,7 @@ func listCommand() {
 	dist, arch, err := getSystemInfo()
 
 	if err != nil {
-		terminal.PrintErrorMessage("%v", err)
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	if !repoIndex.HasData(dist, arch) {
@@ -464,11 +457,11 @@ func listCommand() {
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
 	var (
-		ruby     = repoIndex.Data[dist][arch][CATEGORY_RUBY]
-		jruby    = repoIndex.Data[dist][arch][CATEGORY_JRUBY]
-		ree      = repoIndex.Data[dist][arch][CATEGORY_REE]
-		rubinius = repoIndex.Data[dist][arch][CATEGORY_RUBINIUS]
-		other    = repoIndex.Data[dist][arch][CATEGORY_OTHER]
+		ruby     = getCategoryData(dist, arch, CATEGORY_RUBY)
+		jruby    = getCategoryData(dist, arch, CATEGORY_JRUBY)
+		ree      = getCategoryData(dist, arch, CATEGORY_REE)
+		rubinius = getCategoryData(dist, arch, CATEGORY_RUBINIUS)
+		other    = getCategoryData(dist, arch, CATEGORY_OTHER)
 
 		installed = getInstalledVersionsMap()
 	)
@@ -526,6 +519,10 @@ func printRawListing(dist, arch string) {
 	for _, category := range repoIndex.Data[dist][arch] {
 		for _, version := range category {
 
+			if version.EOL && !options.GetB(OPT_EOL) {
+				continue
+			}
+
 			result = append(result, version.Name)
 
 			if len(version.Variations) != 0 {
@@ -541,20 +538,37 @@ func printRawListing(dist, arch string) {
 	fmt.Print(strings.Join(result, "\n"))
 }
 
+// getCategoryData return filtered versions slice
+func getCategoryData(dist, arch, category string) index.CategoryData {
+	if options.GetB(OPT_EOL) {
+		return repoIndex.Data[dist][arch][category]
+	}
+
+	var result = index.CategoryData{}
+
+	for _, version := range repoIndex.Data[dist][arch][category] {
+		if version.EOL {
+			continue
+		}
+
+		result = append(result, version)
+	}
+
+	return result
+}
+
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
 	osName, archName, err := getSystemInfo()
 
 	if err != nil {
-		terminal.PrintErrorMessage("%v", err)
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	info, category := repoIndex.Find(osName, archName, rubyVersion)
 
 	if info == nil {
-		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
-		exit(1)
+		printErrorAndExit("Can't find info about version %s", rubyVersion)
 	}
 
 	checkRBEnv()
@@ -573,8 +587,7 @@ func installCommand(rubyVersion string) {
 		err = os.Mkdir(getUnpackDirPath(), 0770)
 
 		if err != nil {
-			terminal.PrintWarnMessage("Can't create directory for unpacking data: %v", err)
-			exit(1)
+			printErrorAndExit("Can't create directory for unpacking data: %v", err)
 		}
 	} else {
 		os.Remove(getUnpackDirPath() + "/" + info.Name)
@@ -588,8 +601,7 @@ func installCommand(rubyVersion string) {
 	file, err := downloadFile(url, info.File)
 
 	if err != nil {
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -603,8 +615,7 @@ func installCommand(rubyVersion string) {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -618,8 +629,7 @@ func installCommand(rubyVersion string) {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -633,8 +643,7 @@ func installCommand(rubyVersion string) {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -644,8 +653,7 @@ func installCommand(rubyVersion string) {
 			err = os.RemoveAll(getVersionPath(info.Name))
 
 			if err != nil {
-				terminal.PrintErrorMessage("Can't remove %s: %v", info.Name, err)
-				exit(1)
+				printErrorAndExit("Can't remove %s: %v", info.Name, err)
 			}
 		}
 	}
@@ -653,8 +661,7 @@ func installCommand(rubyVersion string) {
 	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
 
 	if err != nil {
-		terminal.PrintErrorMessage("Can't move unpacked data to rbenv directory: %v", err)
-		exit(1)
+		printErrorAndExit("Can't move unpacked data to rbenv directory: %v", err)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -686,8 +693,7 @@ func installCommand(rubyVersion string) {
 
 			if err != nil {
 				fmtc.NewLine()
-				terminal.PrintErrorMessage(err.Error())
-				exit(1)
+				printErrorAndExit(err.Error())
 			}
 		}
 	}
@@ -731,27 +737,23 @@ func installCommand(rubyVersion string) {
 // uninstallCommand unistall some version of ruby
 func uninstallCommand(rubyVersion string) {
 	if !knf.GetB(RBENV_ALLOW_UNINSTALL, false) {
-		terminal.PrintErrorMessage("Uninstalling is not allowed")
-		exit(1)
+		printErrorAndExit("Uninstalling is not allowed")
 	}
 
 	osName, archName, err := getSystemInfo()
 
 	if err != nil {
-		terminal.PrintErrorMessage("%v", err)
-		exit(1)
+		printErrorAndExit("%v", err)
 	}
 
 	info, _ := repoIndex.Find(osName, archName, rubyVersion)
 
 	if info == nil {
-		terminal.PrintWarnMessage("Can't find info about version %s", rubyVersion)
-		exit(1)
+		printErrorAndExit("Can't find info about version %s", rubyVersion)
 	}
 
 	if !isVersionInstalled(info.Name) {
-		terminal.PrintWarnMessage("Version %s is not installed", rubyVersion)
-		exit(1)
+		printErrorAndExit("Version %s is not installed", rubyVersion)
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -765,8 +767,7 @@ func uninstallCommand(rubyVersion string) {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -790,8 +791,7 @@ func rehashShims() {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.PrintErrorMessage(err.Error())
-		exit(1)
+		printErrorAndExit(err.Error())
 	}
 }
 
@@ -939,15 +939,13 @@ func rehashTaskHandler(args ...string) (string, error) {
 // updateGems update gems installed by rbinstall on defined version
 func updateGems(rubyVersion string) {
 	if !knf.GetB(GEMS_ALLOW_UPDATE, true) {
-		terminal.PrintErrorMessage("Gems update is disabled in configuration file")
-		exit(1)
+		printErrorAndExit("Gems update is disabled in configuration file")
 	}
 
 	fullPath := getVersionPath(rubyVersion)
 
 	if !fsutil.IsExist(fullPath) {
-		terminal.PrintErrorMessage("Version %s is not installed", rubyVersion)
-		exit(1)
+		printErrorAndExit("Version %s is not installed", rubyVersion)
 	}
 
 	checkRBEnv()
@@ -1000,8 +998,7 @@ func updateGems(rubyVersion string) {
 				}
 			} else {
 				fmtc.NewLine()
-				terminal.PrintErrorMessage(err.Error())
-				exit(1)
+				printErrorAndExit(err.Error())
 			}
 		}
 
@@ -1416,15 +1413,13 @@ func checkRBEnv() {
 	versionsDir := getRBEnvVersionsPath()
 
 	if !fsutil.CheckPerms("DWX", versionsDir) {
-		terminal.PrintErrorMessage("Directory %s must be writable and executable", versionsDir)
-		exit(1)
+		printErrorAndExit("Directory %s must be writable and executable", versionsDir)
 	}
 
 	binary := knf.GetS(RBENV_DIR) + "/libexec/rbenv"
 
 	if !fsutil.CheckPerms("FRX", binary) {
-		terminal.PrintErrorMessage("rbenv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
-		exit(1)
+		printErrorAndExit("rbenv is not installed. Follow these instructions to install rbenv https://github.com/rbenv/rbenv#installation")
 	}
 }
 
@@ -1435,8 +1430,7 @@ func checkDependencies(category string) {
 	}
 
 	if env.Which("java") == "" {
-		terminal.PrintErrorMessage("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
-		exit(1)
+		printErrorAndExit("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
 	}
 }
 
@@ -1513,7 +1507,12 @@ func logFailedAction(message string) (string, error) {
 
 // intSignalHandler is INT (Ctrl+C) signal handler
 func intSignalHandler() {
-	terminal.PrintWarnMessage("\n\nInstall process canceled by Ctrl+C")
+	printErrorAndExit("\n\nInstall process canceled by Ctrl+C")
+}
+
+// printErrorAndExit print error message and exit with non-zero exit code
+func printErrorAndExit(f string, a ...interface{}) {
+	terminal.PrintErrorMessage(f, a...)
 	exit(1)
 }
 
@@ -1551,6 +1550,7 @@ func showUsage() {
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
+	info.AddOption(OPT_EOL, "Print versions with EOL (end-of-life)")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(OPT_HELP, "Show this help message")
