@@ -62,11 +62,11 @@ const (
 const (
 	OPT_REINSTALL     = "R:reinstall"
 	OPT_UNINSTALL     = "U:uninstall"
-	OPT_GEMS_UPDATE   = "g:gems-update"
-	OPT_GEMS_INSECURE = "S:gems-insecure"
-	OPT_RUBY_VERSION  = "r:ruby-version"
+	OPT_GEMS_UPDATE   = "G:gems-update"
 	OPT_REHASH        = "H:rehash"
-	OPT_ALL           = "A:all"
+	OPT_GEMS_INSECURE = "s:gems-insecure"
+	OPT_RUBY_VERSION  = "r:ruby-version"
+	OPT_ALL           = "a:all"
 	OPT_NO_COLOR      = "nc:no-color"
 	OPT_NO_PROGRESS   = "np:no-progress"
 	OPT_HELP          = "h:help"
@@ -1547,19 +1547,19 @@ func showUsage() {
 	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
+	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
-	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
-	info.AddOption(OPT_ALL, "Print all avialable versions")
-	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
+	info.AddOption(OPT_ALL, "Print all available versions")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
+	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0", "Install latest available release in 2.0.0")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
-	info.AddExample("2.0.0-p598 -g", "Update gems installed for 2.0.0-p598")
+	info.AddExample("2.0.0-p598 -G", "Update gems installed for 2.0.0-p598")
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
 	info.AddExample("-r", "Install version defined in .ruby-version file")
 
