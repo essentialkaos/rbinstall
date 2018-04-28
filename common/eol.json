@@ -3,5 +3,6 @@
   "1.9": true,
   "2.0": true,
   "2.1": true,
-  "2.2": true
+  "2.2": true,
+  "jruby-1.6": true
 }

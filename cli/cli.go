@@ -19,7 +19,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"pkg.re/essentialkaos/ek.v9/env"
 	"pkg.re/essentialkaos/ek.v9/fmtc"
@@ -32,6 +31,7 @@ import (
 	"pkg.re/essentialkaos/ek.v9/req"
 	"pkg.re/essentialkaos/ek.v9/signal"
 	"pkg.re/essentialkaos/ek.v9/sortutil"
+	"pkg.re/essentialkaos/ek.v9/strutil"
 	"pkg.re/essentialkaos/ek.v9/system"
 	"pkg.re/essentialkaos/ek.v9/terminal"
 	"pkg.re/essentialkaos/ek.v9/terminal/window"
@@ -66,7 +66,7 @@ const (
 	OPT_GEMS_INSECURE = "S:gems-insecure"
 	OPT_RUBY_VERSION  = "r:ruby-version"
 	OPT_REHASH        = "H:rehash"
-	OPT_EOL           = "E:eol"
+	OPT_ALL           = "A:all"
 	OPT_NO_COLOR      = "nc:no-color"
 	OPT_NO_PROGRESS   = "np:no-progress"
 	OPT_HELP          = "h:help"
@@ -144,7 +144,7 @@ var optMap = options.Map{
 	OPT_GEMS_INSECURE: {Type: options.BOOL},
 	OPT_RUBY_VERSION:  {Type: options.BOOL},
 	OPT_REHASH:        {Type: options.BOOL},
-	OPT_EOL:           {Type: options.BOOL},
+	OPT_ALL:           {Type: options.BOOL},
 	OPT_NO_COLOR:      {Type: options.BOOL},
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
 	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
@@ -493,7 +493,6 @@ func printPrettyListing(dist, arch string) {
 	var index int
 
 	for {
-
 		hasItems := false
 
 		hasItems = printCurrentVersionName(CATEGORY_RUBY, ruby, installed, index) || hasItems
@@ -510,6 +509,8 @@ func printPrettyListing(dist, arch string) {
 
 		index++
 	}
+
+	fmtc.Printf("For listing outdated version use option '--all'\n\n")
 }
 
 // printRawListing just print version names
@@ -519,7 +520,7 @@ func printRawListing(dist, arch string) {
 	for _, category := range repoIndex.Data[dist][arch] {
 		for _, version := range category {
 
-			if version.EOL && !options.GetB(OPT_EOL) {
+			if version.EOL && !options.GetB(OPT_ALL) {
 				continue
 			}
 
@@ -540,7 +541,7 @@ func printRawListing(dist, arch string) {
 
 // getCategoryData return filtered versions slice
 func getCategoryData(dist, arch, category string) index.CategoryData {
-	if options.GetB(OPT_EOL) {
+	if options.GetB(OPT_ALL) {
 		return repoIndex.Data[dist][arch][category]
 	}
 
@@ -1393,10 +1394,9 @@ func getUnpackDirPath() string {
 	return getRBEnvVersionsPath() + "/.rbinstall"
 }
 
-// getAlignSpaces return spaces for message align
+// getAlignSpaces return spaces for output align
 func getAlignSpaces(t string, l int) string {
-	spaces := "                                    "
-	return spaces[0 : l-utf8.RuneCount([]byte(t))]
+	return strings.Repeat(" ", 36)[:l-strutil.Len(t)]
 }
 
 // getGemSourceURL return url of gem source
@@ -1550,7 +1550,7 @@ func showUsage() {
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
-	info.AddOption(OPT_EOL, "Print versions with EOL (end-of-life)")
+	info.AddOption(OPT_ALL, "Print all avialable versions")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(OPT_HELP, "Show this help message")
