@@ -368,7 +368,10 @@ func showUsage() {
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
 
-	info.AddExample("https://rbinstall.kaos.io /path/to/clone", "Clone EK repository to /path/to/clone")
+	info.AddExample(
+		"https://rbinstall.kaos.io /path/to/clone",
+		"Clone EK repository to /path/to/clone",
+	)
 
 	info.Render()
 }
