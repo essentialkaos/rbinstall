@@ -510,7 +510,9 @@ func printPrettyListing(dist, arch string) {
 		index++
 	}
 
-	fmtc.Println("{s-}For listing outdated versions use option '--all'{!}")
+	if !options.GetB(OPT_ALL) {
+		fmtc.Println("{s-}For listing outdated versions use option '--all'{!}")
+	}
 }
 
 // printRawListing just print version names
