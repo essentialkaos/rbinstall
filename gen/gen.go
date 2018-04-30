@@ -135,7 +135,7 @@ func loadEOLInfo() {
 		return
 	}
 
-	err := jsonutil.DecodeFile(options.GetS(OPT_EOL), eolInfo)
+	err := jsonutil.DecodeFile(options.GetS(OPT_EOL), &eolInfo)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -255,7 +255,7 @@ func buildIndex(dataDir string) {
 	saveIndex(outputFile, newIndex)
 
 	fmtc.Printf(
-		"{g}Index created and stored as file {g*}%s{g}. Processing took %s{!}\n\n",
+		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n\n",
 		outputFile, timeutil.PrettyDuration(time.Since(start)),
 	)
 }
