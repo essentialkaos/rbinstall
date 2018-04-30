@@ -386,12 +386,20 @@ func showUsage() {
 	info := usage.NewInfo("", "dir")
 
 	info.AddOption(OPT_OUTPUT, "Custom index output", "file")
-	info.AddOption(OPT_OUTPUT, "File with EOL info", "file")
+	info.AddOption(OPT_EOL, "File with EOL info", "file")
+	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
 
-	info.AddExample("/dir/with/rubies")
-	info.AddExample("-o index.json /dir/with/rubies")
+	info.AddExample(
+		"/dir/with/rubies",
+		"Generate index for directory /dir/with/rubies",
+	)
+
+	info.AddExample(
+		"-o all.json /dir/with/rubies",
+		"Generate index for directory /dir/with/rubies and save all all.json",
+	)
 
 	info.Render()
 }
