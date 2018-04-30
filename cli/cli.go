@@ -501,16 +501,16 @@ func printPrettyListing(dist, arch string) {
 		hasItems = printCurrentVersionName(CATEGORY_RUBINIUS, rubinius, installed, index) || hasItems
 		hasItems = printCurrentVersionName(CATEGORY_OTHER, other, installed, index) || hasItems
 
+		fmtc.NewLine()
+
 		if !hasItems {
 			break
 		}
 
-		fmtc.NewLine()
-
 		index++
 	}
 
-	fmtc.Printf("For listing outdated version use option '--all'\n\n")
+	fmtc.Println("{s-}For listing outdated versions use option '--all'{!}")
 }
 
 // printRawListing just print version names
