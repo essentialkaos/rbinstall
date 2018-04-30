@@ -40,7 +40,7 @@ const (
 // Options
 const (
 	OPT_OUTPUT   = "o:output"
-	OPT_EOL      = "E:eol"
+	OPT_EOL      = "e:eol"
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
