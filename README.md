@@ -22,14 +22,14 @@
 #### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```bash
-[sudo] yum install -y https://yum.kaos.st/6/release/x86_64/kaos-repo-9.0-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/6/release/x86_64/kaos-repo-9.1-0.el6.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
 #### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 
 ```bash
-[sudo] yum install -y https://yum.kaos.st/7/release/x86_64/kaos-repo-9.0-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/7/release/x86_64/kaos-repo-9.1-0.el7.noarch.rpm
 [sudo] yum install rbinstall
 ```
 
@@ -60,12 +60,13 @@ Options
 
   --reinstall, -R        Reinstall already installed version (if allowed in config)
   --uninstall, -U        Uninstall already installed version (if allowed in config)
-  --gems-update, -g      Update gems for some version (if allowed in config)
-  --gems-insecure, -S    Use HTTP instead of HTTPS for installing gems
-  --ruby-version, -r     Install version defined in version file
+  --gems-update, -G      Update gems for some version (if allowed in config)
   --rehash, -H           Rehash rbenv shims
-  --no-color, -nc        Disable colors in output
+  --gems-insecure, -s    Use HTTP instead of HTTPS for installing gems
+  --ruby-version, -r     Install version defined in version file
+  --all, -a              Print all available versions
   --no-progress, -np     Disable progress bar and spinner
+  --no-color, -nc        Disable colors in output
   --help, -h             Show this help message
   --version, -v          Show version
 
@@ -80,7 +81,7 @@ Examples
   rbinstall 2.0.0-p598-railsexpress
   Install 2.0.0-p598 with railsexpress patches
 
-  rbinstall 2.0.0-p598 -g
+  rbinstall 2.0.0-p598 -G
   Update gems installed for 2.0.0-p598
 
   rbinstall 2.0.0-p598 --reinstall
@@ -88,7 +89,6 @@ Examples
 
   rbinstall -r
   Install version defined in .ruby-version file
-
 
 ```
 
