@@ -52,7 +52,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.19.0"
+	VER  = "0.19.1"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -599,7 +599,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s {s-}(%s){!}…\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {c}%s {s-}(%s){!} from CDN…\n", info.Name, fmtutil.PrettySize(info.Size))
 
 	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
 	file, err := downloadFile(url, info.File)

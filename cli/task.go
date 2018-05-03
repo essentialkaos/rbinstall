@@ -38,8 +38,14 @@ var (
 // Start start task
 func (t *Task) Start(args ...string) (string, error) {
 	t.start = time.Now()
+	t.spinnerActive = true
+	t.spinnerHiden = false
 
-	go t.showSpinner()
+	if options.GetB(OPT_NO_PROGRESS) {
+		t.spinnerHiden = true
+	} else {
+		go t.showSpinner()
+	}
 
 	result, err := t.Handler(args...)
 
@@ -48,15 +54,9 @@ func (t *Task) Start(args ...string) (string, error) {
 	return result, err
 }
 
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 func (t *Task) showSpinner() {
-	if options.GetB(OPT_NO_PROGRESS) {
-		t.spinnerHiden = true
-		return
-	}
-
-	t.spinnerActive = true
-	t.spinnerHiden = false
-
 SPINNERLOOP:
 	for {
 		for i, frame := range spinnerFrames {
