@@ -1,12 +1,12 @@
-###############################################################################
+################################################################################
 
 # rpmbuilder:relative-pack true
 
-###############################################################################
+################################################################################
 
 %define  debug_package %{nil}
 
-###############################################################################
+################################################################################
 
 %define _posixroot        /
 %define _root             /root
@@ -40,7 +40,7 @@
 %define _rpmstatedir      %{_sharedstatedir}/rpm-state
 %define _pkgconfigdir     %{_libdir}/pkgconfig
 
-###############################################################################
+################################################################################
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
@@ -60,12 +60,12 @@ BuildRequires:   golang >= 1.10
 
 Provides:        %{name} = %{version}-%{release}
 
-###############################################################################
+################################################################################
 
 %description
 Utility for installing different prebuilt versions of ruby to rbenv.
 
-###############################################################################
+################################################################################
 
 %package gen
 
@@ -77,7 +77,7 @@ Group:           Development/Tools
 %description gen
 Utility for generating RBInstall index.
 
-###############################################################################
+################################################################################
 
 %package clone
 
@@ -89,13 +89,13 @@ Group:           Development/Tools
 %description clone
 Utility for cloning RBInstall repository.
 
-###############################################################################
+################################################################################
 
 %prep
 %setup -q
 
 %build
-export GOPATH=$(pwd) 
+export GOPATH=$(pwd)
 pushd src/github.com/essentialkaos/%{name}/
 %{__make} %{?_smp_mflags} all
 popd
@@ -121,7 +121,7 @@ install -pm 644 src/github.com/essentialkaos/%{name}/common/%{name}.knf \
 %clean
 rm -rf %{buildroot}
 
-###############################################################################
+################################################################################
 
 %files
 %defattr(-,root,root,-)
@@ -140,7 +140,7 @@ rm -rf %{buildroot}
 %doc LICENSE.EN LICENSE.RU
 %{_bindir}/%{name}-clone
 
-###############################################################################
+################################################################################
 
 %changelog
 * Thu May 03 2018 Anton Novojilov <andy@essentialkaos.com> - 0.19.1-0
@@ -176,7 +176,7 @@ rm -rf %{buildroot}
 
 * Tue Nov 07 2017 Anton Novojilov <andy@essentialkaos.com> - 0.17.0-0
 - [cli] Fixed bug with updating gems with empty gem list
-- [cli] Now required version of rubygems gem can be defined through 
+- [cli] Now required version of rubygems gem can be defined through
   configuration file
 - [cli] 'gems:no-ri' and 'gems:no-rdoc' options replaced by 'gems:no-document'
 - [cli] Minor UI improvements
@@ -281,7 +281,7 @@ rm -rf %{buildroot}
 - [cli] Fixed listing on small screens (< 140 symbols)
 
 * Wed Jun 01 2016 Anton Novojilov <andy@essentialkaos.com> - 0.7.2-0
-- [cli] Added argument --no-progress for disabling progress 
+- [cli] Added argument --no-progress for disabling progress
   bar and spinner
 
 * Tue May 24 2016 Anton Novojilov <andy@essentialkaos.com> - 0.7.1-0
@@ -306,7 +306,7 @@ rm -rf %{buildroot}
 - [cli] z7.v2 package usage
 
 * Mon Apr 25 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.1-0
-- Added rbinstall-clone Utility for cloning RBInstall repositories  
+- Added rbinstall-clone Utility for cloning RBInstall repositories
 - Code refactoring
 
 * Sat Apr 23 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.0-0
