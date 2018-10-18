@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt ruby to rbenv
 Name:            rbinstall
-Version:         0.19.1
+Version:         0.19.2
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Fri Oct 19 2018 Anton Novojilov <andy@essentialkaos.com> - 0.19.2-0
+- [cli] Minor UI improvements
+
 * Thu May 03 2018 Anton Novojilov <andy@essentialkaos.com> - 0.19.1-0
 - [cli] Possible fixed bug with spinner for fast tasks
 - [cli] Minor UI improvements
