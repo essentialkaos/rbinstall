@@ -52,7 +52,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.19.1"
+	VER  = "0.19.2"
 	DESC = "Utility for installing prebuilt ruby versions to rbenv"
 )
 
@@ -520,10 +520,12 @@ func printPrettyListing(dist, arch string) {
 func printRawListing(dist, arch string) {
 	var result []string
 
+	installed := getInstalledVersionsMap()
+
 	for _, category := range repoIndex.Data[dist][arch] {
 		for _, version := range category {
 
-			if version.EOL && !options.GetB(OPT_ALL) {
+			if !installed[version.Name] && !options.GetB(OPT_ALL) {
 				continue
 			}
 
@@ -535,6 +537,10 @@ func printRawListing(dist, arch string) {
 				}
 			}
 		}
+	}
+
+	if len(result) == 0 {
+		return
 	}
 
 	sortutil.Versions(result)
