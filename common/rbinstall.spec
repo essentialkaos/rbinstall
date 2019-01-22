@@ -42,9 +42,9 @@
 
 ################################################################################
 
-Summary:         Utility for installing prebuilt ruby to rbenv
+Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.19.2
+Version:         0.19.3
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,21 +56,21 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.10
+BuildRequires:   golang >= 1.11
 
 Provides:        %{name} = %{version}-%{release}
 
 ################################################################################
 
 %description
-Utility for installing different prebuilt versions of ruby to rbenv.
+Utility for installing different prebuilt versions of Ruby to rbenv.
 
 ################################################################################
 
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.9.0
+Version:         0.9.1
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -82,7 +82,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         0.6.0
+Version:         0.6.1
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -143,6 +143,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Jan 22 2019 Anton Novojilov <andy@essentialkaos.com> - 0.19.3-0
+- [cli|gen|clone] ek package updated to v10
+- [cli] z7 package updated to v8
+
 * Fri Oct 19 2018 Anton Novojilov <andy@essentialkaos.com> - 0.19.2-0
 - [cli] Minor UI improvements
 

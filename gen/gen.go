@@ -2,7 +2,7 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2018 ESSENTIAL KAOS                         //
+//                     Copyright (c) 2009-2019 ESSENTIAL KAOS                         //
 //        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -15,15 +15,15 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v9/fmtc"
-	"pkg.re/essentialkaos/ek.v9/fsutil"
-	"pkg.re/essentialkaos/ek.v9/hash"
-	"pkg.re/essentialkaos/ek.v9/jsonutil"
-	"pkg.re/essentialkaos/ek.v9/options"
-	"pkg.re/essentialkaos/ek.v9/path"
-	"pkg.re/essentialkaos/ek.v9/sortutil"
-	"pkg.re/essentialkaos/ek.v9/timeutil"
-	"pkg.re/essentialkaos/ek.v9/usage"
+	"pkg.re/essentialkaos/ek.v10/fmtc"
+	"pkg.re/essentialkaos/ek.v10/fsutil"
+	"pkg.re/essentialkaos/ek.v10/hash"
+	"pkg.re/essentialkaos/ek.v10/jsonutil"
+	"pkg.re/essentialkaos/ek.v10/options"
+	"pkg.re/essentialkaos/ek.v10/path"
+	"pkg.re/essentialkaos/ek.v10/sortutil"
+	"pkg.re/essentialkaos/ek.v10/timeutil"
+	"pkg.re/essentialkaos/ek.v10/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -33,7 +33,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.9.0"
+	VER  = "0.9.1"
 	DESC = "Utility for generating RBInstall index"
 )
 

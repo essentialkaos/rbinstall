@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2018 ESSENTIAL KAOS                         //
+//                     Copyright (c) 2009-2019 ESSENTIAL KAOS                         //
 //        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -20,27 +20,27 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v9/env"
-	"pkg.re/essentialkaos/ek.v9/fmtc"
-	"pkg.re/essentialkaos/ek.v9/fmtutil"
-	"pkg.re/essentialkaos/ek.v9/fsutil"
-	"pkg.re/essentialkaos/ek.v9/hash"
-	"pkg.re/essentialkaos/ek.v9/knf"
-	"pkg.re/essentialkaos/ek.v9/log"
-	"pkg.re/essentialkaos/ek.v9/options"
-	"pkg.re/essentialkaos/ek.v9/req"
-	"pkg.re/essentialkaos/ek.v9/signal"
-	"pkg.re/essentialkaos/ek.v9/sortutil"
-	"pkg.re/essentialkaos/ek.v9/strutil"
-	"pkg.re/essentialkaos/ek.v9/system"
-	"pkg.re/essentialkaos/ek.v9/terminal"
-	"pkg.re/essentialkaos/ek.v9/terminal/window"
-	"pkg.re/essentialkaos/ek.v9/tmp"
-	"pkg.re/essentialkaos/ek.v9/usage"
-	"pkg.re/essentialkaos/ek.v9/usage/update"
-	"pkg.re/essentialkaos/ek.v9/version"
+	"pkg.re/essentialkaos/ek.v10/env"
+	"pkg.re/essentialkaos/ek.v10/fmtc"
+	"pkg.re/essentialkaos/ek.v10/fmtutil"
+	"pkg.re/essentialkaos/ek.v10/fsutil"
+	"pkg.re/essentialkaos/ek.v10/hash"
+	"pkg.re/essentialkaos/ek.v10/knf"
+	"pkg.re/essentialkaos/ek.v10/log"
+	"pkg.re/essentialkaos/ek.v10/options"
+	"pkg.re/essentialkaos/ek.v10/req"
+	"pkg.re/essentialkaos/ek.v10/signal"
+	"pkg.re/essentialkaos/ek.v10/sortutil"
+	"pkg.re/essentialkaos/ek.v10/strutil"
+	"pkg.re/essentialkaos/ek.v10/system"
+	"pkg.re/essentialkaos/ek.v10/terminal"
+	"pkg.re/essentialkaos/ek.v10/terminal/window"
+	"pkg.re/essentialkaos/ek.v10/tmp"
+	"pkg.re/essentialkaos/ek.v10/usage"
+	"pkg.re/essentialkaos/ek.v10/usage/update"
+	"pkg.re/essentialkaos/ek.v10/version"
 
-	"pkg.re/essentialkaos/z7.v7"
+	"pkg.re/essentialkaos/z7.v8"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -52,8 +52,8 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.19.2"
-	DESC = "Utility for installing prebuilt ruby versions to rbenv"
+	VER  = "0.19.3"
+	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
