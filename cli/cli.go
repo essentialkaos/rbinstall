@@ -993,29 +993,29 @@ func updateGems(rubyVersion string) {
 
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
-			var gemUpdate *Task
+			var gemUpdateTask *Task
 
 			gemName, gemVersion := parseGemInfo(gem)
 
 			if isGemInstalled(rubyVersion, gemName) {
-				gemUpdate = &Task{
+				gemUpdateTask = &Task{
 					Desc:    fmtc.Sprintf("Updating %s", gemName),
 					Handler: updateGemTaskHandler,
 				}
 			} else {
-				gemUpdate = &Task{
+				gemUpdateTask = &Task{
 					Desc:    fmtc.Sprintf("Installing %s", gemName),
 					Handler: installGemTaskHandler,
 				}
 			}
 
 			if gemVersion != "" {
-				gemUpdate.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+				gemUpdateTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
 			} else {
-				gemUpdate.Desc += fmt.Sprintf(" (latest)")
+				gemUpdateTask.Desc += fmt.Sprintf(" (latest)")
 			}
 
-			installedVersion, err := gemUpdate.Start(rubyVersion, gemName, gemVersion)
+			installedVersion, err := gemUpdateTask.Start(rubyVersion, gemName, gemVersion)
 
 			if err == nil {
 				if installedVersion != "" {
