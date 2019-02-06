@@ -52,8 +52,8 @@
   # If source support https this property must be set to true
   source-secure: true
 
-  # List of gems installed on each ruby version
-  install: bundler
+  # List of gems to install on each Ruby version
+  install: bundler=1 bundler
 
 [log]
 

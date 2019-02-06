@@ -52,7 +52,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.19.3"
+	VER  = "0.20.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -694,12 +694,20 @@ func installCommand(rubyVersion string) {
 
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
+			gemName, gemVersion := parseGemInfo(gem)
+
 			gemInstallTask := &Task{
-				Desc:    fmtc.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gemName),
 				Handler: installGemTaskHandler,
 			}
 
-			_, err = gemInstallTask.Start(info.Name, gem)
+			if gemVersion != "" {
+				gemInstallTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+			} else {
+				gemInstallTask.Desc += fmt.Sprintf(" (latest)")
+			}
+
+			_, err = gemInstallTask.Start(info.Name, gemName, gemVersion)
 
 			if err != nil {
 				fmtc.NewLine()
@@ -912,18 +920,20 @@ func checkBinaryTaskHandler(args ...string) (string, error) {
 
 // installGemTaskHandler run gems installing command
 func installGemTaskHandler(args ...string) (string, error) {
-	version := args[0]
+	rubyVersion := args[0]
 	gem := args[1]
+	gemVersion := args[2]
 
-	return runGemCmd(version, "install", gem)
+	return runGemCmd(rubyVersion, "install", gem, gemVersion)
 }
 
 // updateGemTaskHandler run gems update command
 func updateGemTaskHandler(args ...string) (string, error) {
-	version := args[0]
+	rubyVersion := args[0]
 	gem := args[1]
+	gemVersion := args[2]
 
-	return runGemCmd(version, "update", gem)
+	return runGemCmd(rubyVersion, "update", gem, gemVersion)
 }
 
 // updateRubygemsTaskHandler run rubygems update command
@@ -983,21 +993,29 @@ func updateGems(rubyVersion string) {
 
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
-			var updateGemTask *Task
+			var gemUpdate *Task
 
-			if isGemInstalled(rubyVersion, gem) {
-				updateGemTask = &Task{
-					Desc:    fmtc.Sprintf("Updating %s", gem),
+			gemName, gemVersion := parseGemInfo(gem)
+
+			if isGemInstalled(rubyVersion, gemName) {
+				gemUpdate = &Task{
+					Desc:    fmtc.Sprintf("Updating %s", gemName),
 					Handler: updateGemTaskHandler,
 				}
 			} else {
-				updateGemTask = &Task{
-					Desc:    fmtc.Sprintf("Installing %s", gem),
+				gemUpdate = &Task{
+					Desc:    fmtc.Sprintf("Installing %s", gemName),
 					Handler: installGemTaskHandler,
 				}
 			}
 
-			installedVersion, err := updateGemTask.Start(rubyVersion, gem)
+			if gemVersion != "" {
+				gemUpdate.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+			} else {
+				gemUpdate.Desc += fmt.Sprintf(" (latest)")
+			}
+
+			installedVersion, err := gemUpdate.Start(rubyVersion, gemName, gemVersion)
 
 			if err == nil {
 				if installedVersion != "" {
@@ -1029,10 +1047,14 @@ func updateGems(rubyVersion string) {
 }
 
 // runGemCmd run some gem command for some version
-func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
+func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	start := time.Now()
 	rubyPath := getVersionPath(rubyVersion)
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
+
+	if gemVersion != "" {
+		gemCmd.Args = append(gemCmd.Args, "-v", fmt.Sprintf("~>%s", gemVersion))
+	}
 
 	if knf.GetB(GEMS_NO_DOCUMENT) {
 		gemCmd.Args = append(gemCmd.Args, "--no-document")
@@ -1486,6 +1508,16 @@ func getSystemInfo() (string, string, error) {
 // getNameWithoutPatchLevel return name without -p0
 func getNameWithoutPatchLevel(name string) string {
 	return strings.Replace(name, "-p0", "", -1)
+}
+
+// parseGemInfo extract name and version of gem
+func parseGemInfo(data string) (string, string) {
+	if !strings.Contains(data, "=") {
+		return data, ""
+	}
+
+	return strutil.ReadField(data, 0, false, "="),
+		strutil.ReadField(data, 1, false, "=")
 }
 
 // logFailedAction save data to temporary log file and return path

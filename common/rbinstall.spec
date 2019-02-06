@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.19.3
+Version:         0.20.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Feb 06 2019 Anton Novojilov <andy@essentialkaos.com> - 0.20.0-0
+- [cli] Added possibility to define versions for required gems
+
 * Tue Jan 22 2019 Anton Novojilov <andy@essentialkaos.com> - 0.19.3-0
 - [cli|gen|clone] ek package updated to v10
 - [cli] z7 package updated to v8
