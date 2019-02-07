@@ -145,6 +145,7 @@ rm -rf %{buildroot}
 %changelog
 * Wed Feb 06 2019 Anton Novojilov <andy@essentialkaos.com> - 0.20.0-0
 - [cli] Added possibility to define versions for required gems
+- [cli] Gem installation error now is not critical
 
 * Tue Jan 22 2019 Anton Novojilov <andy@essentialkaos.com> - 0.19.3-0
 - [cli|gen|clone] ek package updated to v10
