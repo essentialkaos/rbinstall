@@ -28,6 +28,7 @@ import (
 	"pkg.re/essentialkaos/ek.v10/knf"
 	"pkg.re/essentialkaos/ek.v10/log"
 	"pkg.re/essentialkaos/ek.v10/options"
+	"pkg.re/essentialkaos/ek.v10/passwd"
 	"pkg.re/essentialkaos/ek.v10/req"
 	"pkg.re/essentialkaos/ek.v10/signal"
 	"pkg.re/essentialkaos/ek.v10/sortutil"
@@ -52,7 +53,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.19.3"
+	VER  = "0.20.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -105,19 +106,16 @@ const (
 	CATEGORY_OTHER    = "other"
 )
 
-// Name of index file
+// INDEX_NAME is name of index file
 const INDEX_NAME = "index.json"
 
-// Path to config file
+// CONFIG_FILE is path to config file
 const CONFIG_FILE = "/etc/rbinstall.knf"
 
-// Name of log with failed actions (gem install)
-const FAIL_LOG_NAME = "rbinstall-fail.log"
-
-// Value for column without any versions
+// NONE_VERSION is value for column without any versions
 const NONE_VERSION = "- none -"
 
-// Default category column size
+// DEFAULT_CATEGORY_SIZE is default category column size
 const DEFAULT_CATEGORY_SIZE = 28
 
 // Default arch names
@@ -694,16 +692,23 @@ func installCommand(rubyVersion string) {
 
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
+			gemName, gemVersion := parseGemInfo(gem)
+
 			gemInstallTask := &Task{
-				Desc:    fmtc.Sprintf("Installing %s", gem),
+				Desc:    fmtc.Sprintf("Installing %s", gemName),
 				Handler: installGemTaskHandler,
 			}
 
-			_, err = gemInstallTask.Start(info.Name, gem)
+			if gemVersion != "" {
+				gemInstallTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+			} else {
+				gemInstallTask.Desc += fmt.Sprintf(" (latest)")
+			}
+
+			_, err = gemInstallTask.Start(info.Name, gemName, gemVersion)
 
 			if err != nil {
-				fmtc.NewLine()
-				printErrorAndExit(err.Error())
+				fmtc.Printf("  {r}%v{!}\n", err)
 			}
 		}
 	}
@@ -912,18 +917,20 @@ func checkBinaryTaskHandler(args ...string) (string, error) {
 
 // installGemTaskHandler run gems installing command
 func installGemTaskHandler(args ...string) (string, error) {
-	version := args[0]
+	rubyVersion := args[0]
 	gem := args[1]
+	gemVersion := args[2]
 
-	return runGemCmd(version, "install", gem)
+	return runGemCmd(rubyVersion, "install", gem, gemVersion)
 }
 
 // updateGemTaskHandler run gems update command
 func updateGemTaskHandler(args ...string) (string, error) {
-	version := args[0]
+	rubyVersion := args[0]
 	gem := args[1]
+	gemVersion := args[2]
 
-	return runGemCmd(version, "update", gem)
+	return runGemCmd(rubyVersion, "update", gem, gemVersion)
 }
 
 // updateRubygemsTaskHandler run rubygems update command
@@ -983,21 +990,29 @@ func updateGems(rubyVersion string) {
 
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
-			var updateGemTask *Task
+			var gemUpdateTask *Task
 
-			if isGemInstalled(rubyVersion, gem) {
-				updateGemTask = &Task{
-					Desc:    fmtc.Sprintf("Updating %s", gem),
+			gemName, gemVersion := parseGemInfo(gem)
+
+			if isGemInstalled(rubyVersion, gemName) {
+				gemUpdateTask = &Task{
+					Desc:    fmtc.Sprintf("Updating %s", gemName),
 					Handler: updateGemTaskHandler,
 				}
 			} else {
-				updateGemTask = &Task{
-					Desc:    fmtc.Sprintf("Installing %s", gem),
+				gemUpdateTask = &Task{
+					Desc:    fmtc.Sprintf("Installing %s", gemName),
 					Handler: installGemTaskHandler,
 				}
 			}
 
-			installedVersion, err := updateGemTask.Start(rubyVersion, gem)
+			if gemVersion != "" {
+				gemUpdateTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+			} else {
+				gemUpdateTask.Desc += fmt.Sprintf(" (latest)")
+			}
+
+			installedVersion, err := gemUpdateTask.Start(rubyVersion, gemName, gemVersion)
 
 			if err == nil {
 				if installedVersion != "" {
@@ -1007,8 +1022,7 @@ func updateGems(rubyVersion string) {
 					)
 				}
 			} else {
-				fmtc.NewLine()
-				printErrorAndExit(err.Error())
+				fmtc.Printf("  {r}%v{!}\n", err)
 			}
 		}
 
@@ -1029,10 +1043,14 @@ func updateGems(rubyVersion string) {
 }
 
 // runGemCmd run some gem command for some version
-func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
+func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	start := time.Now()
 	rubyPath := getVersionPath(rubyVersion)
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
+
+	if gemVersion != "" {
+		gemCmd.Args = append(gemCmd.Args, "-v", fmt.Sprintf("~>%s", gemVersion))
+	}
 
 	if knf.GetB(GEMS_NO_DOCUMENT) {
 		gemCmd.Args = append(gemCmd.Args, "--no-document")
@@ -1054,22 +1072,28 @@ func runGemCmd(rubyVersion, cmd, gem string) (string, error) {
 		return version, nil
 	}
 
+	if gemVersion == "" {
+		gemVersion = "latest"
+	} else {
+		gemVersion += ".x"
+	}
+
 	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmtc.Errorf("Can't update gem %s. Gem command output saved as %s.", gem, actionLog)
+			return "", fmtc.Errorf("Can't update gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
 		default:
-			return "", fmtc.Errorf("Can't install gem %s. Gem command output saved as %s.", gem, actionLog)
+			return "", fmtc.Errorf("Can't install gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
 		}
 	}
 
 	switch cmd {
 	case "update":
-		return "", fmtc.Errorf("Can't update gem %s", gem)
+		return "", fmtc.Errorf("Can't update gem %s (%s)", gem, gemVersion)
 	default:
-		return "", fmtc.Errorf("Can't install gem %s", gem)
+		return "", fmtc.Errorf("Can't install gem %s (%s)", gem, gemVersion)
 	}
 }
 
@@ -1488,6 +1512,16 @@ func getNameWithoutPatchLevel(name string) string {
 	return strings.Replace(name, "-p0", "", -1)
 }
 
+// parseGemInfo extract name and version of gem
+func parseGemInfo(data string) (string, string) {
+	if !strings.Contains(data, "=") {
+		return data, ""
+	}
+
+	return strutil.ReadField(data, 0, false, "="),
+		strutil.ReadField(data, 1, false, "=")
+}
+
 // logFailedAction save data to temporary log file and return path
 // to this log file
 func logFailedAction(message string) (string, error) {
@@ -1495,14 +1529,14 @@ func logFailedAction(message string) (string, error) {
 		return "", errors.New("Output data is empty")
 	}
 
-	tmpName := knf.GetS(MAIN_TMP_DIR) + "/" + FAIL_LOG_NAME
+	logSuffix := passwd.GenPassword(8, passwd.STRENGTH_WEAK)
+	tmpName := fmt.Sprintf("%s/rbinstall-fail-%s.log", knf.GetS(MAIN_TMP_DIR), logSuffix)
 
 	if fsutil.IsExist(tmpName) {
 		os.Remove(tmpName)
 	}
 
 	data := append([]byte(message), []byte("\n\n")...)
-
 	err := ioutil.WriteFile(tmpName, data, 0666)
 
 	if err != nil {
