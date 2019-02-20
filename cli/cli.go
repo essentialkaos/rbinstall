@@ -53,7 +53,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.20.0"
+	VER  = "0.20.1"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -930,6 +930,10 @@ func updateGemTaskHandler(args ...string) (string, error) {
 	gem := args[1]
 	gemVersion := args[2]
 
+	if gemVersion != "" {
+		return runGemCmd(rubyVersion, "install", gem, gemVersion)
+	}
+
 	return runGemCmd(rubyVersion, "update", gem, gemVersion)
 }
 
@@ -1049,7 +1053,7 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
 
 	if gemVersion != "" {
-		gemCmd.Args = append(gemCmd.Args, "-v", fmt.Sprintf("~>%s", gemVersion))
+		gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s", gemVersion))
 	}
 
 	if knf.GetB(GEMS_NO_DOCUMENT) {
