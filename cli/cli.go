@@ -53,7 +53,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.20.1"
+	VER  = "0.20.2"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
