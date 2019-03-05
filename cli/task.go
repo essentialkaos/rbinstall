@@ -49,6 +49,8 @@ func (t *Task) Start(args ...string) (string, error) {
 
 	result, err := t.Handler(args...)
 
+	time.Sleep(25 * time.Millisecond)
+
 	t.hideSpinner(err == nil)
 
 	return result, err
