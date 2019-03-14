@@ -53,7 +53,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.20.2"
+	VER  = "0.21.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -85,7 +85,6 @@ const (
 	RBENV_ALLOW_UNINSTALL = "rbenv:allow-uninstall"
 	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
-	GEMS_RUBYGEMS_VERSION = "gems:rubygems-version"
 	GEMS_ALLOW_UPDATE     = "gems:allow-update"
 	GEMS_NO_DOCUMENT      = "gems:no-document"
 	GEMS_SOURCE           = "gems:source"
@@ -124,6 +123,9 @@ const (
 	ARCH_X64 = "x64"
 	ARCH_ARM = "arm"
 )
+
+// RubyGems version used for old versions of Ruby
+const MIN_RUBYGEMS_VERSION = "2.6.14"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -675,7 +677,7 @@ func installCommand(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
-		rgVersion := knf.GetS(GEMS_RUBYGEMS_VERSION, "latest")
+		rgVersion := getAdvisableRubyGemsVersion(info.Name)
 		updRubygemsTask := &Task{
 			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
 			Handler: updateRubygemsTaskHandler,
@@ -979,7 +981,7 @@ func updateGems(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
-		rgVersion := knf.GetS(GEMS_RUBYGEMS_VERSION, "latest")
+		rgVersion := getAdvisableRubyGemsVersion(rubyVersion)
 		updRubygemsTask := &Task{
 			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
 			Handler: updateRubygemsTaskHandler,
@@ -1050,7 +1052,7 @@ func updateGems(rubyVersion string) {
 func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	start := time.Now()
 	rubyPath := getVersionPath(rubyVersion)
-	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem)
+	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, "--force", gem)
 
 	if gemVersion != "" {
 		gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s", gemVersion))
@@ -1378,6 +1380,29 @@ func isGemInstalled(rubyVersion string, gemName string) bool {
 func isVersionInstalled(rubyVersion string) bool {
 	fullPath := getVersionPath(rubyVersion)
 	return fsutil.IsExist(fullPath)
+}
+
+// getAdvisableRubyGemsVersion returns recomended RubyGems version for
+// given version of Ruby
+func getAdvisableRubyGemsVersion(rubyVersion string) string {
+	if strings.HasPrefix(rubyVersion, "jruby-") {
+		rubyVersion = strutil.Exclude(rubyVersion, "jruby-")
+
+		if !strings.HasPrefix(rubyVersion, "9.2") {
+			return MIN_RUBYGEMS_VERSION
+		}
+
+		return "latest"
+	}
+
+	v, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
+	minVer, _ := version.Parse("2.3.0")
+
+	if err != nil || v.Less(minVer) {
+		return MIN_RUBYGEMS_VERSION
+	}
+
+	return "latest"
 }
 
 // getInstalledVersionsMap return map with names of installed versions
