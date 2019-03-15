@@ -124,8 +124,8 @@ const (
 	ARCH_ARM = "arm"
 )
 
-// RubyGems version used for old versions of Ruby
-const MIN_RUBYGEMS_VERSION = "2.6.14"
+// RubyGems version used for old versions of Ruby (< 2.3.0)
+const MIN_RUBYGEMS_VERSION = "2.7.9"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
