@@ -145,6 +145,7 @@ rm -rf %{buildroot}
 %changelog
 * Thu Mar 14 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.0-0
 - [cli] New RubyGems update mechanics
+- [cli] Added option -i/--info for viewing detailed information about version
 - [gen] Added support for jemalloc variation
 
 * Tue Mar 05 2019 Anton Novojilov <andy@essentialkaos.com> - 0.20.2-0

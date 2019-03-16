@@ -36,6 +36,7 @@ import (
 	"pkg.re/essentialkaos/ek.v10/system"
 	"pkg.re/essentialkaos/ek.v10/terminal"
 	"pkg.re/essentialkaos/ek.v10/terminal/window"
+	"pkg.re/essentialkaos/ek.v10/timeutil"
 	"pkg.re/essentialkaos/ek.v10/tmp"
 	"pkg.re/essentialkaos/ek.v10/usage"
 	"pkg.re/essentialkaos/ek.v10/usage/update"
@@ -67,6 +68,7 @@ const (
 	OPT_REHASH        = "H:rehash"
 	OPT_GEMS_INSECURE = "s:gems-insecure"
 	OPT_RUBY_VERSION  = "r:ruby-version"
+	OPT_INFO          = "i:info"
 	OPT_ALL           = "a:all"
 	OPT_NO_COLOR      = "nc:no-color"
 	OPT_NO_PROGRESS   = "np:no-progress"
@@ -145,6 +147,7 @@ var optMap = options.Map{
 	OPT_RUBY_VERSION:  {Type: options.BOOL},
 	OPT_REHASH:        {Type: options.BOOL},
 	OPT_ALL:           {Type: options.BOOL},
+	OPT_INFO:          {Type: options.BOOL},
 	OPT_NO_COLOR:      {Type: options.BOOL},
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
 	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
@@ -418,20 +421,70 @@ func process(args []string) {
 	}
 
 	if rubyVersion != "" {
+		if options.GetB(OPT_INFO) {
+			showDetailedInfo(rubyVersion)
+			return
+		}
+
 		checkPerms()
 		setupLogger()
 		setupTemp()
 
-		if options.GetB(OPT_GEMS_UPDATE) {
+		switch {
+		case options.GetB(OPT_GEMS_UPDATE):
 			updateGems(rubyVersion)
-		} else if options.GetB(OPT_UNINSTALL) {
+		case options.GetB(OPT_UNINSTALL):
 			uninstallCommand(rubyVersion)
-		} else {
+		default:
 			installCommand(rubyVersion)
 		}
 	} else {
 		listCommand()
 	}
+}
+
+// showDetailedInfo shows detailed information about given version
+func showDetailedInfo(rubyVersion string) {
+	info, _, err := getVersionInfo(rubyVersion)
+
+	if err != nil {
+		printErrorAndExit(err.Error())
+	}
+
+	fmtutil.Separator(true)
+
+	url := fmt.Sprintf("%s/%s/%s", knf.GetS(STORAGE_URL), info.Path, info.File)
+	added := timeutil.Format(time.Unix(info.Added, 0), "%Y/%m/%d %H:%M")
+
+	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Name", info.Name)
+	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "URL", url)
+	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Size", fmtutil.PrettySize(info.Size))
+	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Checksum", strutil.Head(info.Hash, 7))
+	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Added", added)
+
+	if info.EOL {
+		fmtc.Printf(" {*}%-12s{!} {s}|{!} {r}Yes{!}\n", "EOL")
+	} else {
+		fmtc.Printf(" {*}%-12s{!} {s}|{!} No\n", "EOL")
+	}
+
+	if len(info.Variations) != 0 {
+		for index, variation := range info.Variations {
+			if index == 0 {
+				fmtc.Printf(
+					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					"Variations", variation.Name, fmtutil.PrettySize(variation.Size),
+				)
+			} else {
+				fmtc.Printf(
+					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					"", variation.Name, fmtutil.PrettySize(variation.Size),
+				)
+			}
+		}
+	}
+
+	fmtutil.Separator(true)
 }
 
 // listCommand show list of all available versions
@@ -569,16 +622,10 @@ func getCategoryData(dist, arch, category string) index.CategoryData {
 
 // installCommand install some version of ruby
 func installCommand(rubyVersion string) {
-	osName, archName, err := getSystemInfo()
+	info, category, err := getVersionInfo(rubyVersion)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
-	}
-
-	info, category := repoIndex.Find(osName, archName, rubyVersion)
-
-	if info == nil {
-		printErrorAndExit("Can't find info about version %s", rubyVersion)
 	}
 
 	checkRBEnv()
@@ -757,16 +804,10 @@ func uninstallCommand(rubyVersion string) {
 		printErrorAndExit("Uninstalling is not allowed")
 	}
 
-	osName, archName, err := getSystemInfo()
+	info, _, err := getVersionInfo(rubyVersion)
 
 	if err != nil {
-		printErrorAndExit("%v", err)
-	}
-
-	info, _ := repoIndex.Find(osName, archName, rubyVersion)
-
-	if info == nil {
-		printErrorAndExit("Can't find info about version %s", rubyVersion)
+		printErrorAndExit(err.Error())
 	}
 
 	if !isVersionInstalled(info.Name) {
@@ -840,34 +881,6 @@ func unistallTaskHandler(args ...string) (string, error) {
 	}
 
 	return "", nil
-}
-
-// getVersionFromFile try to read version file and return defined version
-func getVersionFromFile() (string, error) {
-	versionFile := fsutil.ProperPath("FRS",
-		[]string{
-			".ruby-version",
-			".rbenv-version",
-		},
-	)
-
-	if versionFile == "" {
-		return "", fmtc.Errorf("Can't find proper version file")
-	}
-
-	versionData, err := ioutil.ReadFile(versionFile)
-
-	if err != nil {
-		return "", fmtc.Errorf("Can't read version file: %v", err)
-	}
-
-	versionName := strings.Trim(string(versionData[:]), " \n\r")
-
-	if versionName == "" {
-		return "", fmtc.Errorf("Can't use version file - file malformed")
-	}
-
-	return versionName, nil
 }
 
 // checkHashTaskHandler check archive checksum
@@ -1382,6 +1395,34 @@ func isVersionInstalled(rubyVersion string) bool {
 	return fsutil.IsExist(fullPath)
 }
 
+// getVersionFromFile try to read version file and return defined version
+func getVersionFromFile() (string, error) {
+	versionFile := fsutil.ProperPath("FRS",
+		[]string{
+			".ruby-version",
+			".rbenv-version",
+		},
+	)
+
+	if versionFile == "" {
+		return "", fmtc.Errorf("Can't find proper version file")
+	}
+
+	versionData, err := ioutil.ReadFile(versionFile)
+
+	if err != nil {
+		return "", fmtc.Errorf("Can't read version file: %v", err)
+	}
+
+	versionName := strings.Trim(string(versionData[:]), " \n\r")
+
+	if versionName == "" {
+		return "", fmtc.Errorf("Can't use version file - file malformed")
+	}
+
+	return versionName, nil
+}
+
 // getAdvisableRubyGemsVersion returns recomended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
@@ -1403,6 +1444,23 @@ func getAdvisableRubyGemsVersion(rubyVersion string) string {
 	}
 
 	return "latest"
+}
+
+// getVersionInfo finds info about given version in index
+func getVersionInfo(rubyVersion string) (*index.VersionInfo, string, error) {
+	osName, archName, err := getSystemInfo()
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	info, category := repoIndex.Find(osName, archName, rubyVersion)
+
+	if info == nil {
+		return nil, "", fmt.Errorf("Can't find info about version %s for your OS", rubyVersion)
+	}
+
+	return info, category, nil
 }
 
 // getInstalledVersionsMap return map with names of installed versions
@@ -1498,10 +1556,7 @@ func checkDependencies(category string) {
 
 // getSystemInfo return info about system
 func getSystemInfo() (string, string, error) {
-	var (
-		os   string
-		arch string
-	)
+	var os, arch string
 
 	systemInfo, err := system.GetSystemInfo()
 
@@ -1622,6 +1677,7 @@ func showUsage() {
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
+	info.AddOption(OPT_INFO, "Print detailed info about version")
 	info.AddOption(OPT_ALL, "Print all available versions")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
