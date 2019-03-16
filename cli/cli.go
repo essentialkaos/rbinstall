@@ -1549,9 +1549,9 @@ func checkDependencies(info *index.VersionInfo, category string) {
 		printErrorAndExit("Java is required for JRuby")
 	}
 
-	if strings.HasPrefix(info.Name, "jemalloc") {
+	if strings.HasSuffix(info.Name, "jemalloc") {
 		if !fsutil.IsExist("/lib64/libjemalloc.so.2") && !fsutil.IsExist("/lib/libjemalloc.so.2") {
-			printErrorAndExit("Jemalloc is required for this version of Ruby")
+			printErrorAndExit("Jemalloc 5+ is required for this version of Ruby")
 		}
 	}
 }
