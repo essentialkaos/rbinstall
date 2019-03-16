@@ -629,7 +629,7 @@ func installCommand(rubyVersion string) {
 	}
 
 	checkRBEnv()
-	checkDependencies(category)
+	checkDependencies(info, category)
 
 	if isVersionInstalled(info.Name) {
 		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
@@ -1544,13 +1544,15 @@ func checkRBEnv() {
 }
 
 // checkDependencies check dependencies for given category
-func checkDependencies(category string) {
-	if category != CATEGORY_JRUBY {
-		return
+func checkDependencies(info *index.VersionInfo, category string) {
+	if category == CATEGORY_JRUBY && env.Which("java") == "" {
+		printErrorAndExit("Java is required for JRuby")
 	}
 
-	if env.Which("java") == "" {
-		printErrorAndExit("Can't find java binary on system. Java 1.6+ is required for all JRuby versions.")
+	if strings.HasPrefix(info.Name, "jemalloc") {
+		if !fsutil.IsExist("/lib64/libjemalloc.so.2") && !fsutil.IsExist("/lib/libjemalloc.so.2") {
+			printErrorAndExit("Jemalloc is required for this version of Ruby")
+		}
 	}
 }
 
