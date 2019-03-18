@@ -462,6 +462,14 @@ func showDetailedInfo(rubyVersion string) {
 	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Checksum", strutil.Head(info.Hash, 7))
 	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Added", added)
 
+	if isVersionInstalled(info.Name) {
+		installDate, _ := fsutil.GetMTime(getVersionPath(info.Name))
+		installDateStr := timeutil.Format(installDate, "%Y/%m/%d %H:%M")
+		fmtc.Printf(" {*}%-12s{!} {s}|{!} Yes {s-}(%s){!}\n", "Installed", installDateStr)
+	} else {
+		fmtc.Printf(" {*}%-12s{!} {s}|{!} No\n", "Installed")
+	}
+
 	if info.EOL {
 		fmtc.Printf(" {*}%-12s{!} {s}|{!} {r}Yes{!}\n", "EOL")
 	} else {
