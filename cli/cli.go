@@ -1431,7 +1431,7 @@ func getVersionFromFile() (string, error) {
 	return versionName, nil
 }
 
-// getAdvisableRubyGemsVersion returns recomended RubyGems version for
+// getAdvisableRubyGemsVersion returns recommended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
 	if strings.HasPrefix(rubyVersion, "jruby-") {
