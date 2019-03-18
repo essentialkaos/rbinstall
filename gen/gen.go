@@ -22,6 +22,7 @@ import (
 	"pkg.re/essentialkaos/ek.v10/options"
 	"pkg.re/essentialkaos/ek.v10/path"
 	"pkg.re/essentialkaos/ek.v10/sortutil"
+	"pkg.re/essentialkaos/ek.v10/strutil"
 	"pkg.re/essentialkaos/ek.v10/timeutil"
 	"pkg.re/essentialkaos/ek.v10/usage"
 
@@ -33,7 +34,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.9.1"
+	VER  = "0.10.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -89,6 +90,8 @@ var optMap = options.Map{
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
 }
+
+var variations = []string{"railsexpress", "jemalloc"}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -221,8 +224,8 @@ func buildIndex(dataDir string) {
 			versionInfo.Hash = hash.FileHash(filePath)
 		}
 
-		if strings.HasSuffix(fileName, "-railsexpress") {
-			baseVersionName := strings.Replace(fileName, "-railsexpress", "", -1)
+		if isBaseRubyVariation(fileName) {
+			baseVersionName := getVariationBaseName(fileName)
 			baseVersionInfo, _ := newIndex.Find(fileInfo.OS, fileInfo.Arch, baseVersionName)
 
 			if baseVersionInfo == nil {
@@ -308,7 +311,8 @@ func saveIndex(outputFile string, i *index.Index) {
 	}
 
 	if fsutil.IsExist(outputFile) {
-		os.RemoveAll(outputFile)
+		os.RemoveAll(outputFile + ".bak")
+		fsutil.MoveFile(outputFile, outputFile+".bak", 0600)
 	}
 
 	err = ioutil.WriteFile(outputFile, indexData, 0644)
@@ -362,6 +366,26 @@ func getExistentIndex(file string) *index.Index {
 	}
 
 	return i
+}
+
+// isBaseRubyVariation returns true if given name is name of base ruby variation
+func isBaseRubyVariation(name string) bool {
+	for _, v := range variations {
+		if strings.HasSuffix(name, "-"+v) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getVariationBaseName returns base ruby name
+func getVariationBaseName(name string) string {
+	for _, v := range variations {
+		name = strutil.Exclude(name, "-"+v)
+	}
+
+	return name
 }
 
 // printError prints error message to console

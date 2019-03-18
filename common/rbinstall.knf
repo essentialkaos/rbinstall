@@ -37,9 +37,6 @@
   # Update rubygems gem
   rubygems-update: true
 
-  # Update rubygems gem to given version
-  rubygems-version: 2.6.14
-
   # Allow gems update
   allow-update: true
 
