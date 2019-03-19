@@ -144,7 +144,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue Mar 19 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.1-0
-- [cli] Fixed bug with railsexpress availablity info in versions listing
+- [cli] Fixed bug with railsexpress availability info in versions listing
 
 * Thu Mar 14 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.0-0
 - [cli] New RubyGems update mechanics
@@ -327,7 +327,7 @@ rm -rf %{buildroot}
 - [cli] Using real user uid/gid for fail log file
 
 * Thu Apr 28 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.2-0
-- [cli] Fixed available versions listing without root privileges
+- [cli] Fixed availabile versions listing without root privileges
 - [cli] z7.v2 package usage
 
 * Mon Apr 25 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.1-0
