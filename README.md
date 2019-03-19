@@ -64,6 +64,7 @@ Options
   --rehash, -H           Rehash rbenv shims
   --gems-insecure, -s    Use HTTP instead of HTTPS for installing gems
   --ruby-version, -r     Install version defined in version file
+  --info, -i             Print detailed info about version
   --all, -a              Print all available versions
   --no-progress, -np     Disable progress bar and spinner
   --no-color, -nc        Disable colors in output
