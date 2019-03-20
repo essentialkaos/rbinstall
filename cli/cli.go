@@ -54,7 +54,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.0"
+	VER  = "0.21.1"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -1213,10 +1213,10 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 
 		var prettyName string
 
-		if len(versions[index].Variations) != 0 {
+		reVersion := getRailsexpressVariationInfo(versions[index])
 
-			// Currently subversion is only one - railsexpress
-			subVerName := versions[index].Variations[0].Name
+		if reVersion != nil {
+			subVerName := reVersion.Name
 
 			if options.GetB(OPT_NO_COLOR) {
 				switch {
@@ -1562,6 +1562,21 @@ func checkDependencies(info *index.VersionInfo, category string) {
 			printErrorAndExit("Jemalloc 5+ is required for this version of Ruby")
 		}
 	}
+}
+
+// getRailsexpressVariationInfo return info about railsexpress variation
+func getRailsexpressVariationInfo(info *index.VersionInfo) *index.VersionInfo {
+	if len(info.Variations) == 0 {
+		return nil
+	}
+
+	for _, variation := range info.Variations {
+		if strings.HasSuffix(variation.Name, "-railsexpress") {
+			return variation
+		}
+	}
+
+	return nil
 }
 
 // getSystemInfo return info about system
