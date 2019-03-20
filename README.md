@@ -15,7 +15,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rbinstall-0100.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rbinstall-0121.gif)](#usage-demo)
 
 ### Installation
 
