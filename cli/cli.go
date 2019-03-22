@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -54,7 +55,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.1"
+	VER  = "0.21.2"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -1558,7 +1559,7 @@ func checkDependencies(info *index.VersionInfo, category string) {
 	}
 
 	if strings.HasSuffix(info.Name, "jemalloc") {
-		if !fsutil.IsExist("/lib64/libjemalloc.so.2") && !fsutil.IsExist("/lib/libjemalloc.so.2") {
+		if !isLibLoaded("libjemalloc.so.2") {
 			printErrorAndExit("Jemalloc 5+ is required for this version of Ruby")
 		}
 	}
@@ -1614,6 +1615,33 @@ func getSystemInfo() (string, string, error) {
 	os = fmt.Sprintf("%s-%d", strings.ToLower(systemInfo.Distribution), distVersion.Major())
 
 	return os, arch, nil
+}
+
+// isLibLoaded return true if given library is loaded
+func isLibLoaded(glob string) bool {
+	cmd := exec.Command("ldconfig", "-p")
+	output, err := cmd.Output()
+
+	if err != nil {
+		printErrorAndExit(err.Error())
+	}
+
+	for _, line := range strings.Split(string(output), "\n") {
+		if !strings.Contains(line, "=>") {
+			continue
+		}
+
+		line = strings.TrimSpace(line)
+		line = strutil.ReadField(line, 0, false, " ")
+
+		match, _ := filepath.Match(glob, line)
+
+		if match {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getNameWithoutPatchLevel return name without -p0
