@@ -1619,11 +1619,11 @@ func getSystemInfo() (string, string, error) {
 
 // isLibLoaded return true if given library is loaded
 func isLibLoaded(glob string) bool {
-	cmd := exec.Command("/usr/sbin/ldconfig", "-p")
+	cmd := exec.Command("ldconfig", "-p")
 	output, err := cmd.Output()
 
 	if err != nil {
-		return false
+		printErrorAndExit(err.Error())
 	}
 
 	for _, line := range strings.Split(string(output), "\n") {
