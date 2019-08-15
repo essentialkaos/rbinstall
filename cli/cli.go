@@ -55,7 +55,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.2"
+	VER  = "0.21.3"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -1085,7 +1085,7 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	}
 
 	if knf.GetS(GEMS_SOURCE) != "" {
-		gemCmd.Args = append(gemCmd.Args, "--source", getGemSourceURL())
+		gemCmd.Args = append(gemCmd.Args, "--clear-sources", "--source", getGemSourceURL())
 	}
 
 	output, err := gemCmd.CombinedOutput()
@@ -1132,17 +1132,13 @@ func updateRubygems(version, rgVersion string) error {
 	rubyPath := getVersionPath(version)
 
 	if rgVersion == "latest" {
-		gemCmd = exec.Command(
-			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system",
-			"--source", getGemSourceURL(),
-		)
+		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system")
 	} else {
-		gemCmd = exec.Command(
-			rubyPath+"/bin/ruby", rubyPath+"/bin/gem",
-			"update", "--system", rgVersion,
-			"--source", getGemSourceURL(),
-		)
+		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system", rgVersion)
+	}
+
+	if knf.GetS(GEMS_SOURCE) != "" {
+		gemCmd.Args = append(gemCmd.Args, "--clear-sources", "--source", getGemSourceURL())
 	}
 
 	output, err := gemCmd.CombinedOutput()
