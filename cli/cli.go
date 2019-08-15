@@ -55,7 +55,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.3"
+	VER  = "0.21.4"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -945,6 +945,11 @@ func installGemTaskHandler(args ...string) (string, error) {
 	gem := args[1]
 	gemVersion := args[2]
 
+	// Do not install the latest version of bundler on Ruby < 2.3.0
+	if gem == "bundler" && gemVersion == "" && !isVersionSupportedByBundler(rubyVersion) {
+		return "", nil
+	}
+
 	return runGemCmd(rubyVersion, "install", gem, gemVersion)
 }
 
@@ -953,6 +958,11 @@ func updateGemTaskHandler(args ...string) (string, error) {
 	rubyVersion := args[0]
 	gem := args[1]
 	gemVersion := args[2]
+
+	// Do not install the latest version of bundler on Ruby < 2.3.0
+	if gem == "bundler" && gemVersion == "" && !isVersionSupportedByBundler(rubyVersion) {
+		return "", nil
+	}
 
 	if gemVersion != "" {
 		return runGemCmd(rubyVersion, "install", gem, gemVersion)
@@ -1638,6 +1648,28 @@ func isLibLoaded(glob string) bool {
 	}
 
 	return false
+}
+
+// isVersionSupportedByBundler returns true if given version is supported by the
+// latest version of bundler
+func isVersionSupportedByBundler(rubyVersion string) bool {
+	major := strutil.Head(rubyVersion, 1)
+
+	if !strings.ContainsAny(major, "12") {
+		return true
+	}
+
+	if major == "1" {
+		return false
+	}
+
+	minor := strutil.ReadField(rubyVersion, 1, false, ".")
+
+	if strings.ContainsAny(minor, "012") {
+		return false
+	}
+
+	return true
 }
 
 // getNameWithoutPatchLevel return name without -p0
