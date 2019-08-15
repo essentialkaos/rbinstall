@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.21.2
+Version:         0.21.3
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.11
+BuildRequires:   golang >= 1.12
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu Aug 15 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.3-0
+- [cli] Improved gems update/install mechanic
+
 * Fri Mar 22 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.2-0
 - [cli] Improved jemalloc availability check
 
