@@ -144,7 +144,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Fri Aug 16 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.5-0
-- [cli] Always use unsecure source for 1.8.x
+- [cli] Always use insecure source for 1.8.x
 
 * Fri Aug 16 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.4-0
 - [cli] Disabled installation of the latest version of bundler gem for old
