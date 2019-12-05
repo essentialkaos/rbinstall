@@ -1,7 +1,7 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rbinstall.svg"/></a></p>
 
 <p align="center">
-  <a href="https://travis-ci.org/essentialkaos/rbinstall"><img src="https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master" /></a>
+  <a href="https://travis-ci.com/essentialkaos/rbinstall"><img src="https://travis-ci.com/essentialkaos/rbinstall.svg?branch=master" /></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" /></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-rbinstall-master"><img alt="codebeat badge" src="https://codebeat.co/badges/b78de32a-6867-4bd3-9135-8244d4813531" /></a>
   <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg" /></a>
@@ -97,8 +97,8 @@ Examples
 
 | Branch | Status |
 |--------|--------|
-| `master` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.org/essentialkaos/rbinstall) |
-| `develop` | [![Build Status](https://travis-ci.org/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.org/essentialkaos/rbinstall) |
+| `master` | [![Build Status](https://travis-ci.com/essentialkaos/rbinstall.svg?branch=master)](https://travis-ci.com/essentialkaos/rbinstall) |
+| `develop` | [![Build Status](https://travis-ci.com/essentialkaos/rbinstall.svg?branch=develop)](https://travis-ci.com/essentialkaos/rbinstall) |
 
 ### Contributing
 
