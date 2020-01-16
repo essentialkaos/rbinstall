@@ -1766,6 +1766,7 @@ func showUsage() {
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0", "Install latest available release in 2.0.0")
+	info.AddExample("2.0.0 -i", "Show details and available variations for 2.0.0")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -G", "Update gems installed for 2.0.0-p598")
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
