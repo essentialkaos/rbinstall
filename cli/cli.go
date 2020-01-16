@@ -55,7 +55,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.5"
+	VER  = "0.21.6"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -127,8 +127,11 @@ const (
 	ARCH_ARM = "arm"
 )
 
-// RubyGems version used for old versions of Ruby (< 2.3.0)
-const MIN_RUBYGEMS_VERSION = "2.7.9"
+// RubyGems versions used for old versions of Ruby
+const (
+	MIN_RUBYGEMS_VERSION_BASE  = "2.7.9"
+	MIN_RUBYGEMS_VERSION_JRUBY = "2.6.14"
+)
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -1445,7 +1448,7 @@ func getAdvisableRubyGemsVersion(rubyVersion string) string {
 		rubyVersion = strutil.Exclude(rubyVersion, "jruby-")
 
 		if !strings.HasPrefix(rubyVersion, "9.2") {
-			return MIN_RUBYGEMS_VERSION
+			return MIN_RUBYGEMS_VERSION_JRUBY
 		}
 
 		return "latest"
@@ -1455,7 +1458,7 @@ func getAdvisableRubyGemsVersion(rubyVersion string) string {
 	minVer, _ := version.Parse("2.3.0")
 
 	if err != nil || v.Less(minVer) {
-		return MIN_RUBYGEMS_VERSION
+		return MIN_RUBYGEMS_VERSION_BASE
 	}
 
 	return "latest"

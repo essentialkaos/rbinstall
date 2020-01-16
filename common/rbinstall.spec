@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.21.5
+Version:         0.21.6
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 15
 
-BuildRequires:   golang >= 1.12
+BuildRequires:   golang >= 1.13
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu Jan 16 2020 Anton Novojilov <andy@essentialkaos.com> - 0.21.6-0
+- [cli] Improved RubyGems update mechanic
+
 * Fri Aug 16 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.5-0
 - [cli] Always use insecure source for 1.8.x
 
