@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.21.6
+Version:         0.22.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.10.0
+Version:         0.11.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -82,7 +82,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         0.6.1
+Version:         0.7.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -143,7 +143,7 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
-* Thu Jan 16 2020 Anton Novojilov <andy@essentialkaos.com> - 0.21.6-0
+* Thu Jan 16 2020 Anton Novojilov <andy@essentialkaos.com> - 0.22.0-0
 - [cli] Improved RubyGems update mechanic
 
 * Fri Aug 16 2019 Anton Novojilov <andy@essentialkaos.com> - 0.21.5-0

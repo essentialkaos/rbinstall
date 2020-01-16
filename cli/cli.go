@@ -21,27 +21,30 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v10/env"
-	"pkg.re/essentialkaos/ek.v10/fmtc"
-	"pkg.re/essentialkaos/ek.v10/fmtutil"
-	"pkg.re/essentialkaos/ek.v10/fsutil"
-	"pkg.re/essentialkaos/ek.v10/hash"
-	"pkg.re/essentialkaos/ek.v10/knf"
-	"pkg.re/essentialkaos/ek.v10/log"
-	"pkg.re/essentialkaos/ek.v10/options"
-	"pkg.re/essentialkaos/ek.v10/passwd"
-	"pkg.re/essentialkaos/ek.v10/req"
-	"pkg.re/essentialkaos/ek.v10/signal"
-	"pkg.re/essentialkaos/ek.v10/sortutil"
-	"pkg.re/essentialkaos/ek.v10/strutil"
-	"pkg.re/essentialkaos/ek.v10/system"
-	"pkg.re/essentialkaos/ek.v10/terminal"
-	"pkg.re/essentialkaos/ek.v10/terminal/window"
-	"pkg.re/essentialkaos/ek.v10/timeutil"
-	"pkg.re/essentialkaos/ek.v10/tmp"
-	"pkg.re/essentialkaos/ek.v10/usage"
-	"pkg.re/essentialkaos/ek.v10/usage/update"
-	"pkg.re/essentialkaos/ek.v10/version"
+	"pkg.re/essentialkaos/ek.v11/env"
+	"pkg.re/essentialkaos/ek.v11/fmtc"
+	"pkg.re/essentialkaos/ek.v11/fmtutil"
+	"pkg.re/essentialkaos/ek.v11/fsutil"
+	"pkg.re/essentialkaos/ek.v11/hash"
+	"pkg.re/essentialkaos/ek.v11/knf"
+	"pkg.re/essentialkaos/ek.v11/log"
+	"pkg.re/essentialkaos/ek.v11/options"
+	"pkg.re/essentialkaos/ek.v11/passwd"
+	"pkg.re/essentialkaos/ek.v11/req"
+	"pkg.re/essentialkaos/ek.v11/signal"
+	"pkg.re/essentialkaos/ek.v11/sortutil"
+	"pkg.re/essentialkaos/ek.v11/strutil"
+	"pkg.re/essentialkaos/ek.v11/system"
+	"pkg.re/essentialkaos/ek.v11/terminal"
+	"pkg.re/essentialkaos/ek.v11/terminal/window"
+	"pkg.re/essentialkaos/ek.v11/timeutil"
+	"pkg.re/essentialkaos/ek.v11/tmp"
+	"pkg.re/essentialkaos/ek.v11/usage"
+	"pkg.re/essentialkaos/ek.v11/usage/update"
+	"pkg.re/essentialkaos/ek.v11/version"
+
+	knfv "pkg.re/essentialkaos/ek.v11/knf/validators"
+	knff "pkg.re/essentialkaos/ek.v11/knf/validators/fs"
 
 	"pkg.re/essentialkaos/z7.v8"
 
@@ -55,7 +58,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.6"
+	VER  = "0.22.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -357,20 +360,9 @@ func loadConfig() {
 
 // validateConfig validate knf.values
 func validateConfig() {
-	var permsChecker = func(config *knf.Config, prop string, value interface{}) error {
-		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
-			switch value.(string) {
-			case "DWX":
-				return fmtc.Errorf("Property %s must be path to writable directory", prop)
-			}
-		}
-
-		return nil
-	}
-
 	errs := knf.Validate([]*knf.Validator{
-		{MAIN_TMP_DIR, permsChecker, "DWX"},
-		{STORAGE_URL, knf.Empty, nil},
+		{MAIN_TMP_DIR, knff.Perms, "DWX"},
+		{STORAGE_URL, knfv.Empty, nil},
 	})
 
 	if len(errs) != 0 {

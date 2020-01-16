@@ -13,17 +13,17 @@ import (
 	"runtime"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v10/fmtc"
-	"pkg.re/essentialkaos/ek.v10/fmtutil"
-	"pkg.re/essentialkaos/ek.v10/fsutil"
-	"pkg.re/essentialkaos/ek.v10/httputil"
-	"pkg.re/essentialkaos/ek.v10/jsonutil"
-	"pkg.re/essentialkaos/ek.v10/options"
-	"pkg.re/essentialkaos/ek.v10/path"
-	"pkg.re/essentialkaos/ek.v10/req"
-	"pkg.re/essentialkaos/ek.v10/terminal"
-	"pkg.re/essentialkaos/ek.v10/timeutil"
-	"pkg.re/essentialkaos/ek.v10/usage"
+	"pkg.re/essentialkaos/ek.v11/fmtc"
+	"pkg.re/essentialkaos/ek.v11/fmtutil"
+	"pkg.re/essentialkaos/ek.v11/fsutil"
+	"pkg.re/essentialkaos/ek.v11/httputil"
+	"pkg.re/essentialkaos/ek.v11/jsonutil"
+	"pkg.re/essentialkaos/ek.v11/options"
+	"pkg.re/essentialkaos/ek.v11/path"
+	"pkg.re/essentialkaos/ek.v11/req"
+	"pkg.re/essentialkaos/ek.v11/terminal"
+	"pkg.re/essentialkaos/ek.v11/timeutil"
+	"pkg.re/essentialkaos/ek.v11/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -33,7 +33,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "0.6.1"
+	VER  = "0.7.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -333,7 +333,7 @@ func saveIndex(repoIndex *index.Index, dir string) {
 
 	fmtc.Printf("Saving index... ")
 
-	err := jsonutil.EncodeToFile(indexPath, repoIndex)
+	err := jsonutil.Write(indexPath, repoIndex)
 
 	if err != nil {
 		fmtc.Println("{r}ERROR{!}")

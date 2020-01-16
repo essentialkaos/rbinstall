@@ -39,6 +39,7 @@ git-config: ## Configure git redirects for stable import path services
 deps: git-config ## Download dependencies
 	go get -d -v pkg.re/cheggaaa/pb.v1
 	go get -d -v pkg.re/essentialkaos/ek.v10
+	go get -d -v pkg.re/essentialkaos/ek.v11
 	go get -d -v pkg.re/essentialkaos/z7.v8
 
 fmt: ## Format source code with gofmt
