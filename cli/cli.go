@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2019 ESSENTIAL KAOS                         //
+//                     Copyright (c) 2009-2020 ESSENTIAL KAOS                         //
 //        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -21,29 +21,32 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v10/env"
-	"pkg.re/essentialkaos/ek.v10/fmtc"
-	"pkg.re/essentialkaos/ek.v10/fmtutil"
-	"pkg.re/essentialkaos/ek.v10/fsutil"
-	"pkg.re/essentialkaos/ek.v10/hash"
-	"pkg.re/essentialkaos/ek.v10/knf"
-	"pkg.re/essentialkaos/ek.v10/log"
-	"pkg.re/essentialkaos/ek.v10/options"
-	"pkg.re/essentialkaos/ek.v10/passwd"
-	"pkg.re/essentialkaos/ek.v10/req"
-	"pkg.re/essentialkaos/ek.v10/signal"
-	"pkg.re/essentialkaos/ek.v10/sortutil"
-	"pkg.re/essentialkaos/ek.v10/strutil"
-	"pkg.re/essentialkaos/ek.v10/system"
-	"pkg.re/essentialkaos/ek.v10/terminal"
-	"pkg.re/essentialkaos/ek.v10/terminal/window"
-	"pkg.re/essentialkaos/ek.v10/timeutil"
-	"pkg.re/essentialkaos/ek.v10/tmp"
-	"pkg.re/essentialkaos/ek.v10/usage"
-	"pkg.re/essentialkaos/ek.v10/usage/update"
-	"pkg.re/essentialkaos/ek.v10/version"
+	"pkg.re/essentialkaos/ek.v11/env"
+	"pkg.re/essentialkaos/ek.v11/fmtc"
+	"pkg.re/essentialkaos/ek.v11/fmtutil"
+	"pkg.re/essentialkaos/ek.v11/fsutil"
+	"pkg.re/essentialkaos/ek.v11/hash"
+	"pkg.re/essentialkaos/ek.v11/knf"
+	"pkg.re/essentialkaos/ek.v11/log"
+	"pkg.re/essentialkaos/ek.v11/options"
+	"pkg.re/essentialkaos/ek.v11/passwd"
+	"pkg.re/essentialkaos/ek.v11/req"
+	"pkg.re/essentialkaos/ek.v11/signal"
+	"pkg.re/essentialkaos/ek.v11/sortutil"
+	"pkg.re/essentialkaos/ek.v11/strutil"
+	"pkg.re/essentialkaos/ek.v11/system"
+	"pkg.re/essentialkaos/ek.v11/terminal"
+	"pkg.re/essentialkaos/ek.v11/terminal/window"
+	"pkg.re/essentialkaos/ek.v11/timeutil"
+	"pkg.re/essentialkaos/ek.v11/tmp"
+	"pkg.re/essentialkaos/ek.v11/usage"
+	"pkg.re/essentialkaos/ek.v11/usage/update"
+	"pkg.re/essentialkaos/ek.v11/version"
 
-	"pkg.re/essentialkaos/z7.v8"
+	knfv "pkg.re/essentialkaos/ek.v11/knf/validators"
+	knff "pkg.re/essentialkaos/ek.v11/knf/validators/fs"
+
+	"pkg.re/essentialkaos/z7.v9"
 
 	"pkg.re/cheggaaa/pb.v1"
 
@@ -55,7 +58,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.21.5"
+	VER  = "0.22.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -127,8 +130,11 @@ const (
 	ARCH_ARM = "arm"
 )
 
-// RubyGems version used for old versions of Ruby (< 2.3.0)
-const MIN_RUBYGEMS_VERSION = "2.7.9"
+// RubyGems versions used for old versions of Ruby
+const (
+	MIN_RUBYGEMS_VERSION_BASE  = "2.7.9"
+	MIN_RUBYGEMS_VERSION_JRUBY = "2.6.14"
+)
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -354,20 +360,9 @@ func loadConfig() {
 
 // validateConfig validate knf.values
 func validateConfig() {
-	var permsChecker = func(config *knf.Config, prop string, value interface{}) error {
-		if !fsutil.CheckPerms(value.(string), config.GetS(prop)) {
-			switch value.(string) {
-			case "DWX":
-				return fmtc.Errorf("Property %s must be path to writable directory", prop)
-			}
-		}
-
-		return nil
-	}
-
 	errs := knf.Validate([]*knf.Validator{
-		{MAIN_TMP_DIR, permsChecker, "DWX"},
-		{STORAGE_URL, knf.Empty, nil},
+		{MAIN_TMP_DIR, knff.Perms, "DWX"},
+		{STORAGE_URL, knfv.Empty, nil},
 	})
 
 	if len(errs) != 0 {
@@ -1445,7 +1440,7 @@ func getAdvisableRubyGemsVersion(rubyVersion string) string {
 		rubyVersion = strutil.Exclude(rubyVersion, "jruby-")
 
 		if !strings.HasPrefix(rubyVersion, "9.2") {
-			return MIN_RUBYGEMS_VERSION
+			return MIN_RUBYGEMS_VERSION_JRUBY
 		}
 
 		return "latest"
@@ -1455,7 +1450,7 @@ func getAdvisableRubyGemsVersion(rubyVersion string) string {
 	minVer, _ := version.Parse("2.3.0")
 
 	if err != nil || v.Less(minVer) {
-		return MIN_RUBYGEMS_VERSION
+		return MIN_RUBYGEMS_VERSION_BASE
 	}
 
 	return "latest"
@@ -1771,6 +1766,7 @@ func showUsage() {
 
 	info.AddExample("2.0.0-p598", "Install 2.0.0-p598")
 	info.AddExample("2.0.0", "Install latest available release in 2.0.0")
+	info.AddExample("2.0.0 -i", "Show details and available variations for 2.0.0")
 	info.AddExample("2.0.0-p598-railsexpress", "Install 2.0.0-p598 with railsexpress patches")
 	info.AddExample("2.0.0-p598 -G", "Update gems installed for 2.0.0-p598")
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")

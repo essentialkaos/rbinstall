@@ -2,7 +2,7 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2019 ESSENTIAL KAOS                         //
+//                     Copyright (c) 2009-2020 ESSENTIAL KAOS                         //
 //        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -15,16 +15,16 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v10/fmtc"
-	"pkg.re/essentialkaos/ek.v10/fsutil"
-	"pkg.re/essentialkaos/ek.v10/hash"
-	"pkg.re/essentialkaos/ek.v10/jsonutil"
-	"pkg.re/essentialkaos/ek.v10/options"
-	"pkg.re/essentialkaos/ek.v10/path"
-	"pkg.re/essentialkaos/ek.v10/sortutil"
-	"pkg.re/essentialkaos/ek.v10/strutil"
-	"pkg.re/essentialkaos/ek.v10/timeutil"
-	"pkg.re/essentialkaos/ek.v10/usage"
+	"pkg.re/essentialkaos/ek.v11/fmtc"
+	"pkg.re/essentialkaos/ek.v11/fsutil"
+	"pkg.re/essentialkaos/ek.v11/hash"
+	"pkg.re/essentialkaos/ek.v11/jsonutil"
+	"pkg.re/essentialkaos/ek.v11/options"
+	"pkg.re/essentialkaos/ek.v11/path"
+	"pkg.re/essentialkaos/ek.v11/sortutil"
+	"pkg.re/essentialkaos/ek.v11/strutil"
+	"pkg.re/essentialkaos/ek.v11/timeutil"
+	"pkg.re/essentialkaos/ek.v11/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -34,7 +34,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "0.10.0"
+	VER  = "0.11.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -138,7 +138,7 @@ func loadEOLInfo() {
 		return
 	}
 
-	err := jsonutil.DecodeFile(options.GetS(OPT_EOL), &eolInfo)
+	err := jsonutil.Read(options.GetS(OPT_EOL), &eolInfo)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -358,7 +358,7 @@ func getExistentIndex(file string) *index.Index {
 
 	i := index.NewIndex()
 
-	err := jsonutil.DecodeFile(file, i)
+	err := jsonutil.Read(file, i)
 
 	if err != nil {
 		printWarn("Can't reuse existing index: %v\n", err)
