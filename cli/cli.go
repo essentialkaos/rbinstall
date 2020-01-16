@@ -46,7 +46,7 @@ import (
 	knfv "pkg.re/essentialkaos/ek.v11/knf/validators"
 	knff "pkg.re/essentialkaos/ek.v11/knf/validators/fs"
 
-	"pkg.re/essentialkaos/z7.v8"
+	"pkg.re/essentialkaos/z7.v9"
 
 	"pkg.re/cheggaaa/pb.v1"
 
