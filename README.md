@@ -11,7 +11,7 @@
   <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
 </p>
 
-`rbinstall` is a utility for installing prebuilt ruby to [rbenv](https://github.com/rbenv/rbenv).
+`rbinstall` is a utility for installing prebuilt Ruby to [rbenv](https://github.com/rbenv/rbenv).
 
 ### Usage demo
 

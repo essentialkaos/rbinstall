@@ -21,34 +21,33 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v11/env"
-	"pkg.re/essentialkaos/ek.v11/fmtc"
-	"pkg.re/essentialkaos/ek.v11/fmtutil"
-	"pkg.re/essentialkaos/ek.v11/fsutil"
-	"pkg.re/essentialkaos/ek.v11/hash"
-	"pkg.re/essentialkaos/ek.v11/knf"
-	"pkg.re/essentialkaos/ek.v11/log"
-	"pkg.re/essentialkaos/ek.v11/options"
-	"pkg.re/essentialkaos/ek.v11/passwd"
-	"pkg.re/essentialkaos/ek.v11/req"
-	"pkg.re/essentialkaos/ek.v11/signal"
-	"pkg.re/essentialkaos/ek.v11/sortutil"
-	"pkg.re/essentialkaos/ek.v11/strutil"
-	"pkg.re/essentialkaos/ek.v11/system"
-	"pkg.re/essentialkaos/ek.v11/terminal"
-	"pkg.re/essentialkaos/ek.v11/terminal/window"
-	"pkg.re/essentialkaos/ek.v11/timeutil"
-	"pkg.re/essentialkaos/ek.v11/tmp"
-	"pkg.re/essentialkaos/ek.v11/usage"
-	"pkg.re/essentialkaos/ek.v11/usage/update"
-	"pkg.re/essentialkaos/ek.v11/version"
+	"pkg.re/essentialkaos/ek.v12/env"
+	"pkg.re/essentialkaos/ek.v12/fmtc"
+	"pkg.re/essentialkaos/ek.v12/fmtutil"
+	"pkg.re/essentialkaos/ek.v12/fsutil"
+	"pkg.re/essentialkaos/ek.v12/hash"
+	"pkg.re/essentialkaos/ek.v12/knf"
+	"pkg.re/essentialkaos/ek.v12/log"
+	"pkg.re/essentialkaos/ek.v12/options"
+	"pkg.re/essentialkaos/ek.v12/passwd"
+	"pkg.re/essentialkaos/ek.v12/progress"
+	"pkg.re/essentialkaos/ek.v12/req"
+	"pkg.re/essentialkaos/ek.v12/signal"
+	"pkg.re/essentialkaos/ek.v12/sortutil"
+	"pkg.re/essentialkaos/ek.v12/strutil"
+	"pkg.re/essentialkaos/ek.v12/system"
+	"pkg.re/essentialkaos/ek.v12/terminal"
+	"pkg.re/essentialkaos/ek.v12/terminal/window"
+	"pkg.re/essentialkaos/ek.v12/timeutil"
+	"pkg.re/essentialkaos/ek.v12/tmp"
+	"pkg.re/essentialkaos/ek.v12/usage"
+	"pkg.re/essentialkaos/ek.v12/usage/update"
+	"pkg.re/essentialkaos/ek.v12/version"
 
-	knfv "pkg.re/essentialkaos/ek.v11/knf/validators"
-	knff "pkg.re/essentialkaos/ek.v11/knf/validators/fs"
+	knfv "pkg.re/essentialkaos/ek.v12/knf/validators"
+	knff "pkg.re/essentialkaos/ek.v12/knf/validators/fs"
 
-	"pkg.re/essentialkaos/z7.v9"
-
-	"pkg.re/cheggaaa/pb.v1"
+	"pkg.re/essentialkaos/zip7.v1"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -58,7 +57,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "0.22.0"
+	VER  = "1.0.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -135,14 +134,6 @@ const (
 	MIN_RUBYGEMS_VERSION_BASE  = "2.7.9"
 	MIN_RUBYGEMS_VERSION_JRUBY = "2.6.14"
 )
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
-// PassThru is reader for progress bar
-type PassThru struct {
-	io.Reader
-	pb *pb.ProgressBar
-}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -259,6 +250,13 @@ func configureUI() {
 		fmtc.DisableColors = true
 		useRawOutput = true
 	}
+
+	progress.DefaultSettings.BarFgColorTag = "{#161}"
+	progress.DefaultSettings.NameColorTag = "{*}"
+	progress.DefaultSettings.PercentColorTag = "{*}"
+	progress.DefaultSettings.ProgressColorTag = "{s}"
+	progress.DefaultSettings.SpeedColorTag = "{s}"
+	progress.DefaultSettings.RemainingColorTag = "{s}"
 }
 
 // prepare do some preparations for installing ruby
@@ -656,10 +654,9 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {c}%s {s-}(%s){!} from CDN…\n", info.Name, fmtutil.PrettySize(info.Size))
+	fmtc.Printf("Fetching {*}{#161}%s{!} from CDN…\n", info.Name)
 
-	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
-	file, err := downloadFile(url, info.File)
+	file, err := downloadFile(info)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -795,10 +792,10 @@ func installCommand(rubyVersion string) {
 
 	if aliasCreated {
 		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
-		fmtc.Printf("{g}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
+		fmtc.Printf("{#161}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
 	} else {
 		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
-		fmtc.Printf("{g}Version {*}%s{!*} successfully installed{!}\n", info.Name)
+		fmtc.Printf("{#161}Version {*}%s{!*} successfully installed{!}\n", info.Name)
 	}
 }
 
@@ -906,7 +903,7 @@ func unpackTaskHandler(args ...string) (string, error) {
 	file := args[0]
 	outputDir := args[1]
 
-	output, err := z7.Extract(z7.Props{File: file, OutputDir: outputDir})
+	output, err := zip7.Extract(zip7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
 		unpackError := err
@@ -1162,14 +1159,15 @@ func updateRubygems(rubyVersion, gemVersion string) error {
 }
 
 // downloadFile download file from remote host
-func downloadFile(url, fileName string) (string, error) {
+func downloadFile(info *index.VersionInfo) (string, error) {
+	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
 	tmpDir, err := temp.MkDir()
 
 	if err != nil {
 		return "", err
 	}
 
-	fd, err := os.OpenFile(tmpDir+"/"+fileName, os.O_CREATE|os.O_WRONLY, 0644)
+	fd, err := os.OpenFile(tmpDir+"/"+info.File, os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		return "", err
@@ -1192,19 +1190,13 @@ func downloadFile(url, fileName string) (string, error) {
 	if options.GetB(OPT_NO_PROGRESS) {
 		_, err = io.Copy(fd, resp.Body)
 	} else {
-		bar := makeProgressBar(resp.ContentLength)
-
-		defer bar.Finish()
-
-		pt := &PassThru{
-			Reader: resp.Body,
-			pb:     bar.Start(),
-		}
-
-		_, err = io.Copy(fd, pt)
+		pb := progress.New(resp.ContentLength, "")
+		defer pb.Finish()
+		pb.Start()
+		_, err = io.Copy(fd, pb.PassThru(resp.Body))
 	}
 
-	return tmpDir + "/" + fileName, err
+	return tmpDir + "/" + info.File, err
 }
 
 // printCurrentVersionName print version from given slice for
@@ -1267,23 +1259,6 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 	printSized(" %%-%ds ", categorySize[category], "")
 
 	return false
-}
-
-// makeProgressBar create and configure progress bar instance
-func makeProgressBar(total int64) *pb.ProgressBar {
-	bar := pb.New64(total)
-
-	bar.ShowCounters = false
-	bar.BarStart = "—"
-	bar.BarEnd = " "
-	bar.Empty = " "
-	bar.Current = "—"
-	bar.CurrentN = "→"
-	bar.Width = 80
-	bar.ForceWidth = false
-	bar.RefreshRate = 50 * time.Millisecond
-
-	return bar
 }
 
 // printSized render format with given size and print text with give arguments
@@ -1731,19 +1706,6 @@ func exit(code int) {
 
 	fmtc.NewLine()
 	os.Exit(code)
-}
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
-// Read proxy for progress bar
-func (pt *PassThru) Read(p []byte) (int, error) {
-	n, err := pt.Reader.Read(p)
-
-	if n > 0 {
-		pt.pb.Add64(int64(n))
-	}
-
-	return n, err
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //

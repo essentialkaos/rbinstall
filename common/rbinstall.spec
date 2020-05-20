@@ -44,17 +44,17 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         0.22.0
+Version:         1.0.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
-URL:             https://github.com/essentialkaos/rbinstall
+URL:             https://kaos.sh/rbinstall
 
 Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rbenv ca-certificates p7zip >= 15
+Requires:        rbenv ca-certificates p7zip >= 16
 
 BuildRequires:   golang >= 1.13
 
@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         0.11.0
+Version:         1.0.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -82,7 +82,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         0.7.0
+Version:         1.0.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -143,6 +143,11 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue May 19 2020 Anton Novojilov <andy@essentialkaos.com> - 1.0.0-0
+- [cli|gen|clone] Migrated to ek.v12
+- [cli] Using zip7 package instead z7
+- [cli] Improved UI
+
 * Thu Jan 16 2020 Anton Novojilov <andy@essentialkaos.com> - 0.22.0-0
 - [cli] Improved RubyGems update mechanic
 
