@@ -37,9 +37,8 @@ git-config: ## Configure git redirects for stable import path services
 	git config --global http.https://pkg.re.followRedirects true
 
 deps: git-config ## Download dependencies
-	go get -d -v pkg.re/cheggaaa/pb.v1
-	go get -d -v pkg.re/essentialkaos/ek.v11
-	go get -d -v pkg.re/essentialkaos/z7.v9
+	go get -d -v pkg.re/essentialkaos/ek.v12
+	go get -d -v pkg.re/essentialkaos/zip7.v1
 
 fmt: ## Format source code with gofmt
 	find . -name "*.go" -exec gofmt -s -w {} \;
