@@ -57,8 +57,8 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "1.0.0"
-	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
+	VER  = "2.0.0"
+	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -103,11 +103,10 @@ const (
 
 // List of default ruby categories
 const (
-	CATEGORY_RUBY     = "ruby"
-	CATEGORY_JRUBY    = "jruby"
-	CATEGORY_REE      = "ree"
-	CATEGORY_RUBINIUS = "rubinius"
-	CATEGORY_OTHER    = "other"
+	CATEGORY_RUBY    = "ruby"
+	CATEGORY_JRUBY   = "jruby"
+	CATEGORY_TRUFFLE = "truffle"
+	CATEGORY_OTHER   = "other"
 )
 
 // INDEX_NAME is name of index file
@@ -120,7 +119,7 @@ const CONFIG_FILE = "/etc/rbinstall.knf"
 const NONE_VERSION = "- none -"
 
 // DEFAULT_CATEGORY_SIZE is default category column size
-const DEFAULT_CATEGORY_SIZE = 28
+const DEFAULT_CATEGORY_SIZE = 20
 
 // Default arch names
 const (
@@ -160,19 +159,17 @@ var (
 )
 
 var categoryColor = map[string]string{
-	CATEGORY_RUBY:     "y",
-	CATEGORY_JRUBY:    "c",
-	CATEGORY_REE:      "g",
-	CATEGORY_RUBINIUS: "m",
-	CATEGORY_OTHER:    "s",
+	CATEGORY_RUBY:    "m",
+	CATEGORY_JRUBY:   "c",
+	CATEGORY_TRUFFLE: "y",
+	CATEGORY_OTHER:   "s",
 }
 
 var categorySize = map[string]int{
-	CATEGORY_RUBY:     0,
-	CATEGORY_JRUBY:    0,
-	CATEGORY_REE:      0,
-	CATEGORY_RUBINIUS: 0,
-	CATEGORY_OTHER:    0,
+	CATEGORY_RUBY:    0,
+	CATEGORY_JRUBY:   0,
+	CATEGORY_TRUFFLE: 0,
+	CATEGORY_OTHER:   0,
 }
 
 var useRawOutput = false
@@ -512,36 +509,31 @@ func listCommand() {
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
 	var (
-		ruby     = getCategoryData(dist, arch, CATEGORY_RUBY)
-		jruby    = getCategoryData(dist, arch, CATEGORY_JRUBY)
-		ree      = getCategoryData(dist, arch, CATEGORY_REE)
-		rubinius = getCategoryData(dist, arch, CATEGORY_RUBINIUS)
-		other    = getCategoryData(dist, arch, CATEGORY_OTHER)
+		ruby    = getCategoryData(dist, arch, CATEGORY_RUBY)
+		jruby   = getCategoryData(dist, arch, CATEGORY_JRUBY)
+		truffle = getCategoryData(dist, arch, CATEGORY_TRUFFLE)
+		other   = getCategoryData(dist, arch, CATEGORY_OTHER)
 
 		installed = getInstalledVersionsMap()
 	)
 
 	configureCategorySizes(map[string]index.CategoryData{
-		CATEGORY_RUBY:     ruby,
-		CATEGORY_JRUBY:    jruby,
-		CATEGORY_REE:      ree,
-		CATEGORY_RUBINIUS: rubinius,
-		CATEGORY_OTHER:    other,
+		CATEGORY_RUBY:    ruby,
+		CATEGORY_JRUBY:   jruby,
+		CATEGORY_TRUFFLE: truffle,
+		CATEGORY_OTHER:   other,
 	})
 
-	headerTemplate := fmt.Sprintf(
-		"{*@y} %%-%ds{!} {*@c} %%-%ds{!} {*@g} %%-%ds{!} {*@m} %%-%ds{!} {*@s} %%-%ds{!}\n\n",
-		categorySize[CATEGORY_RUBY], categorySize[CATEGORY_JRUBY],
-		categorySize[CATEGORY_REE], categorySize[CATEGORY_RUBINIUS],
-		categorySize[CATEGORY_OTHER],
-	)
+	headerTemplate := getCategoryHeaderStyle(CATEGORY_RUBY) + " " +
+		getCategoryHeaderStyle(CATEGORY_JRUBY) + " " +
+		getCategoryHeaderStyle(CATEGORY_TRUFFLE) + " " +
+		getCategoryHeaderStyle(CATEGORY_OTHER) + "\n\n"
 
 	fmtc.Printf(
 		headerTemplate,
 		strings.ToUpper(CATEGORY_RUBY),
 		strings.ToUpper(CATEGORY_JRUBY),
-		strings.ToUpper(CATEGORY_REE),
-		strings.ToUpper(CATEGORY_RUBINIUS),
+		strings.ToUpper(CATEGORY_TRUFFLE),
 		strings.ToUpper(CATEGORY_OTHER),
 	)
 
@@ -552,8 +544,7 @@ func printPrettyListing(dist, arch string) {
 
 		hasItems = printCurrentVersionName(CATEGORY_RUBY, ruby, installed, index) || hasItems
 		hasItems = printCurrentVersionName(CATEGORY_JRUBY, jruby, installed, index) || hasItems
-		hasItems = printCurrentVersionName(CATEGORY_REE, ree, installed, index) || hasItems
-		hasItems = printCurrentVersionName(CATEGORY_RUBINIUS, rubinius, installed, index) || hasItems
+		hasItems = printCurrentVersionName(CATEGORY_TRUFFLE, truffle, installed, index) || hasItems
 		hasItems = printCurrentVersionName(CATEGORY_OTHER, other, installed, index) || hasItems
 
 		if !hasItems {
@@ -569,6 +560,15 @@ func printPrettyListing(dist, arch string) {
 		fmtc.NewLine()
 		fmtc.Println("{s-}For listing outdated versions use option '--all'{!}")
 	}
+}
+
+// getCategoryHeaderStyle generates part of the header style for given category
+func getCategoryHeaderStyle(category string) string {
+	return fmt.Sprintf(
+		"{*@%s} %%-%ds{!}",
+		categoryColor[category],
+		categorySize[category],
+	)
 }
 
 // printRawListing just print version names
@@ -1193,7 +1193,7 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 		pb := progress.New(resp.ContentLength, "")
 		defer pb.Finish()
 		pb.Start()
-		_, err = io.Copy(fd, pb.PassThru(resp.Body))
+		_, err = io.Copy(fd, pb.Reader(resp.Body))
 	}
 
 	return tmpDir + "/" + info.File, err
@@ -1202,63 +1202,83 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 // printCurrentVersionName print version from given slice for
 // versions listing
 func printCurrentVersionName(category string, versions index.CategoryData, installed map[string]bool, index int) bool {
-	if len(versions) > index {
-		curName := versions[index].Name
-
-		var prettyName string
-
-		reVersion := getRailsexpressVariationInfo(versions[index])
-
-		if reVersion != nil {
-			subVerName := reVersion.Name
-
-			if options.GetB(OPT_NO_COLOR) {
-				switch {
-				case installed[curName] && installed[subVerName]:
-					prettyName = fmt.Sprintf("%s-railsexpress ••", curName)
-				case installed[subVerName]:
-					prettyName = fmt.Sprintf("%s-railsexpress -•", curName)
-				case installed[curName]:
-					prettyName = fmt.Sprintf("%s-railsexpress •-", curName)
-				default:
-					prettyName = fmt.Sprintf("%s-railsexpress", curName)
-				}
-			} else {
-				switch {
-				case installed[curName] && installed[subVerName]:
-					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {%s}••{!}", curName, categoryColor[category])
-				case installed[subVerName]:
-					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {s-}•{%s}•{!}", curName, categoryColor[category])
-				case installed[curName]:
-					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!} {%s}•{s-}•{!}", curName, categoryColor[category])
-				default:
-					prettyName = fmt.Sprintf("%s{s-}-railsexpress{!}", curName)
-				}
-			}
-
-			printRubyVersion(category, prettyName)
-
-			return true
-		}
-
-		if installed[curName] {
-			prettyName = fmt.Sprintf("%s {%s}•{!}", curName, categoryColor[category])
-			printRubyVersion(category, prettyName)
-		} else {
-			printSized(" %%-%ds ", categorySize[category], curName)
-		}
-
-		return true
-	}
-
 	if len(versions) == 0 && index == 0 {
 		printSized(" {s-}%%-%ds{!} ", categorySize[category], NONE_VERSION)
 		return true
 	}
 
-	printSized(" %%-%ds ", categorySize[category], "")
+	if len(versions) <= index {
+		printSized(" %%-%ds ", categorySize[category], "")
+		return false
+	}
+
+	info := versions[index]
+	prettyName := info.Name
+
+	if strings.HasPrefix(prettyName, "2.") && strutil.Substr(prettyName, 2, 1) != "0" {
+		prettyName = strutil.Exclude(prettyName, "-p0")
+	}
+
+	if len(info.Variations) > 0 {
+		if isAnyVariationInstalled(info, installed) {
+			prettyName += generateInstallBullets(info, installed, categoryColor[category])
+		} else {
+			prettyName += fmt.Sprintf(" {s-}+%d{!}", len(info.Variations))
+		}
+	} else {
+		if installed[info.Name] {
+			prettyName += " " + getInstallBullet(installed[info.Name], categoryColor[category])
+		}
+	}
+
+	printRubyVersion(category, prettyName)
+
+	return true
+}
+
+// isAnyVariationInstalled returns true if any variation of given version is installed
+func isAnyVariationInstalled(info *index.VersionInfo, installed map[string]bool) bool {
+	if installed[info.Name] {
+		return true
+	}
+
+	for _, variation := range info.Variations {
+		if installed[variation.Name] {
+			return true
+		}
+	}
 
 	return false
+}
+
+// generateInstallBullets generates bullets for installed versions
+func generateInstallBullets(info *index.VersionInfo, installed map[string]bool, color string) string {
+	result := " "
+
+	result += getInstallBullet(installed[info.Name], color)
+
+	for _, variation := range info.Variations {
+		result += getInstallBullet(installed[variation.Name], color)
+	}
+
+	return result
+}
+
+// getInstallBullet returns install bullet with style for given version
+func getInstallBullet(installed bool, color string) string {
+	if installed {
+		if fmtc.DisableColors {
+			return "•"
+		} else {
+			return fmt.Sprintf("{%s}•{!}", color)
+		}
+	} else {
+		if fmtc.DisableColors {
+			return "-"
+		} else {
+			return "{s-}•{!}"
+		}
+	}
 }
 
 // printSized render format with given size and print text with give arguments
@@ -1278,8 +1298,7 @@ func configureCategorySizes(data map[string]index.CategoryData) {
 	if terminalWidth == -1 || terminalWidth > 150 {
 		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
-		categorySize[CATEGORY_REE] = DEFAULT_CATEGORY_SIZE
-		categorySize[CATEGORY_RUBINIUS] = DEFAULT_CATEGORY_SIZE
+		categorySize[CATEGORY_TRUFFLE] = DEFAULT_CATEGORY_SIZE
 		categorySize[CATEGORY_OTHER] = DEFAULT_CATEGORY_SIZE
 
 		return
@@ -1543,21 +1562,6 @@ func checkDependencies(info *index.VersionInfo, category string) {
 			printErrorAndExit("Jemalloc 5+ is required for this version of Ruby")
 		}
 	}
-}
-
-// getRailsexpressVariationInfo return info about railsexpress variation
-func getRailsexpressVariationInfo(info *index.VersionInfo) *index.VersionInfo {
-	if len(info.Variations) == 0 {
-		return nil
-	}
-
-	for _, variation := range info.Variations {
-		if strings.HasSuffix(variation.Name, "-railsexpress") {
-			return variation
-		}
-	}
-
-	return nil
 }
 
 // getSystemInfo return info about system

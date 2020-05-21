@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         1.0.0
+Version:         2.0.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -143,6 +143,11 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed May 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
+- [cli] Improved UI
+- [cli] Removed REE and Rubinius support
+- [cli] Added TruffleRuby support
+
 * Tue May 19 2020 Anton Novojilov <andy@essentialkaos.com> - 1.0.0-0
 - [cli|gen|clone] Migrated to ek.v12
 - [cli] Using zip7 package instead z7
