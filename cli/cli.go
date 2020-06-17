@@ -33,6 +33,7 @@ import (
 	"pkg.re/essentialkaos/ek.v12/progress"
 	"pkg.re/essentialkaos/ek.v12/req"
 	"pkg.re/essentialkaos/ek.v12/signal"
+	"pkg.re/essentialkaos/ek.v12/sliceutil"
 	"pkg.re/essentialkaos/ek.v12/sortutil"
 	"pkg.re/essentialkaos/ek.v12/strutil"
 	"pkg.re/essentialkaos/ek.v12/system"
@@ -101,14 +102,6 @@ const (
 	LOG_LEVEL             = "log:level"
 )
 
-// List of default ruby categories
-const (
-	CATEGORY_RUBY    = "ruby"
-	CATEGORY_JRUBY   = "jruby"
-	CATEGORY_TRUFFLE = "truffle"
-	CATEGORY_OTHER   = "other"
-)
-
 // INDEX_NAME is name of index file
 const INDEX_NAME = "index.json"
 
@@ -159,17 +152,17 @@ var (
 )
 
 var categoryColor = map[string]string{
-	CATEGORY_RUBY:    "m",
-	CATEGORY_JRUBY:   "c",
-	CATEGORY_TRUFFLE: "y",
-	CATEGORY_OTHER:   "s",
+	index.CATEGORY_RUBY:    "m",
+	index.CATEGORY_JRUBY:   "c",
+	index.CATEGORY_TRUFFLE: "y",
+	index.CATEGORY_OTHER:   "s",
 }
 
 var categorySize = map[string]int{
-	CATEGORY_RUBY:    0,
-	CATEGORY_JRUBY:   0,
-	CATEGORY_TRUFFLE: 0,
-	CATEGORY_OTHER:   0,
+	index.CATEGORY_RUBY:    0,
+	index.CATEGORY_JRUBY:   0,
+	index.CATEGORY_TRUFFLE: 0,
+	index.CATEGORY_OTHER:   0,
 }
 
 var useRawOutput = false
@@ -281,11 +274,6 @@ func configureProxy() {
 	if err != nil {
 		printErrorAndExit("Can't parse proxy URL: %v", err)
 	}
-
-	os.Setenv("http_proxy", knf.GetS(PROXY_URL))
-	os.Setenv("https_proxy", knf.GetS(PROXY_URL))
-	os.Setenv("HTTP_PROXY", knf.GetS(PROXY_URL))
-	os.Setenv("HTTPS_PROXY", knf.GetS(PROXY_URL))
 
 	req.Global.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 }
@@ -509,43 +497,43 @@ func listCommand() {
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
 	var (
-		ruby    = getCategoryData(dist, arch, CATEGORY_RUBY)
-		jruby   = getCategoryData(dist, arch, CATEGORY_JRUBY)
-		truffle = getCategoryData(dist, arch, CATEGORY_TRUFFLE)
-		other   = getCategoryData(dist, arch, CATEGORY_OTHER)
+		ruby    = getCategoryData(dist, arch, index.CATEGORY_RUBY)
+		jruby   = getCategoryData(dist, arch, index.CATEGORY_JRUBY)
+		truffle = getCategoryData(dist, arch, index.CATEGORY_TRUFFLE)
+		other   = getCategoryData(dist, arch, index.CATEGORY_OTHER)
 
 		installed = getInstalledVersionsMap()
 	)
 
 	configureCategorySizes(map[string]index.CategoryData{
-		CATEGORY_RUBY:    ruby,
-		CATEGORY_JRUBY:   jruby,
-		CATEGORY_TRUFFLE: truffle,
-		CATEGORY_OTHER:   other,
+		index.CATEGORY_RUBY:    ruby,
+		index.CATEGORY_JRUBY:   jruby,
+		index.CATEGORY_TRUFFLE: truffle,
+		index.CATEGORY_OTHER:   other,
 	})
 
-	headerTemplate := getCategoryHeaderStyle(CATEGORY_RUBY) + " " +
-		getCategoryHeaderStyle(CATEGORY_JRUBY) + " " +
-		getCategoryHeaderStyle(CATEGORY_TRUFFLE) + " " +
-		getCategoryHeaderStyle(CATEGORY_OTHER) + "\n\n"
+	headerTemplate := getCategoryHeaderStyle(index.CATEGORY_RUBY) + " " +
+		getCategoryHeaderStyle(index.CATEGORY_JRUBY) + " " +
+		getCategoryHeaderStyle(index.CATEGORY_TRUFFLE) + " " +
+		getCategoryHeaderStyle(index.CATEGORY_OTHER) + "\n\n"
 
 	fmtc.Printf(
 		headerTemplate,
-		strings.ToUpper(CATEGORY_RUBY),
-		strings.ToUpper(CATEGORY_JRUBY),
-		strings.ToUpper(CATEGORY_TRUFFLE),
-		strings.ToUpper(CATEGORY_OTHER),
+		strings.ToUpper(index.CATEGORY_RUBY),
+		strings.ToUpper(index.CATEGORY_JRUBY),
+		strings.ToUpper(index.CATEGORY_TRUFFLE),
+		strings.ToUpper(index.CATEGORY_OTHER),
 	)
 
-	var index int
+	var counter int
 
 	for {
 		hasItems := false
 
-		hasItems = printCurrentVersionName(CATEGORY_RUBY, ruby, installed, index) || hasItems
-		hasItems = printCurrentVersionName(CATEGORY_JRUBY, jruby, installed, index) || hasItems
-		hasItems = printCurrentVersionName(CATEGORY_TRUFFLE, truffle, installed, index) || hasItems
-		hasItems = printCurrentVersionName(CATEGORY_OTHER, other, installed, index) || hasItems
+		hasItems = printCurrentVersionName(index.CATEGORY_RUBY, ruby, installed, counter) || hasItems
+		hasItems = printCurrentVersionName(index.CATEGORY_JRUBY, jruby, installed, counter) || hasItems
+		hasItems = printCurrentVersionName(index.CATEGORY_TRUFFLE, truffle, installed, counter) || hasItems
+		hasItems = printCurrentVersionName(index.CATEGORY_OTHER, other, installed, counter) || hasItems
 
 		if !hasItems {
 			break
@@ -553,7 +541,7 @@ func printPrettyListing(dist, arch string) {
 
 		fmtc.NewLine()
 
-		index++
+		counter++
 	}
 
 	if !options.GetB(OPT_ALL) {
@@ -1201,18 +1189,18 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 
 // printCurrentVersionName print version from given slice for
 // versions listing
-func printCurrentVersionName(category string, versions index.CategoryData, installed map[string]bool, index int) bool {
-	if len(versions) == 0 && index == 0 {
+func printCurrentVersionName(category string, versions index.CategoryData, installed map[string]bool, counter int) bool {
+	if len(versions) == 0 && counter == 0 {
 		printSized(" {s-}%%-%ds{!} ", categorySize[category], NONE_VERSION)
 		return true
 	}
 
-	if len(versions) <= index {
+	if len(versions) <= counter {
 		printSized(" %%-%ds ", categorySize[category], "")
 		return false
 	}
 
-	info := versions[index]
+	info := versions[counter]
 	prettyName := info.Name
 
 	if strings.HasPrefix(prettyName, "2.") && strutil.Substr(prettyName, 2, 1) != "0" {
@@ -1296,10 +1284,10 @@ func configureCategorySizes(data map[string]index.CategoryData) {
 	terminalWidth := window.GetWidth()
 
 	if terminalWidth == -1 || terminalWidth > 150 {
-		categorySize[CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
-		categorySize[CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
-		categorySize[CATEGORY_TRUFFLE] = DEFAULT_CATEGORY_SIZE
-		categorySize[CATEGORY_OTHER] = DEFAULT_CATEGORY_SIZE
+		categorySize[index.CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[index.CATEGORY_JRUBY] = DEFAULT_CATEGORY_SIZE
+		categorySize[index.CATEGORY_TRUFFLE] = DEFAULT_CATEGORY_SIZE
+		categorySize[index.CATEGORY_OTHER] = DEFAULT_CATEGORY_SIZE
 
 		return
 	}
@@ -1553,8 +1541,12 @@ func checkRBEnv() {
 
 // checkDependencies check dependencies for given category
 func checkDependencies(info *index.VersionInfo, category string) {
-	if category == CATEGORY_JRUBY && env.Which("java") == "" {
-		printErrorAndExit("Java is required for JRuby")
+	rubiesOnJava := []string{index.CATEGORY_JRUBY, index.CATEGORY_TRUFFLE}
+
+	if sliceutil.Contains(rubiesOnJava, category) {
+		if env.Which("java") == "" {
+			printErrorAndExit("Java is required for this variation of Ruby")
+		}
 	}
 
 	if strings.HasSuffix(info.Name, "jemalloc") {

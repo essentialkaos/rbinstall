@@ -19,6 +19,15 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+const (
+	CATEGORY_RUBY    = "ruby"
+	CATEGORY_JRUBY   = "jruby"
+	CATEGORY_TRUFFLE = "truffle"
+	CATEGORY_OTHER   = "other"
+)
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 type Index struct {
 	Meta *Metadata           `json:"meta"`
 	Data map[string]DistData `json:"data"`

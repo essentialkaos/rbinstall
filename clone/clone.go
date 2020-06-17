@@ -33,7 +33,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "1.0.0"
+	VER  = "2.0.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -42,15 +42,6 @@ const (
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
-)
-
-// Categories
-const (
-	CATEGORY_RUBY     = "ruby"
-	CATEGORY_JRUBY    = "jruby"
-	CATEGORY_REE      = "ree"
-	CATEGORY_RUBINIUS = "rubinius"
-	CATEGORY_OTHER    = "other"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //

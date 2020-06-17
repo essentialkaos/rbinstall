@@ -19,37 +19,30 @@
 
 ### Installation
 
-#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+#### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
 
 ```bash
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el6.noarch.rpm
-[sudo] yum install rbinstall
-```
-
-#### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
-
-```bash
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm
-[sudo] yum install rbinstall
+sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install rbinstall
 ```
 
 #### Using `install.sh`
 We provide simple bash script `install.sh` for installing the application from the sources.
 
 ```bash
-... install rbenv, golang and latest 7zip
-... set GOPATH
+# install rbenv, golang and latest 7zip
+# set GOPATH
 
 git clone https://github.com/essentialkaos/rbinstall.git
 cd rbinstall
 
-[sudo] ./install.sh
+sudo ./install.sh
 ```
 
 If you have some issues with installing, try to use script in debug mode:
 
-```
-[sudo] ./install.sh --debug
+```bash
+sudo ./install.sh --debug
 ```
 
 ### Usage
