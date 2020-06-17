@@ -496,14 +496,12 @@ func listCommand() {
 
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
-	var (
-		ruby    = getCategoryData(dist, arch, index.CATEGORY_RUBY)
-		jruby   = getCategoryData(dist, arch, index.CATEGORY_JRUBY)
-		truffle = getCategoryData(dist, arch, index.CATEGORY_TRUFFLE)
-		other   = getCategoryData(dist, arch, index.CATEGORY_OTHER)
+	ruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, options.GetB(OPT_ALL))
+	jruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, options.GetB(OPT_ALL))
+	truffle := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, options.GetB(OPT_ALL))
+	other := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_OTHER, options.GetB(OPT_ALL))
 
-		installed = getInstalledVersionsMap()
-	)
+	installed := getInstalledVersionsMap()
 
 	configureCategorySizes(map[string]index.CategoryData{
 		index.CATEGORY_RUBY:    ruby,
@@ -512,6 +510,11 @@ func printPrettyListing(dist, arch string) {
 		index.CATEGORY_OTHER:   other,
 	})
 
+	rubyTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, true).Total()
+	jrubyTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, true).Total()
+	truffleTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, true).Total()
+	otherTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_OTHER, true).Total()
+
 	headerTemplate := getCategoryHeaderStyle(index.CATEGORY_RUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_JRUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_TRUFFLE) + " " +
@@ -519,10 +522,10 @@ func printPrettyListing(dist, arch string) {
 
 	fmtc.Printf(
 		headerTemplate,
-		strings.ToUpper(index.CATEGORY_RUBY),
-		strings.ToUpper(index.CATEGORY_JRUBY),
-		strings.ToUpper(index.CATEGORY_TRUFFLE),
-		strings.ToUpper(index.CATEGORY_OTHER),
+		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_RUBY), rubyTotal),
+		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_JRUBY), jrubyTotal),
+		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_TRUFFLE), truffleTotal),
+		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_OTHER), otherTotal),
 	)
 
 	var counter int
@@ -589,25 +592,6 @@ func printRawListing(dist, arch string) {
 	sortutil.Versions(result)
 
 	fmt.Print(strings.Join(result, "\n"))
-}
-
-// getCategoryData return filtered versions slice
-func getCategoryData(dist, arch, category string) index.CategoryData {
-	if options.GetB(OPT_ALL) {
-		return repoIndex.Data[dist][arch][category]
-	}
-
-	var result = index.CategoryData{}
-
-	for _, version := range repoIndex.Data[dist][arch][category] {
-		if version.EOL {
-			continue
-		}
-
-		result = append(result, version)
-	}
-
-	return result
 }
 
 // installCommand install some version of ruby

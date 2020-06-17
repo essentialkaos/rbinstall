@@ -84,7 +84,7 @@ func NewIndex() *Index {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Add used for adding info about some ruby version
+// Add adds info about ruby to index
 func (i *Index) Add(dist, arch, category string, info *VersionInfo) {
 	if i == nil {
 		return
@@ -107,8 +107,7 @@ func (i *Index) Add(dist, arch, category string, info *VersionInfo) {
 	)
 }
 
-// HasData return true if index contains data for
-// some dist + arch
+// HasData returns true if index contains data for some dist + arch
 func (i *Index) HasData(dist, arch string) bool {
 	if i.Data[dist] == nil {
 		return false
@@ -121,7 +120,30 @@ func (i *Index) HasData(dist, arch string) bool {
 	return true
 }
 
-// Encode encode index to JSON format
+// GetCategoryData returns data for given dist, arch and category
+func (i *Index) GetCategoryData(dist, arch, category string, eol bool) CategoryData {
+	if !i.HasData(dist, arch) {
+		return nil
+	}
+
+	if eol {
+		return i.Data[dist][arch][category]
+	}
+
+	var result = CategoryData{}
+
+	for _, v := range i.Data[dist][arch][category] {
+		if v.EOL {
+			continue
+		}
+
+		result = append(result, v)
+	}
+
+	return result
+}
+
+// Encode encodes index to JSON format
 func (i *Index) Encode() ([]byte, error) {
 	if i == nil {
 		return nil, errors.New("Index is nil")
@@ -140,7 +162,7 @@ func (i *Index) Encode() ([]byte, error) {
 	return data, nil
 }
 
-// UpdateMetadata update index metadata
+// UpdateMetadata updates index metadata
 func (i *Index) UpdateMetadata() {
 	if i == nil {
 		return
@@ -183,7 +205,7 @@ func (i *Index) Sort() {
 	}
 }
 
-// Find try to find info about version by name
+// Find tries to find info about version by name
 func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 	if i == nil {
 		return nil, ""
@@ -216,6 +238,23 @@ func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 	}
 
 	return nil, ""
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// Total returns total number of rubies available for installation
+func (d CategoryData) Total() int {
+	if len(d) == 0 {
+		return 0
+	}
+
+	var result int
+
+	for _, v := range d {
+		result += len(v.Variations) + 1
+	}
+
+	return result
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
