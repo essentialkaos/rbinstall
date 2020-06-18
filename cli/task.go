@@ -62,7 +62,7 @@ func (t *Task) showSpinner() {
 SPINNERLOOP:
 	for {
 		for i, frame := range spinnerFrames {
-			fmtc.Printf("{y}%s {!}%s… ", frame, t.Desc)
+			fmtc.Printf("{y}%s  {!}%s… ", frame, t.Desc)
 			time.Sleep(framesDelay[i] * time.Millisecond)
 			fmtc.Printf("\r")
 
@@ -84,8 +84,8 @@ func (t *Task) hideSpinner(ok bool) {
 	}
 
 	if ok {
-		fmtc.Printf("{g}✔ {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
+		fmtc.Printf("{g}✔  {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	} else {
-		fmtc.Printf("{r}✖ {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
+		fmtc.Printf("{r}✖  {!}%s {s-}(%s){!}\n", t.Desc, timeutil.PrettyDuration(time.Since(t.start)))
 	}
 }

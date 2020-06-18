@@ -368,7 +368,7 @@ func fetchIndex() {
 	}
 
 	if resp.StatusCode != 200 {
-		printErrorAndExit("Can't fetch repository index: CDN return status code %d", resp.StatusCode)
+		printErrorAndExit("Can't fetch repository index: storage return status code %d", resp.StatusCode)
 	}
 
 	repoIndex = index.NewIndex()
@@ -626,7 +626,8 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	fmtc.Printf("Fetching {*}{#161}%s{!} from CDN…\n", info.Name)
+	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
+	fmtc.Printf("Fetching {*}{"+categoryColor[category]+"}%s{!} from storage…\n", info.Name)
 
 	file, err := downloadFile(info)
 
@@ -747,10 +748,10 @@ func installCommand(rubyVersion string) {
 			err = os.Symlink(getVersionPath(info.Name), getVersionPath(cleanVersionName))
 
 			if err != nil {
-				fmtc.Println("{r}✖ {!}Creating alias")
+				fmtc.Println("{r}✖  {!}Creating alias")
 				terminal.PrintWarnMessage(err.Error())
 			} else {
-				fmtc.Println("{g}✔ {!}Creating alias")
+				fmtc.Println("{g}✔  {!}Creating alias")
 				aliasCreated = true
 			}
 		}
@@ -764,10 +765,10 @@ func installCommand(rubyVersion string) {
 
 	if aliasCreated {
 		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
-		fmtc.Printf("{#161}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
+		fmtc.Printf("{g}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
 	} else {
 		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
-		fmtc.Printf("{#161}Version {*}%s{!*} successfully installed{!}\n", info.Name)
+		fmtc.Printf("{g}Version {*}%s{!*} successfully installed{!}\n", info.Name)
 	}
 }
 
