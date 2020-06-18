@@ -241,7 +241,7 @@ func configureUI() {
 		useRawOutput = true
 	}
 
-	progress.DefaultSettings.BarFgColorTag = "{#161}"
+	progress.DefaultSettings.BarFgColorTag = "{m}"
 	progress.DefaultSettings.NameColorTag = "{*}"
 	progress.DefaultSettings.PercentColorTag = "{*}"
 	progress.DefaultSettings.ProgressColorTag = "{s}"
