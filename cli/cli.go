@@ -112,7 +112,7 @@ const CONFIG_FILE = "/etc/rbinstall.knf"
 const NONE_VERSION = "- none -"
 
 // DEFAULT_CATEGORY_SIZE is default category column size
-const DEFAULT_CATEGORY_SIZE = 20
+const DEFAULT_CATEGORY_SIZE = 22
 
 // Default arch names
 const (
