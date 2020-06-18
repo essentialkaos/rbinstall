@@ -34,7 +34,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "1.0.0"
+	VER  = "2.0.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -45,15 +45,6 @@ const (
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
-)
-
-// Categories
-const (
-	CATEGORY_RUBY     = "ruby"
-	CATEGORY_JRUBY    = "jruby"
-	CATEGORY_REE      = "ree"
-	CATEGORY_RUBINIUS = "rubinius"
-	CATEGORY_OTHER    = "other"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -325,17 +316,16 @@ func saveIndex(outputFile string, i *index.Index) {
 // guessCategory try to guess category by file name
 func guessCategory(name string) string {
 	switch {
-	case name[0:2] == "1.", name[0:2] == "2.":
-		return CATEGORY_RUBY
-	case name[0:5] == "jruby":
-		return CATEGORY_JRUBY
-	case name[0:3] == "ree":
-		return CATEGORY_REE
-	case name[0:5] == "rubin":
-		return CATEGORY_RUBINIUS
+	case strings.HasPrefix(name, "1."),
+		strings.HasPrefix(name, "2."):
+		return index.CATEGORY_RUBY
+	case strings.HasPrefix(name, "jruby"):
+		return index.CATEGORY_JRUBY
+	case strings.HasPrefix(name, "truffle"):
+		return index.CATEGORY_TRUFFLE
 	}
 
-	return CATEGORY_OTHER
+	return index.CATEGORY_OTHER
 }
 
 // getOutputFile return path to output file
