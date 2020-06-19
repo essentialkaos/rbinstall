@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         2.0.0
+Version:         2.1.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         EKOL
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 16
 
-BuildRequires:   golang >= 1.13
+BuildRequires:   golang >= 1.14
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sat Jun 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.0.1-0
+- [cli] Improved UI
+
 * Wed May 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
 - [cli] Improved UI
 - [cli] Removed REE and Rubinius support
