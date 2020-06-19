@@ -1526,12 +1526,8 @@ func checkRBEnv() {
 
 // checkDependencies check dependencies for given category
 func checkDependencies(info *index.VersionInfo, category string) {
-	rubiesOnJava := []string{index.CATEGORY_JRUBY, index.CATEGORY_TRUFFLE}
-
-	if sliceutil.Contains(rubiesOnJava, category) {
-		if env.Which("java") == "" {
-			printErrorAndExit("Java is required for this variation of Ruby")
-		}
+	if category == index.CATEGORY_JRUBY && env.Which("java") == "" {
+		printErrorAndExit("Java is required for this variation of Ruby")
 	}
 
 	if strings.HasSuffix(info.Name, "jemalloc") {
