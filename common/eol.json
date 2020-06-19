@@ -4,7 +4,10 @@
   "2.0": true,
   "2.1": true,
   "2.2": true,
+  "2.3": true,
+  "2.4": true,
   "jruby-1.6": true,
   "jruby-1.7": true,
-  "jruby-9.0": true
+  "jruby-9.0": true,
+  "jruby-9.1": true
 }

@@ -33,7 +33,6 @@ import (
 	"pkg.re/essentialkaos/ek.v12/progress"
 	"pkg.re/essentialkaos/ek.v12/req"
 	"pkg.re/essentialkaos/ek.v12/signal"
-	"pkg.re/essentialkaos/ek.v12/sliceutil"
 	"pkg.re/essentialkaos/ek.v12/sortutil"
 	"pkg.re/essentialkaos/ek.v12/strutil"
 	"pkg.re/essentialkaos/ek.v12/system"
@@ -58,7 +57,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.0.0"
+	VER  = "2.1.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -435,24 +434,24 @@ func showDetailedInfo(rubyVersion string) {
 	url := fmt.Sprintf("%s/%s/%s", knf.GetS(STORAGE_URL), info.Path, info.File)
 	added := timeutil.Format(time.Unix(info.Added, 0), "%Y/%m/%d %H:%M")
 
-	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Name", info.Name)
-	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "URL", url)
-	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Size", fmtutil.PrettySize(info.Size))
-	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Checksum", strutil.Head(info.Hash, 7))
-	fmtc.Printf(" {*}%-12s{!} {s}|{!} %s\n", "Added", added)
+	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Name", info.Name)
+	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "URL", url)
+	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Size", fmtutil.PrettySize(info.Size))
+	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "SHA-256 Checksum", info.Hash)
+	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Added", added)
 
 	if isVersionInstalled(info.Name) {
 		installDate, _ := fsutil.GetMTime(getVersionPath(info.Name))
 		installDateStr := timeutil.Format(installDate, "%Y/%m/%d %H:%M")
-		fmtc.Printf(" {*}%-12s{!} {s}|{!} Yes {s-}(%s){!}\n", "Installed", installDateStr)
+		fmtc.Printf(" {*}%-16s{!} {s}|{!} Yes {s-}(%s){!}\n", "Installed", installDateStr)
 	} else {
-		fmtc.Printf(" {*}%-12s{!} {s}|{!} No\n", "Installed")
+		fmtc.Printf(" {*}%-16s{!} {s}|{!} No\n", "Installed")
 	}
 
 	if info.EOL {
-		fmtc.Printf(" {*}%-12s{!} {s}|{!} {r}Yes{!}\n", "EOL")
+		fmtc.Printf(" {*}%-16s{!} {s}|{!} {r}Yes{!}\n", "EOL")
 	} else {
-		fmtc.Printf(" {*}%-12s{!} {s}|{!} No\n", "EOL")
+		fmtc.Printf(" {*}%-16s{!} {s}|{!} No\n", "EOL")
 	}
 
 	if len(info.Variations) != 0 {
@@ -1526,12 +1525,8 @@ func checkRBEnv() {
 
 // checkDependencies check dependencies for given category
 func checkDependencies(info *index.VersionInfo, category string) {
-	rubiesOnJava := []string{index.CATEGORY_JRUBY, index.CATEGORY_TRUFFLE}
-
-	if sliceutil.Contains(rubiesOnJava, category) {
-		if env.Which("java") == "" {
-			printErrorAndExit("Java is required for this variation of Ruby")
-		}
+	if category == index.CATEGORY_JRUBY && env.Which("java") == "" {
+		printErrorAndExit("Java is required for this variation of Ruby")
 	}
 
 	if strings.HasSuffix(info.Name, "jemalloc") {
