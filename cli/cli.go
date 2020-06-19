@@ -33,7 +33,6 @@ import (
 	"pkg.re/essentialkaos/ek.v12/progress"
 	"pkg.re/essentialkaos/ek.v12/req"
 	"pkg.re/essentialkaos/ek.v12/signal"
-	"pkg.re/essentialkaos/ek.v12/sliceutil"
 	"pkg.re/essentialkaos/ek.v12/sortutil"
 	"pkg.re/essentialkaos/ek.v12/strutil"
 	"pkg.re/essentialkaos/ek.v12/system"
