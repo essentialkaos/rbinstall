@@ -143,7 +143,7 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
-* Sat Jun 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.0.1-0
+* Sat Jun 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - [cli] Improved UI
 
 * Wed May 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
