@@ -4,6 +4,7 @@
   <a href="https://travis-ci.com/essentialkaos/rbinstall"><img src="https://travis-ci.com/essentialkaos/rbinstall.svg?branch=master" /></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" /></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-rbinstall-master"><img alt="codebeat badge" src="https://codebeat.co/badges/b78de32a-6867-4bd3-9135-8244d4813531" /></a>
+  <img src="https://github.com/essentialkaos/rbinstall/workflows/CodeQL/badge.svg">
   <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg" /></a>
 </p>
 
