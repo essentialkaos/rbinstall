@@ -47,7 +47,7 @@ Name:            rbinstall
 Version:         2.1.0
 Release:         0%{?dist}
 Group:           Applications/System
-License:         EKOL
+License:         Apache License, Version 2.0
 URL:             https://kaos.sh/rbinstall
 
 Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
@@ -125,19 +125,19 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE.EN LICENSE.RU
+%doc LICENSE
 %dir %{_logdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}.knf
 %{_bindir}/%{name}
 
 %files gen
 %defattr(-,root,root,-)
-%doc LICENSE.EN LICENSE.RU
+%doc LICENSE
 %{_bindir}/%{name}-gen
 
 %files clone
 %defattr(-,root,root,-)
-%doc LICENSE.EN LICENSE.RU
+%doc LICENSE
 %{_bindir}/%{name}-clone
 
 ################################################################################
