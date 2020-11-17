@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 19 */15 * *'
+
+jobs:
+  Go:
+    name: Go
+    runs-on: ubuntu-latest
+
+    env:
+      SRC_DIR: src/github.com/${{ github.repository }}
+
+    strategy:
+      matrix:
+        go: [ '1.14.x', '1.15.x' ]
+
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+        id: go
+
+      - name: Setup PATH
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "GOBIN=${{ github.workspace }}/bin" >> "$GITHUB_ENV"
+          echo "${{ github.workspace }}/bin" >> "$GITHUB_PATH"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: ${{env.SRC_DIR}}
+
+      - name: Download dependencies
+        working-directory: ${{env.SRC_DIR}}
+        run: make deps
+
+      - name: Build binary
+        working-directory: ${{env.SRC_DIR}}
+        run: make all
+
+  Perfecto:
+    name: Perfecto
+    runs-on: ubuntu-latest
+
+    needs: Go
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v2
+
+      - name: Run Perfecto docker image
+        uses: docker://essentialkaos/perfecto:slim
+        with:
+          args: --version
+
+      - name: Install perfecto-docker
+        run: |
+          wget https://kaos.sh/perfecto/perfecto-docker
+          chmod +x perfecto-docker
+
+      - name: Run Perfecto check
+        env:
+          IMAGE: essentialkaos/perfecto:slim
+        run: ./perfecto-docker common/rbinstall.spec
