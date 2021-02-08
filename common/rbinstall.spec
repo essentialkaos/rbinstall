@@ -44,8 +44,8 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         2.1.0
-Release:         1%{?dist}
+Version:         2.2.0
+Release:         0%{?dist}
 Group:           Applications/System
 License:         Apache License, Version 2.0
 URL:             https://kaos.sh/rbinstall
@@ -143,8 +143,8 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
-* Tue Feb 09 2021 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-1
-- [gen] Added support of Ruby 3
+* Tue Feb 09 2021 Anton Novojilov <andy@essentialkaos.com> - 2.2.0-0
+- [cli|gen] Added support of Ruby 3
 
 * Sat Jun 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - [cli] Improved UI

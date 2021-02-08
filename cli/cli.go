@@ -57,7 +57,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.1.0"
+	VER  = "2.2.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -1188,6 +1188,10 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 	prettyName := info.Name
 
 	if strings.HasPrefix(prettyName, "2.") && strutil.Substr(prettyName, 2, 1) != "0" {
+		prettyName = strutil.Exclude(prettyName, "-p0")
+	}
+
+	if strings.HasPrefix(prettyName, "3.") {
 		prettyName = strutil.Exclude(prettyName, "-p0")
 	}
 
