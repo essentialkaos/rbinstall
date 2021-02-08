@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 16
 
-BuildRequires:   golang >= 1.14
+BuildRequires:   golang >= 1.15
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         2.0.0
+Version:         2.1.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -143,6 +143,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Feb 09 2021 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-1
+- [gen] Added support of Ruby 3
+
 * Sat Jun 20 2020 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - [cli] Improved UI
 

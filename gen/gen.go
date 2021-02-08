@@ -317,7 +317,8 @@ func saveIndex(outputFile string, i *index.Index) {
 func guessCategory(name string) string {
 	switch {
 	case strings.HasPrefix(name, "1."),
-		strings.HasPrefix(name, "2."):
+		strings.HasPrefix(name, "2."),
+		strings.HasPrefix(name, "3."):
 		return index.CATEGORY_RUBY
 	case strings.HasPrefix(name, "jruby"):
 		return index.CATEGORY_JRUBY
