@@ -45,7 +45,7 @@
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
 Version:         2.1.0
-Release:         0%{?dist}
+Release:         1%{?dist}
 Group:           Applications/System
 License:         Apache License, Version 2.0
 URL:             https://kaos.sh/rbinstall
