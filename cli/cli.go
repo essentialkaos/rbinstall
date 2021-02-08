@@ -458,12 +458,12 @@ func showDetailedInfo(rubyVersion string) {
 		for index, variation := range info.Variations {
 			if index == 0 {
 				fmtc.Printf(
-					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
 					"Variations", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			} else {
 				fmtc.Printf(
-					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
 					"", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			}
