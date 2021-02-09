@@ -2,7 +2,7 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2020 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2021 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -34,7 +34,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "2.0.0"
+	VER  = "2.1.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -317,7 +317,8 @@ func saveIndex(outputFile string, i *index.Index) {
 func guessCategory(name string) string {
 	switch {
 	case strings.HasPrefix(name, "1."),
-		strings.HasPrefix(name, "2."):
+		strings.HasPrefix(name, "2."),
+		strings.HasPrefix(name, "3."):
 		return index.CATEGORY_RUBY
 	case strings.HasPrefix(name, "jruby"):
 		return index.CATEGORY_JRUBY

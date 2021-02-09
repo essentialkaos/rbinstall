@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2020 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2021 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -57,7 +57,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.1.0"
+	VER  = "2.2.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -458,12 +458,12 @@ func showDetailedInfo(rubyVersion string) {
 		for index, variation := range info.Variations {
 			if index == 0 {
 				fmtc.Printf(
-					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
 					"Variations", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			} else {
 				fmtc.Printf(
-					" {*}%-12s{!} {s}|{!} %s {s-}(%s){!}\n",
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
 					"", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			}
@@ -1188,6 +1188,10 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 	prettyName := info.Name
 
 	if strings.HasPrefix(prettyName, "2.") && strutil.Substr(prettyName, 2, 1) != "0" {
+		prettyName = strutil.Exclude(prettyName, "-p0")
+	}
+
+	if strings.HasPrefix(prettyName, "3.") {
 		prettyName = strutil.Exclude(prettyName, "-p0")
 	}
 
