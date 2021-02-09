@@ -46,17 +46,14 @@ type ArchData map[string]CategoryData
 type CategoryData []*VersionInfo
 
 type VersionInfo struct {
-	Name  string `json:"name"`  // Version name
-	File  string `json:"file"`  // Full filename (with extension)
-	Path  string `json:"path"`  // Relative path to 7z file
-	Size  int64  `json:"size"`  // Size in bytes
-	Hash  string `json:"hash"`  // SHA-256 hash
-	Added int64  `json:"added"` // Timestamp with date when version was added to repo
-	EOL   bool   `json:"eol"`   // EOL marker
-
-	// Variations contains info about version variations (railsexpress version
-	// for example)
-	Variations []*VersionInfo `json:"variations,omitempty"`
+	Variations []*VersionInfo `json:"variations,omitempty"` // Info about version variations (railsexpress version for example)
+	Name       string         `json:"name"`                 // Version name
+	File       string         `json:"file"`                 // Full filename (with extension)
+	Path       string         `json:"path"`                 // Relative path to 7z file
+	Hash       string         `json:"hash"`                 // SHA-256 hash
+	Size       int64          `json:"size"`                 // Size in bytes
+	Added      int64          `json:"added"`                // Timestamp with date when version was added to repo
+	EOL        bool           `json:"eol"`                  // EOL marker
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
