@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         2.2.0
+Version:         2.3.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         Apache License, Version 2.0
@@ -96,6 +96,7 @@ Utility for cloning RBInstall repository.
 
 %build
 export GOPATH=$(pwd)
+export GO111MODULE=auto
 pushd src/github.com/essentialkaos/%{name}/
 %{__make} %{?_smp_mflags} all
 popd
@@ -143,6 +144,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sat Mar 20 2021 Anton Novojilov <andy@essentialkaos.com> - 2.3.0-0
+- [cli] UI improvements
+
 * Tue Feb 09 2021 Anton Novojilov <andy@essentialkaos.com> - 2.2.0-0
 - [cli|gen] Added support of Ruby 3
 
