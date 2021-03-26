@@ -34,7 +34,7 @@ We provide simple bash script `install.sh` for installing the application from t
 # install rbenv, golang and latest 7zip
 # set GOPATH
 
-git clone https://github.com/essentialkaos/rbinstall.git
+git clone https://kaos.sh/rbinstall.git
 cd rbinstall
 
 sudo ./install.sh

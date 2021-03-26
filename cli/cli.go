@@ -34,6 +34,7 @@ import (
 	"pkg.re/essentialkaos/ek.v12/req"
 	"pkg.re/essentialkaos/ek.v12/signal"
 	"pkg.re/essentialkaos/ek.v12/sortutil"
+	"pkg.re/essentialkaos/ek.v12/spinner"
 	"pkg.re/essentialkaos/ek.v12/strutil"
 	"pkg.re/essentialkaos/ek.v12/system"
 	"pkg.re/essentialkaos/ek.v12/terminal"
@@ -57,7 +58,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.2.0"
+	VER  = "2.3.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -235,12 +236,15 @@ func configureUI() {
 		fmtc.DisableColors = true
 	}
 
+	if options.GetB(OPT_NO_PROGRESS) {
+		spinner.DisableAnimation = true
+	}
+
 	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
 		fmtc.DisableColors = true
 		useRawOutput = true
 	}
 
-	progress.DefaultSettings.BarFgColorTag = "{m}"
 	progress.DefaultSettings.NameColorTag = "{*}"
 	progress.DefaultSettings.PercentColorTag = "{*}"
 	progress.DefaultSettings.ProgressColorTag = "{s}"
@@ -626,6 +630,8 @@ func installCommand(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
+	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
+
 	fmtc.Printf("Fetching {*}{"+categoryColor[category]+"}%s{!} from storage…\n", info.Name)
 
 	file, err := downloadFile(info)
@@ -636,12 +642,9 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	checkHashTask := &Task{
-		Desc:    "Checking sha1 checksum",
-		Handler: checkHashTaskHandler,
-	}
-
-	_, err = checkHashTask.Start(file, info.Hash)
+	spinner.Show("Checking SHA-1 checksum")
+	err = checkHashTaskHandler(file, info.Hash)
+	spinner.Done(err == nil)
 
 	if err != nil {
 		fmtc.NewLine()
@@ -650,12 +653,9 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	unpackTask := &Task{
-		Desc:    "Unpacking 7z archive",
-		Handler: unpackTaskHandler,
-	}
-
-	_, err = unpackTask.Start(file, getUnpackDirPath())
+	spinner.Show("Unpacking 7z archive")
+	err = unpackTaskHandler(file, getUnpackDirPath())
+	spinner.Done(err == nil)
 
 	if err != nil {
 		fmtc.NewLine()
@@ -664,12 +664,9 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	checkBinaryTask := &Task{
-		Desc:    "Checking binary",
-		Handler: checkBinaryTaskHandler,
-	}
-
-	_, err = checkBinaryTask.Start(info.Name, getUnpackDirPath())
+	spinner.Show("Checking binary")
+	err = checkBinaryTaskHandler(info.Name, getUnpackDirPath())
+	spinner.Done(err == nil)
 
 	if err != nil {
 		fmtc.NewLine()
@@ -698,12 +695,10 @@ func installCommand(rubyVersion string) {
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
 		rgVersion := getAdvisableRubyGemsVersion(info.Name)
-		updRubygemsTask := &Task{
-			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
-			Handler: updateRubygemsTaskHandler,
-		}
 
-		_, err = updRubygemsTask.Start(info.Name, rgVersion)
+		spinner.Show("Updating RubyGems to %s", rgVersion)
+		err = updateRubygemsTaskHandler(info.Name, rgVersion)
+		spinner.Done(err == nil)
 
 		if err != nil {
 			terminal.PrintWarnMessage(err.Error())
@@ -715,22 +710,20 @@ func installCommand(rubyVersion string) {
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
-
-			gemInstallTask := &Task{
-				Desc:    fmtc.Sprintf("Installing %s", gemName),
-				Handler: installGemTaskHandler,
-			}
+			taskDesc := fmt.Sprintf("Installing %s", gemName)
 
 			if gemVersion != "" {
-				gemInstallTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+				taskDesc += fmt.Sprintf(" (%s.x)", gemVersion)
 			} else {
-				gemInstallTask.Desc += fmt.Sprintf(" (latest)")
+				taskDesc += fmt.Sprintf(" (latest)")
 			}
 
-			_, err = gemInstallTask.Start(info.Name, gemName, gemVersion)
+			spinner.Show(taskDesc)
+			_, err = installGemTaskHandler(info.Name, gemName, gemVersion)
+			spinner.Done(err == nil)
 
 			if err != nil {
-				fmtc.Printf("  {r}%v{!}\n", err)
+				terminal.PrintWarnMessage(err.Error())
 			}
 		}
 	}
@@ -789,12 +782,9 @@ func uninstallCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	unistallTask := &Task{
-		Desc:    fmt.Sprintf("Unistalling %s", rubyVersion),
-		Handler: unistallTaskHandler,
-	}
-
-	_, err = unistallTask.Start(info.Name)
+	spinner.Show("Unistalling %s", rubyVersion)
+	err = unistallTaskHandler(info.Name)
+	spinner.Done(err == nil)
 
 	if err != nil {
 		fmtc.NewLine()
@@ -813,12 +803,9 @@ func uninstallCommand(rubyVersion string) {
 
 // rehashShims run 'rbenv rehash' command
 func rehashShims() {
-	rehashTask := &Task{
-		Desc:    "Rehashing",
-		Handler: rehashTaskHandler,
-	}
-
-	_, err := rehashTask.Start()
+	spinner.Show("Rehashing")
+	err := rehashTaskHandler()
+	spinner.Done(err == nil)
 
 	if err != nil {
 		fmtc.NewLine()
@@ -827,9 +814,7 @@ func rehashShims() {
 }
 
 // unistallTaskHandler remove data for given ruby version
-func unistallTaskHandler(args ...string) (string, error) {
-	versionName := args[0]
-
+func unistallTaskHandler(versionName string) error {
 	versionsDir := getRBEnvVersionsPath()
 	cleanVersionName := getNameWithoutPatchLevel(versionName)
 
@@ -840,7 +825,7 @@ func unistallTaskHandler(args ...string) (string, error) {
 		err = os.Remove(versionsDir + "/" + cleanVersionName)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
@@ -849,32 +834,26 @@ func unistallTaskHandler(args ...string) (string, error) {
 		err = os.RemoveAll(versionsDir + "/" + versionName)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
-	return "", nil
+	return nil
 }
 
 // checkHashTaskHandler check archive checksum
-func checkHashTaskHandler(args ...string) (string, error) {
-	filePath := args[0]
-	fileHash := args[1]
-
+func checkHashTaskHandler(filePath, fileHash string) error {
 	curHash := hash.FileHash(filePath)
 
 	if fileHash != curHash {
-		return "", fmtc.Errorf("Wrong file hash %s ≠ %s", fileHash, curHash)
+		return fmt.Errorf("Wrong file hash %s ≠ %s", fileHash, curHash)
 	}
 
-	return "", nil
+	return nil
 }
 
 // unpackTaskHandler run unpacking command
-func unpackTaskHandler(args ...string) (string, error) {
-	file := args[0]
-	outputDir := args[1]
-
+func unpackTaskHandler(file, outputDir string) error {
 	output, err := zip7.Extract(zip7.Props{File: file, OutputDir: outputDir})
 
 	if err != nil {
@@ -882,33 +861,26 @@ func unpackTaskHandler(args ...string) (string, error) {
 		actionLog, err := logFailedAction(output)
 
 		if err != nil {
-			return "", fmtc.Errorf("7za return error: %s", unpackError.Error())
+			return fmtc.Errorf("7za return error: %s", unpackError.Error())
 		}
 
-		return "", fmtc.Errorf("7za return error: %s (7za output saved as %s)", unpackError.Error(), actionLog)
+		return fmtc.Errorf("7za return error: %s (7za output saved as %s)", unpackError.Error(), actionLog)
 	}
 
-	return "", nil
+	return nil
 }
 
 // checkBinaryTaskHandler run and check installer binary
-func checkBinaryTaskHandler(args ...string) (string, error) {
-	version := args[0]
-	unpackDir := args[1]
+func checkBinaryTaskHandler(args ...string) error {
+	version, unpackDir := args[0], args[1]
 
 	binary := unpackDir + "/" + version + "/bin/ruby"
 
-	err := exec.Command(binary, "--version").Start()
-
-	return "", err
+	return exec.Command(binary, "--version").Start()
 }
 
 // installGemTaskHandler run gems installing command
-func installGemTaskHandler(args ...string) (string, error) {
-	rubyVersion := args[0]
-	gem := args[1]
-	gemVersion := args[2]
-
+func installGemTaskHandler(rubyVersion, gem, gemVersion string) (string, error) {
 	// Do not install the latest version of bundler on Ruby < 2.3.0
 	if gem == "bundler" && gemVersion == "" && !isVersionSupportedByBundler(rubyVersion) {
 		return "", nil
@@ -918,11 +890,7 @@ func installGemTaskHandler(args ...string) (string, error) {
 }
 
 // updateGemTaskHandler run gems update command
-func updateGemTaskHandler(args ...string) (string, error) {
-	rubyVersion := args[0]
-	gem := args[1]
-	gemVersion := args[2]
-
+func updateGemTaskHandler(rubyVersion, gem, gemVersion string) (string, error) {
 	// Do not install the latest version of bundler on Ruby < 2.3.0
 	if gem == "bundler" && gemVersion == "" && !isVersionSupportedByBundler(rubyVersion) {
 		return "", nil
@@ -936,27 +904,26 @@ func updateGemTaskHandler(args ...string) (string, error) {
 }
 
 // updateRubygemsTaskHandler run rubygems update command
-func updateRubygemsTaskHandler(args ...string) (string, error) {
-	version := args[0]
-	rgVersion := args[1]
-
-	return "", updateRubygems(version, rgVersion)
+func updateRubygemsTaskHandler(version, rgVersion string) error {
+	return updateRubygems(version, rgVersion)
 }
 
 // rehashTaskHandler run 'rbenv rehash' command
-func rehashTaskHandler(args ...string) (string, error) {
+func rehashTaskHandler() error {
 	rehashCmd := exec.Command("rbenv", "rehash")
 	output, err := rehashCmd.CombinedOutput()
 
 	if err != nil {
-		return "", errors.New(strings.TrimRight(string(output), "\r\n"))
+		return errors.New(strings.TrimRight(string(output), "\r\n"))
 	}
 
-	return "", nil
+	return nil
 }
 
 // updateGems update gems installed by rbinstall on defined version
 func updateGems(rubyVersion string) {
+	var err error
+
 	if !knf.GetB(GEMS_ALLOW_UPDATE, true) {
 		printErrorAndExit("Gems update is disabled in configuration file")
 	}
@@ -978,12 +945,14 @@ func updateGems(rubyVersion string) {
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
 		rgVersion := getAdvisableRubyGemsVersion(rubyVersion)
-		updRubygemsTask := &Task{
-			Desc:    fmtc.Sprintf("Updating RubyGems to %s", rgVersion),
-			Handler: updateRubygemsTaskHandler,
-		}
 
-		updRubygemsTask.Start(rubyVersion, rgVersion)
+		spinner.Show("Updating RubyGems to %s", rgVersion)
+		err = updateRubygemsTaskHandler(rubyVersion, rgVersion)
+		spinner.Done(err == nil)
+
+		if err != nil {
+			terminal.PrintWarnMessage(err.Error())
+		}
 
 		installed = true
 	}
@@ -991,40 +960,36 @@ func updateGems(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if knf.GetS(GEMS_INSTALL) != "" {
-		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
-			var gemUpdateTask *Task
+		var gemVerInfo, installedVersion string
 
+		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
 
-			if isGemInstalled(rubyVersion, gemName) {
-				gemUpdateTask = &Task{
-					Desc:    fmtc.Sprintf("Updating %s", gemName),
-					Handler: updateGemTaskHandler,
-				}
-			} else {
-				gemUpdateTask = &Task{
-					Desc:    fmtc.Sprintf("Installing %s", gemName),
-					Handler: installGemTaskHandler,
-				}
-			}
-
 			if gemVersion != "" {
-				gemUpdateTask.Desc += fmt.Sprintf(" (%s.x)", gemVersion)
+				gemVerInfo = fmt.Sprintf("(%s.x)", gemVersion)
 			} else {
-				gemUpdateTask.Desc += fmt.Sprintf(" (latest)")
+				gemVerInfo = fmt.Sprintf("(latest)")
 			}
 
-			installedVersion, err := gemUpdateTask.Start(rubyVersion, gemName, gemVersion)
+			if isGemInstalled(rubyVersion, gemName) {
+				spinner.Show("Updating %s %s", gemName, gemVerInfo)
+				installedVersion, err = updateGemTaskHandler(rubyVersion, gemName, gemVersion)
+			} else {
+				spinner.Show("Installing %s %s", gemName, gemVerInfo)
+				installedVersion, err = installGemTaskHandler(rubyVersion, gemName, gemVersion)
+			}
+
+			spinner.Done(err == nil)
 
 			if err == nil {
 				if installedVersion != "" {
 					log.Info(
-						"[%s] Updated gem %s to version %s for %s",
+						"[%s]Gem %s updated to version %s for %s",
 						currentUser.RealName, gem, installedVersion, rubyVersion,
 					)
 				}
 			} else {
-				fmtc.Printf("  {r}%v{!}\n", err)
+				terminal.PrintWarnMessage(err.Error())
 			}
 		}
 
@@ -1669,6 +1634,7 @@ func logFailedAction(message string) (string, error) {
 
 // intSignalHandler is INT (Ctrl+C) signal handler
 func intSignalHandler() {
+	spinner.Done(false)
 	printErrorAndExit("\n\nInstall process canceled by Ctrl+C")
 }
 
