@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        go: [ '1.15.x', '1.16.x' ]
+        go: [ '1.16.x', '1.17.x' ]
 
     steps:
       - name: Set up Go
@@ -63,17 +63,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Run Perfecto docker image
-        uses: docker://essentialkaos/perfecto:micro
+      - name: Check specs with Perfecto
+        uses: essentialkaos/perfecto-action@v1
         with:
-          args: --version
-
-      - name: Install perfecto-docker
-        run: |
-          wget https://kaos.sh/perfecto/perfecto-docker
-          chmod +x perfecto-docker
-
-      - name: Run Perfecto check
-        env:
-          IMAGE: essentialkaos/perfecto:micro
-        run: ./perfecto-docker common/rbinstall.spec
+          files: common/rbinstall.spec

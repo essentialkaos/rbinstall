@@ -1,10 +1,10 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rbinstall.svg"/></a></p>
 
 <p align="center">
-  <a href="https://github.com/essentialkaos/rbinstall/actions"><img src="https://github.com/essentialkaos/rbinstall/workflows/CI/badge.svg" alt="GitHub Actions Status" /></a>
-  <a href="https://github.com/essentialkaos/rbinstall/actions?query=workflow%3ACodeQL"><img src="https://github.com/essentialkaos/rbinstall/workflows/CodeQL/badge.svg" /></a>
-  <a href="https://goreportcard.com/report/github.com/essentialkaos/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" /></a>
-  <a href="https://codebeat.co/projects/github-com-essentialkaos-rbinstall-master"><img alt="codebeat badge" src="https://codebeat.co/badges/b78de32a-6867-4bd3-9135-8244d4813531" /></a>
+  <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci.svg" alt="GitHub Actions CI Status" /></a>
+  <a href="https://kaos.sh/r/rbinstall"><img src="https://kaos.sh/r/rbinstall.svg" alt="GoReportCard" /></a>
+  <a href="https://kaos.sh/b/rbinstall"><img src="https://kaos.sh/b/b78de32a-6867-4bd3-9135-8244d4813531.svg" alt="codebeat badge" /></a>
+  <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://kaos.sh/w/rbinstall/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
   <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
 </p>
 
@@ -94,8 +94,8 @@ Examples
 
 | Branch | Status |
 |--------|--------|
-| `master` | [![CI](https://github.com/essentialkaos/rbinstall/workflows/CI/badge.svg?branch=master)](https://github.com/essentialkaos/rbinstall/actions) |
-| `develop` | [![CI](https://github.com/essentialkaos/rbinstall/workflows/CI/badge.svg?branch=develop)](https://github.com/essentialkaos/rbinstall/actions) |
+| `master` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=master)](https://kaos.sh/w/rbinstall/ci?query=branch:master) |
+| `develop` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=master)](https://kaos.sh/w/rbinstall/ci?query=branch:develop) |
 
 ### Contributing
 
