@@ -11,8 +11,10 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
+	"pkg.re/essentialkaos/ek.v12/env"
 	"pkg.re/essentialkaos/ek.v12/fmtc"
 	"pkg.re/essentialkaos/ek.v12/fmtutil"
 	"pkg.re/essentialkaos/ek.v12/fsutil"
@@ -33,7 +35,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "2.0.0"
+	VER  = "2.0.1"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -63,6 +65,9 @@ var optMap = options.Map{
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
 }
 
+var colorTagApp string
+var colorTagVer string
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Init is main func
@@ -79,9 +84,7 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
+	configureUI()
 
 	if options.GetB(OPT_VER) {
 		showAbout()
@@ -102,6 +105,40 @@ func Init() {
 
 	checkArguments(url, dir)
 	cloneRepository(url, dir)
+}
+
+// configureUI configures user interface
+func configureUI() {
+	envVars := env.Get()
+	term := envVars.GetS("TERM")
+
+	fmtc.DisableColors = true
+
+	if term != "" {
+		switch {
+		case strings.Contains(term, "xterm"),
+			strings.Contains(term, "color"),
+			term == "screen":
+			fmtc.DisableColors = false
+		}
+	}
+
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+		fmtc.DisableColors = true
+	}
+
+	switch {
+	case fmtc.IsTrueColorSupported():
+		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+	case fmtc.Is256ColorsSupported():
+		colorTagApp, colorTagVer = "{#160}", "{#160}"
+	default:
+		colorTagApp, colorTagVer = "{r}", "{r}"
+	}
 }
 
 // checkArguments checks command line arguments
@@ -355,6 +392,8 @@ func printErrorAndExit(f string, a ...interface{}) {
 func showUsage() {
 	info := usage.NewInfo("", "url", "path")
 
+	info.AppNameColorTag = "{*}" + colorTagApp
+
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
@@ -374,7 +413,10 @@ func showAbout() {
 		Desc:    DESC,
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>",
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
+
+		AppNameColorTag: "{*}" + colorTagApp,
+		VersionColorTag: colorTagVer,
 	}
 
 	about.Render()

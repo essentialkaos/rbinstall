@@ -58,7 +58,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.3.0"
+	VER  = "2.3.1"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -165,6 +165,9 @@ var categorySize = map[string]int{
 	index.CATEGORY_OTHER:   0,
 }
 
+var colorTagApp string
+var colorTagVer string
+
 var useRawOutput = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -243,6 +246,15 @@ func configureUI() {
 	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
 		fmtc.DisableColors = true
 		useRawOutput = true
+	}
+
+	switch {
+	case fmtc.IsTrueColorSupported():
+		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+	case fmtc.Is256ColorsSupported():
+		colorTagApp, colorTagVer = "{#160}", "{#160}"
+	default:
+		colorTagApp, colorTagVer = "{r}", "{r}"
 	}
 
 	progress.DefaultSettings.NameColorTag = "{*}"
@@ -1659,6 +1671,8 @@ func exit(code int) {
 func showUsage() {
 	info := usage.NewInfo("", "version")
 
+	info.AppNameColorTag = "{*}" + colorTagApp
+
 	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in config){!}")
 	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
@@ -1692,6 +1706,9 @@ func showAbout() {
 		Owner:         "ESSENTIAL KAOS",
 		License:       "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
+
+		AppNameColorTag: "{*}" + colorTagApp,
+		VersionColorTag: colorTagVer,
 	}
 
 	about.Render()

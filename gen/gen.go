@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"pkg.re/essentialkaos/ek.v12/env"
 	"pkg.re/essentialkaos/ek.v12/fmtc"
 	"pkg.re/essentialkaos/ek.v12/fsutil"
 	"pkg.re/essentialkaos/ek.v12/hash"
@@ -34,7 +35,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "2.1.0"
+	VER  = "2.2.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -75,7 +76,7 @@ func (s fileInfoSlice) Less(i, j int) bool {
 var eolInfo map[string]bool
 
 var optMap = options.Map{
-	OPT_OUTPUT:   {},
+	OPT_OUTPUT:   {Value: "index.json"},
 	OPT_EOL:      {},
 	OPT_NO_COLOR: {Type: options.BOOL},
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
@@ -83,6 +84,9 @@ var optMap = options.Map{
 }
 
 var variations = []string{"railsexpress", "jemalloc"}
+
+var colorTagApp string
+var colorTagVer string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -100,9 +104,7 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
+	configureUI()
 
 	if options.GetB(OPT_VER) {
 		showAbout()
@@ -119,6 +121,40 @@ func Init() {
 	loadEOLInfo()
 	checkDir(dataDir)
 	buildIndex(dataDir)
+}
+
+// configureUI configures user interface
+func configureUI() {
+	envVars := env.Get()
+	term := envVars.GetS("TERM")
+
+	fmtc.DisableColors = true
+
+	if term != "" {
+		switch {
+		case strings.Contains(term, "xterm"),
+			strings.Contains(term, "color"),
+			term == "screen":
+			fmtc.DisableColors = false
+		}
+	}
+
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+		fmtc.DisableColors = true
+	}
+
+	switch {
+	case fmtc.IsTrueColorSupported():
+		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+	case fmtc.Is256ColorsSupported():
+		colorTagApp, colorTagVer = "{#160}", "{#160}"
+	default:
+		colorTagApp, colorTagVer = "{r}", "{r}"
+	}
 }
 
 // loadEOLInfo load EOL info from file
@@ -174,12 +210,9 @@ func buildIndex(dataDir string) {
 		printErrorAndExit("Can't find any data in given directory\n")
 	}
 
-	outputFile := getOutputFile(dataDir)
-
-	var (
-		newIndex = index.NewIndex()
-		oldIndex = getExistentIndex(outputFile)
-	)
+	outputFile := options.GetS(OPT_OUTPUT)
+	newIndex := index.NewIndex()
+	oldIndex := getExistentIndex(outputFile)
 
 	start := time.Now()
 
@@ -329,17 +362,6 @@ func guessCategory(name string) string {
 	return index.CATEGORY_OTHER
 }
 
-// getOutputFile return path to output file
-func getOutputFile(dataDir string) string {
-	outputFile := options.GetS(OPT_OUTPUT)
-
-	if outputFile != "" {
-		return outputFile
-	}
-
-	return path.Join(dataDir, "index.json")
-}
-
 // getExistentIndex read and decode index
 func getExistentIndex(file string) *index.Index {
 	if !fsutil.IsExist(file) {
@@ -400,7 +422,9 @@ func printErrorAndExit(f string, a ...interface{}) {
 func showUsage() {
 	info := usage.NewInfo("", "dir")
 
-	info.AddOption(OPT_OUTPUT, "Custom index output", "file")
+	info.AppNameColorTag = "{*}" + colorTagApp
+
+	info.AddOption(OPT_OUTPUT, "Custom index output {s-}(default: index.json){!}", "file")
 	info.AddOption(OPT_EOL, "File with EOL info", "file")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
@@ -426,7 +450,10 @@ func showAbout() {
 		Desc:    DESC,
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>",
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
+
+		AppNameColorTag: "{*}" + colorTagApp,
+		VersionColorTag: colorTagVer,
 	}
 
 	about.Render()
