@@ -2,7 +2,7 @@ package clone
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2021 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2022 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -14,18 +14,18 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v12/env"
-	"pkg.re/essentialkaos/ek.v12/fmtc"
-	"pkg.re/essentialkaos/ek.v12/fmtutil"
-	"pkg.re/essentialkaos/ek.v12/fsutil"
-	"pkg.re/essentialkaos/ek.v12/httputil"
-	"pkg.re/essentialkaos/ek.v12/jsonutil"
-	"pkg.re/essentialkaos/ek.v12/options"
-	"pkg.re/essentialkaos/ek.v12/path"
-	"pkg.re/essentialkaos/ek.v12/req"
-	"pkg.re/essentialkaos/ek.v12/terminal"
-	"pkg.re/essentialkaos/ek.v12/timeutil"
-	"pkg.re/essentialkaos/ek.v12/usage"
+	"github.com/essentialkaos/ek/v12/env"
+	"github.com/essentialkaos/ek/v12/fmtc"
+	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v12/fsutil"
+	"github.com/essentialkaos/ek/v12/httputil"
+	"github.com/essentialkaos/ek/v12/jsonutil"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/path"
+	"github.com/essentialkaos/ek/v12/req"
+	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/timeutil"
+	"github.com/essentialkaos/ek/v12/usage"
 
 	"github.com/essentialkaos/rbinstall/index"
 )

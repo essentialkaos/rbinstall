@@ -146,6 +146,9 @@ rm -rf %{buildroot}
 %changelog
 * Fri Jan 07 2022 Anton Novojilov <andy@essentialkaos.com> - 2.3.1-0
 - [cli|gen|clone] Minor UI improvements
+- [cli|gen|clone] Removed pkg.re usage
+- Added module info
+- Added Dependabot configuration
 
 * Sat Mar 20 2021 Anton Novojilov <andy@essentialkaos.com> - 2.3.0-0
 - [cli] UI improvements

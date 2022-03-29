@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2021 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2022 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -21,34 +21,34 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v12/env"
-	"pkg.re/essentialkaos/ek.v12/fmtc"
-	"pkg.re/essentialkaos/ek.v12/fmtutil"
-	"pkg.re/essentialkaos/ek.v12/fsutil"
-	"pkg.re/essentialkaos/ek.v12/hash"
-	"pkg.re/essentialkaos/ek.v12/knf"
-	"pkg.re/essentialkaos/ek.v12/log"
-	"pkg.re/essentialkaos/ek.v12/options"
-	"pkg.re/essentialkaos/ek.v12/passwd"
-	"pkg.re/essentialkaos/ek.v12/progress"
-	"pkg.re/essentialkaos/ek.v12/req"
-	"pkg.re/essentialkaos/ek.v12/signal"
-	"pkg.re/essentialkaos/ek.v12/sortutil"
-	"pkg.re/essentialkaos/ek.v12/spinner"
-	"pkg.re/essentialkaos/ek.v12/strutil"
-	"pkg.re/essentialkaos/ek.v12/system"
-	"pkg.re/essentialkaos/ek.v12/terminal"
-	"pkg.re/essentialkaos/ek.v12/terminal/window"
-	"pkg.re/essentialkaos/ek.v12/timeutil"
-	"pkg.re/essentialkaos/ek.v12/tmp"
-	"pkg.re/essentialkaos/ek.v12/usage"
-	"pkg.re/essentialkaos/ek.v12/usage/update"
-	"pkg.re/essentialkaos/ek.v12/version"
+	"github.com/essentialkaos/ek/v12/env"
+	"github.com/essentialkaos/ek/v12/fmtc"
+	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v12/fsutil"
+	"github.com/essentialkaos/ek/v12/hash"
+	"github.com/essentialkaos/ek/v12/knf"
+	"github.com/essentialkaos/ek/v12/log"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/passwd"
+	"github.com/essentialkaos/ek/v12/progress"
+	"github.com/essentialkaos/ek/v12/req"
+	"github.com/essentialkaos/ek/v12/signal"
+	"github.com/essentialkaos/ek/v12/sortutil"
+	"github.com/essentialkaos/ek/v12/spinner"
+	"github.com/essentialkaos/ek/v12/strutil"
+	"github.com/essentialkaos/ek/v12/system"
+	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/window"
+	"github.com/essentialkaos/ek/v12/timeutil"
+	"github.com/essentialkaos/ek/v12/tmp"
+	"github.com/essentialkaos/ek/v12/usage"
+	"github.com/essentialkaos/ek/v12/usage/update"
+	"github.com/essentialkaos/ek/v12/version"
 
-	knfv "pkg.re/essentialkaos/ek.v12/knf/validators"
-	knff "pkg.re/essentialkaos/ek.v12/knf/validators/fs"
+	knfv "github.com/essentialkaos/ek/v12/knf/validators"
+	knff "github.com/essentialkaos/ek/v12/knf/validators/fs"
 
-	"pkg.re/essentialkaos/zip7.v1"
+	"github.com/essentialkaos/zip7"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
