@@ -95,8 +95,6 @@ Utility for cloning RBInstall repository.
 %setup -q
 
 %build
-export GOPATH=$(pwd)
-export GO111MODULE=auto
 pushd src/github.com/essentialkaos/%{name}/
 %{__make} %{?_smp_mflags} all
 popd
