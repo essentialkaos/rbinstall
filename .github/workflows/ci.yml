@@ -15,7 +15,6 @@ jobs:
 
     env:
       SRC_DIR: src/github.com/${{ github.repository }}
-      GO111MODULE: auto
 
     strategy:
       matrix:
@@ -26,13 +25,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
-        id: go
-
-      - name: Setup PATH
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> "$GITHUB_ENV"
-          echo "GOBIN=${{ github.workspace }}/bin" >> "$GITHUB_ENV"
-          echo "${{ github.workspace }}/bin" >> "$GITHUB_PATH"
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -57,16 +49,14 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v3
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: ${{ env.DOCKERHUB_USERNAME != '' }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check specs with Perfecto
-        uses: essentialkaos/perfecto-action@v1
+        uses: essentialkaos/perfecto-action@v2
         with:
           files: common/rbinstall.spec
