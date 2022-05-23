@@ -398,12 +398,12 @@ func fetchIndex() {
 }
 
 // process process command
-func process(args []string) {
+func process(args options.Arguments) {
 	var err error
 	var rubyVersion string
 
 	if len(args) != 0 {
-		rubyVersion = args[0]
+		rubyVersion = args.Get(0).String()
 	} else if options.GetB(OPT_RUBY_VERSION) {
 		rubyVersion, err = getVersionFromFile()
 

@@ -100,8 +100,8 @@ func Init() {
 
 	req.SetUserAgent("RBI-Cloner", VER)
 
-	url := args[0]
-	dir := args[1]
+	url := args.Get(0).String()
+	dir := args.Get(1).String()
 
 	checkArguments(url, dir)
 	cloneRepository(url, dir)

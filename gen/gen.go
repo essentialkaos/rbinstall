@@ -116,7 +116,7 @@ func Init() {
 		return
 	}
 
-	dataDir := args[0]
+	dataDir := args.Get(0).Clean().String()
 
 	loadEOLInfo()
 	checkDir(dataDir)
