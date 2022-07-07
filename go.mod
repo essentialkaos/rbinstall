@@ -2,7 +2,10 @@ module github.com/essentialkaos/rbinstall
 
 go 1.17
 
+replace github.com/essentialkaos/ek/v12 => ../ek
+
 require (
+	github.com/essentialkaos/depsy v1.0.0
 	github.com/essentialkaos/ek/v12 v12.50.0
 	github.com/essentialkaos/zip7 v1.0.4
 )

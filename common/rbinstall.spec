@@ -44,7 +44,7 @@
 
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
-Version:         2.3.1
+Version:         2.4.0
 Release:         0%{?dist}
 Group:           Applications/System
 License:         Apache License, Version 2.0
@@ -56,7 +56,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rbenv ca-certificates p7zip >= 16
 
-BuildRequires:   golang >= 1.15
+BuildRequires:   golang >= 1.17
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -70,7 +70,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:         Utility for generating RBInstall index
-Version:         2.1.1
+Version:         2.3.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -82,7 +82,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:         Utility for cloning RBInstall repository
-Version:         2.0.1
+Version:         2.1.0
 Release:         0%{?dist}
 Group:           Development/Tools
 
@@ -142,7 +142,12 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
-* Fri Jan 07 2022 Anton Novojilov <andy@essentialkaos.com> - 2.3.1-0
+* Fri Jan 07 2022 Anton Novojilov <andy@essentialkaos.com> - 2.4.0-0
+- [cli|gen|clone] Added man page generation
+- [cli|gen|clone] Added zsh completion generation
+- [cli|gen|clone] Added bash completion generation
+- [cli|gen|clone] Added fish completion generation
+- [cli|gen|clone] Added option for printing verbose application info
 - [cli|gen|clone] Minor UI improvements
 - [cli|gen|clone] Removed pkg.re usage
 - Added module info

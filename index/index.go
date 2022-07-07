@@ -29,8 +29,9 @@ const (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type Index struct {
-	Meta *Metadata           `json:"meta"`
-	Data map[string]DistData `json:"data"`
+	Meta    *Metadata           `json:"meta"`
+	Data    map[string]DistData `json:"data"`
+	Aliases map[string]string   `json:"aliases,omitempty"`
 }
 
 type Metadata struct {
@@ -106,6 +107,10 @@ func (i *Index) Add(dist, arch, category string, info *VersionInfo) {
 
 // HasData returns true if index contains data for some dist + arch
 func (i *Index) HasData(dist, arch string) bool {
+	if i.Aliases[dist] != "" {
+		dist = i.Aliases[dist]
+	}
+
 	if i.Data[dist] == nil {
 		return false
 	}
@@ -121,6 +126,10 @@ func (i *Index) HasData(dist, arch string) bool {
 func (i *Index) GetCategoryData(dist, arch, category string, eol bool) CategoryData {
 	if !i.HasData(dist, arch) {
 		return nil
+	}
+
+	if i.Aliases[dist] != "" {
+		dist = i.Aliases[dist]
 	}
 
 	if eol {
@@ -206,6 +215,10 @@ func (i *Index) Sort() {
 func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 	if i == nil {
 		return nil, ""
+	}
+
+	if i.Aliases[dist] != "" {
+		dist = i.Aliases[dist]
 	}
 
 	if i.Data[dist] == nil {

@@ -42,6 +42,10 @@ import (
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/tmp"
 	"github.com/essentialkaos/ek/v12/usage"
+	"github.com/essentialkaos/ek/v12/usage/completion/bash"
+	"github.com/essentialkaos/ek/v12/usage/completion/fish"
+	"github.com/essentialkaos/ek/v12/usage/completion/zsh"
+	"github.com/essentialkaos/ek/v12/usage/man"
 	"github.com/essentialkaos/ek/v12/usage/update"
 	"github.com/essentialkaos/ek/v12/version"
 
@@ -51,6 +55,7 @@ import (
 	"github.com/essentialkaos/zip7"
 
 	"github.com/essentialkaos/rbinstall/index"
+	"github.com/essentialkaos/rbinstall/support"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -58,7 +63,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.3.1"
+	VER  = "2.4.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -78,6 +83,10 @@ const (
 	OPT_NO_PROGRESS   = "np:no-progress"
 	OPT_HELP          = "h:help"
 	OPT_VER           = "v:version"
+
+	OPT_VERB_VER     = "vv:verbose-version"
+	OPT_COMPLETION   = "completion"
+	OPT_GENERATE_MAN = "generate-man"
 )
 
 // List of supported config values
@@ -142,14 +151,16 @@ var optMap = options.Map{
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
 	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:           {Type: options.BOOL, Alias: "ver"},
+
+	OPT_VERB_VER:     {Type: options.BOOL},
+	OPT_COMPLETION:   {},
+	OPT_GENERATE_MAN: {Type: options.BOOL},
 }
 
-var (
-	repoIndex   *index.Index
-	temp        *tmp.Temp
-	currentUser *system.User
-	runDate     time.Time
-)
+var repoIndex *index.Index
+var temp *tmp.Temp
+var currentUser *system.User
+var runDate time.Time
 
 var categoryColor = map[string]string{
 	index.CATEGORY_RUBY:    "m",
@@ -172,7 +183,7 @@ var useRawOutput = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func Init() {
+func Init(gitRev string, gomod []byte) {
 	var err error
 	var errs []error
 
@@ -192,12 +203,18 @@ func Init() {
 
 	configureUI()
 
-	if options.GetB(OPT_VER) {
-		showAbout()
+	switch {
+	case options.Has(OPT_COMPLETION):
+		exit(genCompletion())
+	case options.Has(OPT_GENERATE_MAN):
+		exit(genMan())
+	case options.GetB(OPT_VER):
+		showAbout(gitRev)
 		return
-	}
-
-	if options.GetB(OPT_HELP) {
+	case options.GetB(OPT_VERB_VER):
+		showVerboseAbout(gitRev, gomod)
+		return
+	case options.GetB(OPT_HELP):
 		showUsage()
 		return
 	}
@@ -498,8 +515,11 @@ func listCommand() {
 	}
 
 	if !repoIndex.HasData(dist, arch) {
-		terminal.PrintWarnMessage("Prebuilt binaries not found for this system")
-		exit(0)
+		terminal.PrintWarnMessage(
+			"Prebuilt binaries not found for this system (%s/%s)",
+			dist, arch,
+		)
+		exit(1)
 	}
 
 	if useRawOutput {
@@ -1140,9 +1160,9 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 		_, err = io.Copy(fd, resp.Body)
 	} else {
 		pb := progress.New(resp.ContentLength, "")
-		defer pb.Finish()
 		pb.Start()
 		_, err = io.Copy(fd, pb.Reader(resp.Body))
+		pb.Finish()
 	}
 
 	return tmpDir + "/" + info.File, err
@@ -1523,7 +1543,6 @@ func getSystemInfo() (string, string, error) {
 
 	systemInfo, err := system.GetSystemInfo()
 
-	// Return by default x64
 	if err != nil {
 		return "", "", fmt.Errorf("Can't get information about system")
 	}
@@ -1543,13 +1562,19 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("%s is not supported yet", systemInfo.OS)
 	}
 
-	distVersion, err := version.Parse(systemInfo.Version)
+	osInfo, err := system.GetOSInfo()
+
+	if err != nil {
+		return "", "", fmt.Errorf("Can't get information about OS")
+	}
+
+	osVersion, err := version.Parse(osInfo.VersionID)
 
 	if err != nil {
 		return "", "", fmt.Errorf("Can't parse OS version")
 	}
 
-	os = fmt.Sprintf("%s-%d", strings.ToLower(systemInfo.Distribution), distVersion.Major())
+	os = fmt.Sprintf("%s-%d", osInfo.ID, osVersion.Major())
 
 	return os, arch, nil
 }
@@ -1668,7 +1693,53 @@ func exit(code int) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// showUsage prints usage info
 func showUsage() {
+	genUsage().Render()
+}
+
+// showAbout prints info about version
+func showAbout(gitRev string) {
+	genAbout(gitRev).Render()
+}
+
+// showVerboseAbout prints verbose info about app
+func showVerboseAbout(gitRev string, gomod []byte) {
+	support.ShowSupportInfo(APP, VER, gitRev, gomod)
+}
+
+// genCompletion generates completion for different shells
+func genCompletion() int {
+	info := genUsage()
+
+	switch options.GetS(OPT_COMPLETION) {
+	case "bash":
+		fmt.Printf(bash.Generate(info, "rbinstall"))
+	case "fish":
+		fmt.Printf(fish.Generate(info, "rbinstall"))
+	case "zsh":
+		fmt.Printf(zsh.Generate(info, optMap, "rbinstall"))
+	default:
+		return 1
+	}
+
+	return 0
+}
+
+// genMan generates man page
+func genMan() int {
+	fmt.Println(
+		man.Generate(
+			genUsage(),
+			genAbout(""),
+		),
+	)
+
+	return 0
+}
+
+// genUsage generates usage info
+func genUsage() *usage.Info {
 	info := usage.NewInfo("", "version")
 
 	info.AppNameColorTag = "{*}" + colorTagApp
@@ -1694,11 +1765,12 @@ func showUsage() {
 	info.AddExample("2.0.0-p598 --reinstall", "Reinstall 2.0.0-p598")
 	info.AddExample("-r", "Install version defined in .ruby-version file")
 
-	info.Render()
+	return info
 }
 
-func showAbout() {
-	about := &usage.About{
+// genAbout generates info about version
+func genAbout(gitRev string) *usage.About {
+	return &usage.About{
 		App:           APP,
 		Version:       VER,
 		Desc:          DESC,
@@ -1710,6 +1782,4 @@ func showAbout() {
 		AppNameColorTag: "{*}" + colorTagApp,
 		VersionColorTag: colorTagVer,
 	}
-
-	about.Render()
 }
