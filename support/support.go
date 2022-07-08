@@ -23,12 +23,22 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Pkg contains simple package info
+type Pkg struct {
+	Name    string
+	Version string
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // ShowSupportInfo prints verbose info about application, system, dependencies and
 // important environment
 func ShowSupportInfo(app, ver, gitRev string, gomod []byte) {
+	pkgs := collectPackagesInfo()
+
 	showApplicationInfo(app, ver, gitRev)
 	showOSInfo()
-	showEnvironmentInfo()
+	showEnvironmentInfo(pkgs)
 	showDepsInfo(gomod)
 	fmtutil.Separator(false)
 }
@@ -96,24 +106,12 @@ func showOSInfo() {
 }
 
 // showEnvironmentInfo shows info about environment
-func showEnvironmentInfo() {
+func showEnvironmentInfo(pkgs []Pkg) {
 	fmtutil.Separator(false, "ENVIRONMENT")
 
-	cliPkgVer := getPackageVersion("rbinstall")
-	genPkgVer := getPackageVersion("rbinstall-gen")
-	clonePkgVer := getPackageVersion("rbinstall-clone")
-	p7zipPkgVer := getPackageVersion("p7zip")
-	rbenvPkgVer := getPackageVersion("rbenv")
-	jemallocPkgVer := getPackageVersion("jemalloc")
-	zlibPkgVer := getPackageVersion("zlib")
-
-	fmtc.Printf("  {*}%-16s{!} %s\n", "rbinstall:", formatValue(cliPkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "rbinstall-gen:", formatValue(genPkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "rbinstall-clone:", formatValue(clonePkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "p7zip:", formatValue(p7zipPkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "rbenv:", formatValue(rbenvPkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "jemalloc:", formatValue(jemallocPkgVer))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "zlib:", formatValue(zlibPkgVer))
+	for _, pkg := range pkgs {
+		fmtc.Printf("  {*}%-16s{!} %s\n", pkg.Name+":", formatValue(pkg.Version))
+	}
 }
 
 // showDepsInfo shows information about all dependencies
@@ -135,16 +133,31 @@ func showDepsInfo(gomod []byte) {
 	}
 }
 
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// collectPackagesInfo collects info with packages versions
+func collectPackagesInfo() []Pkg {
+	return []Pkg{
+		getPackageInfo("rbinstall"),
+		getPackageInfo("rbinstall-gen"),
+		getPackageInfo("rbinstall-clone"),
+		getPackageInfo("p7zip"),
+		getPackageInfo("rbenv"),
+		getPackageInfo("jemalloc"),
+		getPackageInfo("zlib"),
+	}
+}
+
 // getPackageVersion returns package name from rpm database
-func getPackageVersion(name string) string {
+func getPackageInfo(name string) Pkg {
 	cmd := exec.Command("rpm", "-q", name)
 	out, err := cmd.Output()
 
 	if err != nil || len(out) == 0 {
-		return ""
+		return Pkg{name, ""}
 	}
 
-	return strings.TrimRight(string(out), "\n\r")
+	return Pkg{name, strings.TrimRight(string(out), "\n\r")}
 }
 
 // formatValue formats value for output

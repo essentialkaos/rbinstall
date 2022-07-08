@@ -78,13 +78,13 @@ else
 	go mod tidy $(VERBOSE_FLAG)
 endif
 
-	test -d vendor && go mod vendor $(VERBOSE_FLAG) || :
+	test -d vendor && rm -rf vendor && go mod vendor $(VERBOSE_FLAG) || :
 
 mod-download:
 	go mod download
 
 mod-vendor:
-	go mod vendor $(VERBOSE_FLAG)
+	rm -rf vendor && go mod vendor $(VERBOSE_FLAG)
 
 fmt: ## Format source code with gofmt
 	find . -name "*.go" -exec gofmt -s -w {} \;
@@ -100,7 +100,7 @@ clean: ## Remove generated files
 help: ## Show this info
 	@echo -e '\n\033[1mTargets:\033[0m\n'
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[33m%-14s\033[0m %s\n", $$1, $$2}'
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[33m%-17s\033[0m %s\n", $$1, $$2}'
 	@echo -e '\n\033[1mVariables:\033[0m\n'
 	@grep -E '^ifdef [A-Z_]+ .*?## .*$$' $(abspath $(lastword $(MAKEFILE_LIST))) \
 		| sed 's/ifdef //' \
