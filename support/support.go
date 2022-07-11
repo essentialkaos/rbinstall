@@ -114,6 +114,7 @@ func showOSInfo() {
 		containerEngine = "Yes (Podman)"
 	}
 
+	fmtc.NewLine()
 	fmtc.Printf("  {*}%-16s{!} %s\n", "Container:", containerEngine)
 }
 
