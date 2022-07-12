@@ -5,8 +5,8 @@ github.com/essentialkaos/check v1.3.0/go.mod h1:PhxzfJWlf5L/skuyhzBLIvjMB5Xu9TIy
 github.com/essentialkaos/depsy v1.0.0 h1:FikBtTnNhk+xFO/hFr+CfiKs6QnA3wMD6tGL0XTEUkc=
 github.com/essentialkaos/depsy v1.0.0/go.mod h1:XVsB2eVUonEzmLKQP3ig2P6v2+WcHVgJ10zm0JLqFMM=
 github.com/essentialkaos/ek/v12 v12.42.1/go.mod h1:Cv/tOZshmFg4pMJnBkg4aW/WyYhzzc41qzZIfk5RSi4=
-github.com/essentialkaos/ek/v12 v12.50.0 h1:X1/OW4VBn9vL898sMeIeDnJ9xwaHb0W3GUPb+YuTPt0=
-github.com/essentialkaos/ek/v12 v12.50.0/go.mod h1:Y8ln7hqABw8GT1vWuU7cCJfZAdE1uxmOYZvOVv8HRzo=
+github.com/essentialkaos/ek/v12 v12.50.1 h1:iPv3yENf28q25GOcVs+IDEI2zyyLQTDzornVDMT3NPY=
+github.com/essentialkaos/ek/v12 v12.50.1/go.mod h1:Y8ln7hqABw8GT1vWuU7cCJfZAdE1uxmOYZvOVv8HRzo=
 github.com/essentialkaos/go-linenoise/v3 v3.3.5/go.mod h1:g4X3LhT83XT4h7xwrCLclAdMkJvS9qWBQTGNdS6y4vo=
 github.com/essentialkaos/go-linenoise/v3 v3.4.0 h1:g72w8x+/HIwOMBVvNaPYp+wMWVHrYZwzFAF7OfZR5Ts=
 github.com/essentialkaos/go-linenoise/v3 v3.4.0/go.mod h1:t1kNLY2bSMQCy1JXOefD2BDLs/TTPMtTv3DFNV5uDSI=
@@ -32,8 +32,8 @@ golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e h1:CsOuNlbOuf0mzxJIefr6Q4uAUetRUwZE4qt7VfzP+xo=
-golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e h1:NHvCuwuS43lGnYhten69ZWqi2QOj/CiDNcKbVqwVoew=
+golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.6/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
