@@ -1770,7 +1770,7 @@ func genUsage() *usage.Info {
 
 // genAbout generates info about version
 func genAbout(gitRev string) *usage.About {
-	return &usage.About{
+	about := &usage.About{
 		App:           APP,
 		Version:       VER,
 		Desc:          DESC,
@@ -1778,8 +1778,16 @@ func genAbout(gitRev string) *usage.About {
 		Owner:         "ESSENTIAL KAOS",
 		License:       "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
-
-		AppNameColorTag: "{*}" + colorTagApp,
-		VersionColorTag: colorTagVer,
 	}
+
+	if gitRev != "" {
+		about.Build = "git:" + gitRev
+	}
+
+	if fmtc.Is256ColorsSupported() {
+		about.AppNameColorTag = "{*}" + colorTagApp
+		about.VersionColorTag = colorTagVer
+	}
+
+	return about
 }

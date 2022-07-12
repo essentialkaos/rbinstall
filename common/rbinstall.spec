@@ -42,6 +42,10 @@
 
 ################################################################################
 
+%define srcdir src/github.com/essentialkaos/%{name}
+
+################################################################################
+
 Summary:         Utility for installing prebuilt Ruby to rbenv
 Name:            rbinstall
 Version:         2.4.0
@@ -95,8 +99,19 @@ Utility for cloning RBInstall repository.
 %setup -q
 
 %build
-pushd src/github.com/essentialkaos/%{name}/
-%{__make} %{?_smp_mflags} all
+export GOPATH=$(pwd)
+
+if [[ ! -d "%{srcdir}/vendor" ]] ; then
+  echo "This package requires vendored dependencies"
+  exit 1
+fi
+
+pushd %{srcdir}
+  %if 0%{?unstable}
+    %{__make} %{?_smp_mflags} all GITREV=$(cat .REVISION)
+  %else
+    %{__make} %{?_smp_mflags} all
+  %endif
 popd
 
 %install
