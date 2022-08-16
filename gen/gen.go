@@ -2,12 +2,13 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2021 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2022 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -15,18 +16,24 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v12/fmtc"
-	"pkg.re/essentialkaos/ek.v12/fsutil"
-	"pkg.re/essentialkaos/ek.v12/hash"
-	"pkg.re/essentialkaos/ek.v12/jsonutil"
-	"pkg.re/essentialkaos/ek.v12/options"
-	"pkg.re/essentialkaos/ek.v12/path"
-	"pkg.re/essentialkaos/ek.v12/sortutil"
-	"pkg.re/essentialkaos/ek.v12/strutil"
-	"pkg.re/essentialkaos/ek.v12/timeutil"
-	"pkg.re/essentialkaos/ek.v12/usage"
+	"github.com/essentialkaos/ek/v12/env"
+	"github.com/essentialkaos/ek/v12/fmtc"
+	"github.com/essentialkaos/ek/v12/fsutil"
+	"github.com/essentialkaos/ek/v12/hash"
+	"github.com/essentialkaos/ek/v12/jsonutil"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/path"
+	"github.com/essentialkaos/ek/v12/sortutil"
+	"github.com/essentialkaos/ek/v12/strutil"
+	"github.com/essentialkaos/ek/v12/timeutil"
+	"github.com/essentialkaos/ek/v12/usage"
+	"github.com/essentialkaos/ek/v12/usage/completion/bash"
+	"github.com/essentialkaos/ek/v12/usage/completion/fish"
+	"github.com/essentialkaos/ek/v12/usage/completion/zsh"
+	"github.com/essentialkaos/ek/v12/usage/man"
 
 	"github.com/essentialkaos/rbinstall/index"
+	"github.com/essentialkaos/rbinstall/support"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -34,7 +41,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "2.1.0"
+	VER  = "2.3.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -42,9 +49,14 @@ const (
 const (
 	OPT_OUTPUT   = "o:output"
 	OPT_EOL      = "e:eol"
+	OPT_ALIAS    = "a:alias"
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
+
+	OPT_VERB_VER     = "vv:verbose-version"
+	OPT_COMPLETION   = "completion"
+	OPT_GENERATE_MAN = "generate-man"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -73,21 +85,29 @@ func (s fileInfoSlice) Less(i, j int) bool {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var eolInfo map[string]bool
+var aliasInfo map[string]string
 
 var optMap = options.Map{
-	OPT_OUTPUT:   {},
+	OPT_OUTPUT:   {Value: "index.json"},
 	OPT_EOL:      {},
+	OPT_ALIAS:    {},
 	OPT_NO_COLOR: {Type: options.BOOL},
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
+
+	OPT_VERB_VER:     {Type: options.BOOL},
+	OPT_COMPLETION:   {},
+	OPT_GENERATE_MAN: {Type: options.BOOL},
 }
 
 var variations = []string{"railsexpress", "jemalloc"}
 
+var colorTagApp string
+var colorTagVer string
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Init is main func
-func Init() {
+func Init(gitRev string, gomod []byte) {
 	runtime.GOMAXPROCS(1)
 
 	args, errs := options.Parse(optMap)
@@ -100,25 +120,64 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
+	configureUI()
 
-	if options.GetB(OPT_VER) {
-		showAbout()
+	switch {
+	case options.Has(OPT_COMPLETION):
+		os.Exit(genCompletion())
+	case options.Has(OPT_GENERATE_MAN):
+		os.Exit(genMan())
+	case options.GetB(OPT_VER):
+		showAbout(gitRev)
 		return
-	}
-
-	if options.GetB(OPT_HELP) || len(args) == 0 {
+	case options.GetB(OPT_VERB_VER):
+		showVerboseAbout(gitRev, gomod)
+		return
+	case options.GetB(OPT_HELP) || len(args) == 0:
 		showUsage()
 		return
 	}
 
-	dataDir := args[0]
+	dataDir := args.Get(0).Clean().String()
 
 	loadEOLInfo()
+	loadAliasInfo()
 	checkDir(dataDir)
 	buildIndex(dataDir)
+}
+
+// configureUI configures user interface
+func configureUI() {
+	envVars := env.Get()
+	term := envVars.GetS("TERM")
+
+	fmtc.DisableColors = true
+
+	if term != "" {
+		switch {
+		case strings.Contains(term, "xterm"),
+			strings.Contains(term, "color"),
+			term == "screen":
+			fmtc.DisableColors = false
+		}
+	}
+
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+		fmtc.DisableColors = true
+	}
+
+	switch {
+	case fmtc.IsTrueColorSupported():
+		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+	case fmtc.Is256ColorsSupported():
+		colorTagApp, colorTagVer = "{#160}", "{#160}"
+	default:
+		colorTagApp, colorTagVer = "{r}", "{r}"
+	}
 }
 
 // loadEOLInfo load EOL info from file
@@ -130,6 +189,21 @@ func loadEOLInfo() {
 	}
 
 	err := jsonutil.Read(options.GetS(OPT_EOL), &eolInfo)
+
+	if err != nil {
+		printErrorAndExit(err.Error())
+	}
+}
+
+// loadAliasInfo loads aliases info
+func loadAliasInfo() {
+	aliasInfo = make(map[string]string)
+
+	if !options.Has(OPT_ALIAS) {
+		return
+	}
+
+	err := jsonutil.Read(options.GetS(OPT_ALIAS), &aliasInfo)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -174,12 +248,9 @@ func buildIndex(dataDir string) {
 		printErrorAndExit("Can't find any data in given directory\n")
 	}
 
-	outputFile := getOutputFile(dataDir)
-
-	var (
-		newIndex = index.NewIndex()
-		oldIndex = getExistentIndex(outputFile)
-	)
+	outputFile := options.GetS(OPT_OUTPUT)
+	newIndex := index.NewIndex()
+	oldIndex := getExistentIndex(outputFile)
 
 	start := time.Now()
 
@@ -246,6 +317,10 @@ func buildIndex(dataDir string) {
 
 	fmtc.NewLine()
 
+	if len(aliasInfo) != 0 {
+		newIndex.Aliases = aliasInfo
+	}
+
 	saveIndex(outputFile, newIndex)
 
 	fmtc.Printf(
@@ -311,6 +386,8 @@ func saveIndex(outputFile string, i *index.Index) {
 	if err != nil {
 		printErrorAndExit(err.Error())
 	}
+
+	os.Chmod(outputFile, 0644)
 }
 
 // guessCategory try to guess category by file name
@@ -327,17 +404,6 @@ func guessCategory(name string) string {
 	}
 
 	return index.CATEGORY_OTHER
-}
-
-// getOutputFile return path to output file
-func getOutputFile(dataDir string) string {
-	outputFile := options.GetS(OPT_OUTPUT)
-
-	if outputFile != "" {
-		return outputFile
-	}
-
-	return path.Join(dataDir, "index.json")
 }
 
 // getExistentIndex read and decode index
@@ -397,11 +463,60 @@ func printErrorAndExit(f string, a ...interface{}) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// showUsage prints usage info
 func showUsage() {
+	genUsage().Render()
+}
+
+// showAbout prints info about version
+func showAbout(gitRev string) {
+	genAbout(gitRev).Render()
+}
+
+// showVerboseAbout prints verbose info about app
+func showVerboseAbout(gitRev string, gomod []byte) {
+	support.ShowSupportInfo(APP, VER, gitRev, gomod)
+}
+
+// genCompletion generates completion for different shells
+func genCompletion() int {
+	info := genUsage()
+
+	switch options.GetS(OPT_COMPLETION) {
+	case "bash":
+		fmt.Printf(bash.Generate(info, "rbinstall-clone"))
+	case "fish":
+		fmt.Printf(fish.Generate(info, "rbinstall-clone"))
+	case "zsh":
+		fmt.Printf(zsh.Generate(info, optMap, "rbinstall-clone"))
+	default:
+		return 1
+	}
+
+	return 0
+}
+
+// genMan generates man page
+func genMan() int {
+	fmt.Println(
+		man.Generate(
+			genUsage(),
+			genAbout(""),
+		),
+	)
+
+	return 0
+}
+
+// genUsage generates usage info
+func genUsage() *usage.Info {
 	info := usage.NewInfo("", "dir")
 
-	info.AddOption(OPT_OUTPUT, "Custom index output", "file")
-	info.AddOption(OPT_EOL, "File with EOL info", "file")
+	info.AppNameColorTag = "{*}" + colorTagApp
+
+	info.AddOption(OPT_OUTPUT, "Custom index output {s-}(default: index.json){!}", "file")
+	info.AddOption(OPT_EOL, "File with EOL information", "file")
+	info.AddOption(OPT_ALIAS, "File with aliases information", "file")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
@@ -416,18 +531,20 @@ func showUsage() {
 		"Generate index for directory /dir/with/rubies and save all all.json",
 	)
 
-	info.Render()
+	return info
 }
 
-func showAbout() {
-	about := &usage.About{
+// genAbout generates info about version
+func genAbout(gitRev string) *usage.About {
+	return &usage.About{
 		App:     APP,
 		Version: VER,
 		Desc:    DESC,
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
-		License: "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>",
-	}
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 
-	about.Render()
+		AppNameColorTag: "{*}" + colorTagApp,
+		VersionColorTag: colorTagVer,
+	}
 }

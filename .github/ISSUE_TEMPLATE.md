@@ -4,9 +4,7 @@ _Before opening an issue, search for similar bug reports or feature requests on 
 
 **System info:**
 
-* **Version used (`rbinstall --version`):** 
-* **OS (e.g. from `/etc/*-release`):** 
-* **Kernel (`uname -a`):** 
+* **Verbose application info (`rbinstall -vv`):** 
 * **Install tools:** 
 
 **Steps to reproduce:**

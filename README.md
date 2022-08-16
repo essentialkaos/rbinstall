@@ -87,7 +87,6 @@ Examples
 
   rbinstall -r
   Install version defined in .ruby-version file
-
 ```
 
 ### Build Status
@@ -95,7 +94,7 @@ Examples
 | Branch | Status |
 |--------|--------|
 | `master` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=master)](https://kaos.sh/w/rbinstall/ci?query=branch:master) |
-| `develop` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=master)](https://kaos.sh/w/rbinstall/ci?query=branch:develop) |
+| `develop` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=develop)](https://kaos.sh/w/rbinstall/ci?query=branch:develop) |
 
 ### Contributing
 
