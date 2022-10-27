@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/essentialkaos/depsy v1.0.0
-	github.com/essentialkaos/ek/v12 v12.56.0
+	github.com/essentialkaos/ek/v12 v12.57.0
 	github.com/essentialkaos/zip7 v1.0.4
 )
 
