@@ -8,6 +8,7 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +53,8 @@ import (
 	knfv "github.com/essentialkaos/ek/v12/knf/validators"
 	knff "github.com/essentialkaos/ek/v12/knf/validators/fs"
 
-	"github.com/essentialkaos/zip7"
+	"github.com/essentialkaos/npck/tar"
+	"github.com/essentialkaos/npck/tzst"
 
 	"github.com/essentialkaos/rbinstall/index"
 	"github.com/essentialkaos/rbinstall/support"
@@ -63,7 +65,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "2.4.0"
+	VER  = "3.0.0"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -112,7 +114,7 @@ const (
 )
 
 // INDEX_NAME is name of index file
-const INDEX_NAME = "index.json"
+const INDEX_NAME = "index3.json"
 
 // CONFIG_FILE is path to config file
 const CONFIG_FILE = "/etc/rbinstall.knf"
@@ -121,7 +123,7 @@ const CONFIG_FILE = "/etc/rbinstall.knf"
 const NONE_VERSION = "- none -"
 
 // DEFAULT_CATEGORY_SIZE is default category column size
-const DEFAULT_CATEGORY_SIZE = 22
+const DEFAULT_CATEGORY_SIZE = 24
 
 // Default arch names
 const (
@@ -132,8 +134,7 @@ const (
 
 // RubyGems versions used for old versions of Ruby
 const (
-	MIN_RUBYGEMS_VERSION_BASE  = "2.7.9"
-	MIN_RUBYGEMS_VERSION_JRUBY = "2.6.14"
+	MIN_RUBYGEMS_VERSION_BASE = "2.7.9"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -163,8 +164,8 @@ var currentUser *system.User
 var runDate time.Time
 
 var categoryColor = map[string]string{
-	index.CATEGORY_RUBY:    "m",
-	index.CATEGORY_JRUBY:   "c",
+	index.CATEGORY_RUBY:    "r",
+	index.CATEGORY_JRUBY:   "m",
 	index.CATEGORY_TRUFFLE: "y",
 	index.CATEGORY_OTHER:   "s",
 }
@@ -274,6 +275,12 @@ func configureUI() {
 		colorTagApp, colorTagVer = "{r}", "{r}"
 	}
 
+	if fmtc.IsTrueColorSupported() || fmtc.Is256ColorsSupported() {
+		categoryColor[index.CATEGORY_RUBY] = "#197"
+		categoryColor[index.CATEGORY_JRUBY] = "#160"
+		categoryColor[index.CATEGORY_TRUFFLE] = "#214"
+	}
+
 	progress.DefaultSettings.NameColorTag = "{*}"
 	progress.DefaultSettings.PercentColorTag = "{*}"
 	progress.DefaultSettings.ProgressColorTag = "{s}"
@@ -284,6 +291,7 @@ func configureUI() {
 // prepare do some preparations for installing ruby
 func prepare() {
 	req.SetUserAgent(APP, VER)
+	tar.AllowExternalLinks = true
 
 	loadConfig()
 	validateConfig()
@@ -591,7 +599,7 @@ func printPrettyListing(dist, arch string) {
 // getCategoryHeaderStyle generates part of the header style for given category
 func getCategoryHeaderStyle(category string) string {
 	return fmt.Sprintf(
-		"{*@%s} %%-%ds{!}",
+		"{*@}{%s} %%-%ds{!}",
 		categoryColor[category],
 		categorySize[category],
 	)
@@ -661,12 +669,20 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
+	var file string
+
 	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
 	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
+	fmtc.NameColor("category", "{"+categoryColor[category]+"}")
 
-	fmtc.Printf("Fetching {*}{"+categoryColor[category]+"}%s{!} from storage…\n", info.Name)
-
-	file, err := downloadFile(info)
+	if !options.GetB(OPT_NO_PROGRESS) {
+		fmtc.Printf("Fetching {*}{?category}%s{!} from storage…\n", info.Name)
+		file, err = downloadFile(info)
+	} else {
+		spinner.Show("Fetching {*}{?category}%s{!} from storage", info.Name)
+		file, err = downloadFile(info)
+		spinner.Done(err == nil)
+	}
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -685,12 +701,16 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	spinner.Show("Unpacking 7z archive")
-	err = unpackTaskHandler(file, getUnpackDirPath())
-	spinner.Done(err == nil)
+	if !options.GetB(OPT_NO_PROGRESS) {
+		fmtc.Printf("Unpacking {*}{?category}%s{!} data…\n", info.Name)
+		err = unpackFile(file, getUnpackDirPath())
+	} else {
+		spinner.Show("Unpacking {*}{?category}%s{!} data", info.Name)
+		err = unpackFile(file, getUnpackDirPath())
+		spinner.Done(err == nil)
+	}
 
 	if err != nil {
-		fmtc.NewLine()
 		printErrorAndExit(err.Error())
 	}
 
@@ -725,7 +745,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if knf.GetB(GEMS_RUBYGEMS_UPDATE) {
+	if knf.GetB(GEMS_RUBYGEMS_UPDATE) && strutil.HasPrefixAny(info.Name, "1", "2", "3") {
 		rgVersion := getAdvisableRubyGemsVersion(info.Name)
 
 		spinner.Show("Updating RubyGems to %s", rgVersion)
@@ -884,24 +904,6 @@ func checkHashTaskHandler(filePath, fileHash string) error {
 	return nil
 }
 
-// unpackTaskHandler run unpacking command
-func unpackTaskHandler(file, outputDir string) error {
-	output, err := zip7.Extract(zip7.Props{File: file, OutputDir: outputDir})
-
-	if err != nil {
-		unpackError := err
-		actionLog, err := logFailedAction(output)
-
-		if err != nil {
-			return fmtc.Errorf("7za return error: %s", unpackError.Error())
-		}
-
-		return fmtc.Errorf("7za return error: %s (7za output saved as %s)", unpackError.Error(), actionLog)
-	}
-
-	return nil
-}
-
 // checkBinaryTaskHandler run and check installer binary
 func checkBinaryTaskHandler(args ...string) error {
 	version, unpackDir := args[0], args[1]
@@ -1045,7 +1047,7 @@ func updateGems(rubyVersion string) {
 func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	start := time.Now()
 	rubyPath := getVersionPath(rubyVersion)
-	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, "--force", gem)
+	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem, "--force")
 
 	if gemVersion != "" {
 		gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s", gemVersion))
@@ -1166,6 +1168,30 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 	}
 
 	return tmpDir + "/" + info.File, err
+}
+
+// unpackFile unpacks archived Ruby version
+func unpackFile(file, outputDir string) error {
+	var err error
+
+	fd, err := os.OpenFile(file, os.O_RDONLY, 0)
+
+	if err != nil {
+		return fmt.Errorf("Can't unpack %s: %w", file, err)
+	}
+
+	if options.GetB(OPT_NO_PROGRESS) {
+		err = tzst.Read(bufio.NewReader(fd), outputDir)
+	} else {
+		pb := progress.New(fsutil.GetSize(file), "")
+		pb.Start()
+		err = tzst.Read(pb.Reader(bufio.NewReader(fd)), outputDir)
+		pb.Finish()
+	}
+
+	fd.Close()
+
+	return err
 }
 
 // printCurrentVersionName print version from given slice for
@@ -1403,16 +1429,6 @@ func getVersionFromFile() (string, error) {
 // getAdvisableRubyGemsVersion returns recommended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
-	if strings.HasPrefix(rubyVersion, "jruby-") {
-		rubyVersion = strutil.Exclude(rubyVersion, "jruby-")
-
-		if !strings.HasPrefix(rubyVersion, "9.2") {
-			return MIN_RUBYGEMS_VERSION_JRUBY
-		}
-
-		return "latest"
-	}
-
 	v, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
 	minVer, _ := version.Parse("2.3.0")
 
@@ -1574,7 +1590,11 @@ func getSystemInfo() (string, string, error) {
 		return "", "", fmt.Errorf("Can't parse OS version")
 	}
 
-	os = fmt.Sprintf("%s-%d", osInfo.ID, osVersion.Major())
+	if strings.Contains(osInfo.IDLike, "rhel") {
+		os = fmt.Sprintf("rhel-%d", osVersion.Major())
+	} else {
+		os = fmt.Sprintf("%s-%d", osInfo.ID, osVersion.Major())
+	}
 
 	return os, arch, nil
 }

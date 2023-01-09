@@ -41,7 +41,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "2.1.0"
+	VER  = "3.0.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -55,6 +55,11 @@ const (
 	OPT_COMPLETION   = "completion"
 	OPT_GENERATE_MAN = "generate-man"
 )
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// INDEX_NAME is name of index file
+const INDEX_NAME = "index3.json"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -257,7 +262,7 @@ func fetchIndex(url string) (*index.Index, error) {
 func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 	items := getItems(repoIndex, url)
 
-	fmtc.Printf("{s-}Downloading %d items...{!}\n\n", len(items))
+	fmtc.Printf("{s-}Downloading %d items…{!}\n\n", len(items))
 
 	for _, item := range items {
 		fileDir := path.Join(dir, item.OS, item.Arch)
@@ -374,9 +379,9 @@ func downloadFile(url, output string) (time.Duration, error) {
 
 // saveIndex encode index to json format and save to file
 func saveIndex(repoIndex *index.Index, dir string) {
-	indexPath := path.Join(dir, "index.json")
+	indexPath := path.Join(dir, INDEX_NAME)
 
-	fmtc.Printf("Saving index... ")
+	fmtc.Printf("Saving index… ")
 
 	err := jsonutil.Write(indexPath, repoIndex)
 

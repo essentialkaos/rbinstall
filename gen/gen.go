@@ -18,6 +18,7 @@ import (
 
 	"github.com/essentialkaos/ek/v12/env"
 	"github.com/essentialkaos/ek/v12/fmtc"
+	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/hash"
 	"github.com/essentialkaos/ek/v12/jsonutil"
@@ -41,7 +42,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "2.3.0"
+	VER  = "3.0.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -61,6 +62,11 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// INDEX_NAME is name of index file
+const INDEX_NAME = "index3.json"
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // FileInfo contains info about file
 type FileInfo struct {
 	OS       string
@@ -76,10 +82,10 @@ type fileInfoSlice []FileInfo
 func (s fileInfoSlice) Len() int      { return len(s) }
 func (s fileInfoSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s fileInfoSlice) Less(i, j int) bool {
-	iv := strings.Replace(s[i].File, "-", ".", -1)
-	jv := strings.Replace(s[j].File, "-", ".", -1)
-
-	return sortutil.VersionCompare(iv, jv)
+	return sortutil.VersionCompare(
+		fmtVersionName(s[i].File),
+		fmtVersionName(s[j].File),
+	)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -88,7 +94,7 @@ var eolInfo map[string]bool
 var aliasInfo map[string]string
 
 var optMap = options.Map{
-	OPT_OUTPUT:   {Value: "index.json"},
+	OPT_OUTPUT:   {Value: INDEX_NAME},
 	OPT_EOL:      {},
 	OPT_ALIAS:    {},
 	OPT_NO_COLOR: {Type: options.BOOL},
@@ -241,7 +247,7 @@ func buildIndex(dataDir string) {
 		dataDir, true,
 		fsutil.ListingFilter{
 			Perms:         "FR",
-			MatchPatterns: []string{"*.7z"},
+			MatchPatterns: []string{"*.tzst"},
 		})
 
 	if len(fileList) == 0 {
@@ -258,13 +264,13 @@ func buildIndex(dataDir string) {
 		alreadyExist := false
 
 		filePath := path.Join(dataDir, fileInfo.OS, fileInfo.Arch, fileInfo.File)
-		fileName := strings.Replace(fileInfo.File, ".7z", "", -1)
+		fileName := strings.Replace(fileInfo.File, ".tzst", "", -1)
 		fileSize := fsutil.GetSize(filePath)
 		fileAdded, _ := fsutil.GetCTime(filePath)
 
 		versionInfo := &index.VersionInfo{
 			Name:  fileName,
-			File:  fileName + ".7z",
+			File:  fileName + ".tzst",
 			Path:  path.Join(fileInfo.OS, fileInfo.Arch),
 			Size:  fileSize,
 			Added: fileAdded.Unix(),
@@ -273,7 +279,7 @@ func buildIndex(dataDir string) {
 
 		oldVersionInfo, _ := oldIndex.Find(fileInfo.OS, fileInfo.Arch, fileName)
 
-		// If 7z file have same creation date and size, we use hash from old index
+		// If file have same creation date and size, we use hash from old index
 		if oldVersionInfo != nil {
 			if oldVersionInfo.Added == fileAdded.Unix() && oldVersionInfo.Size == fileSize {
 				versionInfo.Hash = oldVersionInfo.Hash
@@ -308,19 +314,18 @@ func buildIndex(dataDir string) {
 			)
 		} else {
 			fmtc.Printf(
-				"{g}+ %-24s{!} → {c}%s/%s %s{!}\n",
+				"{g}+ %-24s{!} → {c}%s/%s {c*}%s{!}\n",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
 		}
 	}
 
-	fmtc.NewLine()
-
 	if len(aliasInfo) != 0 {
 		newIndex.Aliases = aliasInfo
 	}
 
+	printIndexStats(newIndex)
 	saveIndex(outputFile, newIndex)
 
 	fmtc.Printf(
@@ -368,7 +373,49 @@ func processFiles(files []string) []FileInfo {
 	return result
 }
 
-// saveIndex save index data as JSON to file
+// printIndexStats prints index statistics
+func printIndexStats(i *index.Index) {
+	fmtutil.Separator(false, "STATISTICS")
+
+	i.UpdateMeta()
+
+	for distName, dist := range i.Data {
+		size := int64(0)
+		items := 0
+
+		for archName, arch := range dist {
+			for _, category := range arch {
+				for _, version := range category {
+					size += version.Size
+					items++
+
+					if len(version.Variations) != 0 {
+						for _, variation := range version.Variations {
+							items++
+							size += variation.Size
+						}
+					}
+				}
+			}
+
+			fmtc.Printf(
+				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s\n", distName, archName,
+				fmtutil.PrettyNum(items), fmtutil.PrettySize(size, " "),
+			)
+		}
+	}
+
+	fmtc.NewLine()
+	fmtc.Printf(
+		"  {*}Total:{!} %s {s-}|{!} %s\n",
+		fmtutil.PrettyNum(i.Meta.Items),
+		fmtutil.PrettySize(i.Meta.Size, " "),
+	)
+
+	fmtutil.Separator(false)
+}
+
+// saveIndex saves index data as JSON to file
 func saveIndex(outputFile string, i *index.Index) {
 	indexData, err := i.Encode()
 
@@ -377,8 +424,8 @@ func saveIndex(outputFile string, i *index.Index) {
 	}
 
 	if fsutil.IsExist(outputFile) {
-		os.RemoveAll(outputFile + ".bak")
-		fsutil.MoveFile(outputFile, outputFile+".bak", 0600)
+		os.RemoveAll(outputFile + ".bkp")
+		fsutil.MoveFile(outputFile, outputFile+".bkp", 0600)
 	}
 
 	err = ioutil.WriteFile(outputFile, indexData, 0644)
@@ -443,6 +490,13 @@ func getVariationBaseName(name string) string {
 	}
 
 	return name
+}
+
+// fmtVersionName formats version file name for comparison
+func fmtVersionName(v string) string {
+	v = strings.ReplaceAll(v, ".tzst", "")
+	v = strings.ReplaceAll(v, "-p", ".")
+	return v
 }
 
 // printError prints error message to console

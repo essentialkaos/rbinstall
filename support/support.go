@@ -161,7 +161,6 @@ func collectPackagesInfo() []Pkg {
 		getPackageInfo("rbinstall"),
 		getPackageInfo("rbinstall-gen"),
 		getPackageInfo("rbinstall-clone"),
-		getPackageInfo("p7zip"),
 		getPackageInfo("rbenv"),
 		getPackageInfo("jemalloc"),
 		getPackageInfo("zlib"),

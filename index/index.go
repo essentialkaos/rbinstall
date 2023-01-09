@@ -157,7 +157,7 @@ func (i *Index) Encode() ([]byte, error) {
 
 	// Prepare index for encoding
 	i.Sort()
-	i.UpdateMetadata()
+	i.UpdateMeta()
 
 	data, err := json.MarshalIndent(i, "", "  ")
 
@@ -168,8 +168,8 @@ func (i *Index) Encode() ([]byte, error) {
 	return data, nil
 }
 
-// UpdateMetadata updates index metadata
-func (i *Index) UpdateMetadata() {
+// UpdateMeta updates index metadata
+func (i *Index) UpdateMeta() {
 	if i == nil {
 		return
 	}
@@ -183,9 +183,9 @@ func (i *Index) UpdateMetadata() {
 					i.Meta.Size += version.Size
 
 					if len(version.Variations) != 0 {
-						for _, subver := range version.Variations {
+						for _, variation := range version.Variations {
 							i.Meta.Items++
-							i.Meta.Size += subver.Size
+							i.Meta.Size += variation.Size
 						}
 					}
 				}
