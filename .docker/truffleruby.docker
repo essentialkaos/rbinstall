@@ -1,0 +1,43 @@
+## REGISTRY CONFIGURATION ######################################################
+
+ARG REGISTRY="docker.io"
+
+## BUILDER #####################################################################
+
+FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
+
+ARG VERSION=22.3.0
+
+# hadolint ignore=DL3031,DL3041
+RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y install rbenv rbinstall && \
+    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    rbinstall truffleruby-${VERSION} --no-progress
+
+## FINAL IMAGE  ################################################################
+
+FROM ${REGISTRY}/essentialkaos/oraclelinux:8
+
+ARG VERSION
+
+LABEL org.opencontainers.image.title="rbinstall-ruby" \
+      org.opencontainers.image.description="RBEnv with prebuilt Ruby" \
+      org.opencontainers.image.vendor="ESSENTIAL KAOS" \
+      org.opencontainers.image.authors="Anton Novojilov" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.url="https://kaos.sh/rbinstall" \
+      org.opencontainers.image.source="https://github.com/essentialkaos/rbinstall"
+
+COPY --from=installer /usr/local/rbenv/versions/truffleruby-${VERSION} \
+                      /usr/local/rbenv/versions/truffleruby-${VERSION}
+
+# hadolint ignore=DL3031,DL3041
+RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y install rbenv && \
+    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    source /etc/profile.d/rbenv.sh && \
+    rbenv global truffleruby-${VERSION}
+
+ENV PATH /usr/local/rbenv/shims:$PATH
+
+CMD [ "irb" ]
