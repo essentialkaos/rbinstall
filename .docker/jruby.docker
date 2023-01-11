@@ -9,7 +9,7 @@ FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
 ARG VERSION=9.3.9.0
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y install rbenv rbinstall jre11 && \
+    dnf -y -q install rbenv rbinstall jre11 && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
     rbinstall jruby-${VERSION} --no-progress
 
@@ -17,7 +17,7 @@ RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8
 
-ARG VERSION
+ARG VERSION=9.3.9.0
 
 LABEL org.opencontainers.image.title="rbinstall-ruby" \
       org.opencontainers.image.description="RBEnv with prebuilt Ruby" \
@@ -31,7 +31,7 @@ COPY --from=installer /usr/local/rbenv/versions/jruby-${VERSION} \
                       /usr/local/rbenv/versions/jruby-${VERSION}
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y install rbenv jre11 && \
+    dnf -y -q install rbenv jre11 && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
     source /etc/profile.d/rbenv.sh && \
     rbenv global jruby-${VERSION}

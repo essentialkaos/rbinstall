@@ -7,17 +7,20 @@ ARG REGISTRY="docker.io"
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
 
 ARG VERSION=3.2.0
+ARG WITH_STATIC=no
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y install rbenv rbinstall libyaml && \
+    dnf -y -q install rbenv rbinstall libyaml && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
-    rbinstall ${VERSION} --no-progress
+    rbinstall ${VERSION} --no-progress && \
+    if [ "${WITH_STATIC}" != "no" ] ; then rm -f /usr/local/rbenv/versions/${VERSION}/lib/libruby-static.a ; fi
 
 ## FINAL IMAGE  ################################################################
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8
 
-ARG VERSION
+ARG VERSION=3.2.0
+ARG WITH_STATIC=no
 
 LABEL org.opencontainers.image.title="rbinstall-ruby" \
       org.opencontainers.image.description="RBEnv with prebuilt Ruby" \
@@ -31,7 +34,8 @@ COPY --from=installer /usr/local/rbenv/versions/${VERSION} \
                       /usr/local/rbenv/versions/${VERSION}
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y install rbenv libyaml && \
+    dnf -y -q install rbenv libyaml && \
+    if [ "${WITH_GCC}" != "no" ] ; then dnf -y -q install gcc ; fi
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
     source /etc/profile.d/rbenv.sh && \
     rbenv global ${VERSION}

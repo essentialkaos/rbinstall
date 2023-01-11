@@ -74,4 +74,4 @@ jobs:
       - name: Check dockerfiles with Hadolint
         uses: essentialkaos/hadolint-action@v1
         with:
-          files: .docker/ruby.docker .docker/ruby-jemalloc.docker .docker/jruby.docker .docker/truffleruby.docker
+          files: .docker/ruby.docker .docker/ruby-jemalloc.docker .docker/ruby-railsexpress.docker .docker/jruby.docker
