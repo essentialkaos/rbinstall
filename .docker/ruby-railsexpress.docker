@@ -6,20 +6,20 @@ ARG REGISTRY="docker.io"
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
 
-ARG VERSION=3.2.0
+ARG RUBY_VERSION=3.2.0
 ARG WITH_STATIC=no
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install rbenv rbinstall libyaml && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
-    rbinstall ${VERSION}-railsexpress --no-progress && \
-    if [ "${WITH_STATIC}" != "no" ] ; then rm -f /usr/local/rbenv/versions/${VERSION}/lib/libruby-static.a ; fi
+    rbinstall ${RUBY_VERSION}-railsexpress --no-progress && \
+    if [ "${WITH_STATIC}" != "no" ] ; then rm -f /usr/local/rbenv/versions/${RUBY_VERSION}/lib/libruby-static.a ; fi
 
 ## FINAL IMAGE  ################################################################
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8
 
-ARG VERSION=3.2.0
+ARG RUBY_VERSION=3.2.0
 ARG WITH_GCC=no
 
 LABEL org.opencontainers.image.title="rbinstall-ruby" \
@@ -30,15 +30,15 @@ LABEL org.opencontainers.image.title="rbinstall-ruby" \
       org.opencontainers.image.url="https://kaos.sh/rbinstall" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rbinstall"
 
-COPY --from=installer /usr/local/rbenv/versions/${VERSION}-railsexpress \
-                      /usr/local/rbenv/versions/${VERSION}-railsexpress
+COPY --from=installer /usr/local/rbenv/versions/${RUBY_VERSION}-railsexpress \
+                      /usr/local/rbenv/versions/${RUBY_VERSION}-railsexpress
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install rbenv libyaml && \
     if [ "${WITH_GCC}" != "no" ] ; then dnf -y -q install gcc ; fi
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
     source /etc/profile.d/rbenv.sh && \
-    rbenv global ${VERSION}-railsexpress
+    rbenv global ${RUBY_VERSION}-railsexpress
 
 ENV PATH /usr/local/rbenv/shims:$PATH
 
