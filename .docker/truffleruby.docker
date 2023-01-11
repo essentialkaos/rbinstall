@@ -8,7 +8,6 @@ FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
 
 ARG VERSION=22.3.0
 
-# hadolint ignore=DL3031,DL3041
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y install rbenv rbinstall && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
@@ -31,7 +30,6 @@ LABEL org.opencontainers.image.title="rbinstall-ruby" \
 COPY --from=installer /usr/local/rbenv/versions/truffleruby-${VERSION} \
                       /usr/local/rbenv/versions/truffleruby-${VERSION}
 
-# hadolint ignore=DL3031,DL3041
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y install rbenv && \
     dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
