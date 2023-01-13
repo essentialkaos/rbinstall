@@ -31,6 +31,7 @@ import (
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/passwd"
+	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/progress"
 	"github.com/essentialkaos/ek/v12/req"
 	"github.com/essentialkaos/ek/v12/signal"
@@ -401,7 +402,7 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
+	resp, err := req.Request{URL: path.Join(knf.GetS(STORAGE_URL), INDEX_NAME)}.Get()
 
 	if err != nil {
 		printErrorAndExit("Can't fetch repository index: %v", err)
@@ -664,7 +665,7 @@ func installCommand(rubyVersion string) {
 			printErrorAndExit("Can't create directory for unpacking data: %v", err)
 		}
 	} else {
-		os.Remove(getUnpackDirPath() + "/" + info.Name)
+		os.Remove(path.Join(getUnpackDirPath(), info.Name))
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////// //
@@ -737,7 +738,7 @@ func installCommand(rubyVersion string) {
 		}
 	}
 
-	err = os.Rename(getUnpackDirPath()+"/"+info.Name, getVersionPath(info.Name))
+	err = os.Rename(path.Join(getUnpackDirPath(), info.Name), getVersionPath(info.Name))
 
 	if err != nil {
 		printErrorAndExit("Can't move unpacked data to rbenv directory: %v", err)
@@ -873,8 +874,8 @@ func unistallTaskHandler(versionName string) error {
 	var err error
 
 	// Remove symlink
-	if fsutil.IsExist(versionsDir + "/" + cleanVersionName) {
-		err = os.Remove(versionsDir + "/" + cleanVersionName)
+	if fsutil.IsExist(path.Join(versionsDir, cleanVersionName)) {
+		err = os.Remove(path.Join(versionsDir, cleanVersionName))
 
 		if err != nil {
 			return err
@@ -882,8 +883,8 @@ func unistallTaskHandler(versionName string) error {
 	}
 
 	// Remove directory with files
-	if fsutil.IsExist(versionsDir + "/" + versionName) {
-		err = os.RemoveAll(versionsDir + "/" + versionName)
+	if fsutil.IsExist(path.Join(versionsDir, versionName)) {
+		err = os.RemoveAll(path.Join(versionsDir, versionName))
 
 		if err != nil {
 			return err
@@ -908,7 +909,7 @@ func checkHashTaskHandler(filePath, fileHash string) error {
 func checkBinaryTaskHandler(args ...string) error {
 	version, unpackDir := args[0], args[1]
 
-	binary := unpackDir + "/" + version + "/bin/ruby"
+	binary := path.Join(unpackDir, version, "bin/ruby")
 
 	return exec.Command(binary, "--version").Start()
 }
@@ -1131,14 +1132,15 @@ func updateRubygems(rubyVersion, gemVersion string) error {
 
 // downloadFile download file from remote host
 func downloadFile(info *index.VersionInfo) (string, error) {
-	url := knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File
+	url := path.Join(knf.GetS(STORAGE_URL), info.Path, info.File)
 	tmpDir, err := temp.MkDir()
 
 	if err != nil {
 		return "", err
 	}
 
-	fd, err := os.OpenFile(tmpDir+"/"+info.File, os.O_CREATE|os.O_WRONLY, 0644)
+	output := path.Join(tmpDir, info.File)
+	fd, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		return "", err
@@ -1167,7 +1169,7 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 		pb.Finish()
 	}
 
-	return tmpDir + "/" + info.File, err
+	return output, err
 }
 
 // unpackFile unpacks archived Ruby version
@@ -1358,7 +1360,8 @@ func getInstalledGemVersion(rubyVersion string, gemName string, since time.Time)
 		}
 
 		if gem[0:gemNameSize+1] == gemName+"-" {
-			modTime, _ := fsutil.GetMTime(gemsDir + "/" + gem)
+			gemFile := path.Join(gemsDir, gem)
+			modTime, _ := fsutil.GetMTime(gemFile)
 
 			if modTime.Unix() > runDate.Unix() {
 				return gem[gemNameSize+1:]
@@ -1489,12 +1492,12 @@ func getVersionGemDirPath(rubyVersion string) string {
 		return ""
 	}
 
-	return gemsPath + "/" + gemsDirList[0] + "/gems"
+	return path.Join(gemsPath, gemsDirList[0], "gems")
 }
 
 // getVersionPath return full path to directory for given ruby version
 func getVersionPath(rubyVersion string) string {
-	return getRBEnvVersionsPath() + "/" + rubyVersion
+	return path.Join(getRBEnvVersionsPath(), rubyVersion)
 }
 
 // getRBEnvVersionsPath return path to rbenv directory with all versions
