@@ -24,9 +24,9 @@ import (
 	"github.com/essentialkaos/ek/v12/jsonutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/path"
+	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/progress"
 	"github.com/essentialkaos/ek/v12/req"
-	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
@@ -153,8 +153,6 @@ func configureUI() {
 			fmtc.DisableColors = false
 		}
 	}
-
-	fmtutil.SeparatorSize = 120
 
 	terminal.Prompt = "› "
 	terminal.TitleColorTag = "{s}"
@@ -314,19 +312,22 @@ func downloadRepositoryData(i *index.Index, url, dir string) {
 	pbs.IsSize = false
 	pbs.ShowSpeed = false
 	pbs.ShowRemaining = false
+	pbs.ShowName = false
 	pbs.NameColorTag = "{*}"
 	pbs.BarFgColorTag = colorTagApp
 	pbs.PercentColorTag = ""
 	pbs.RemainingColorTag = "{s}"
-	pbs.Width = 120
-	pbs.NameSize = 24
 
 	pb.UpdateSettings(pbs)
 	pb.Start()
 
-	for _, item := range items {
-		pb.SetName(strutil.Exclude(item.File, ".tzst"))
+	fmtc.Printf(
+		"Downloading %s %s from remote repository…\n",
+		fmtutil.PrettyNum(len(items)),
+		pluralize.Pluralize(len(items), "file", "files"),
+	)
 
+	for _, item := range items {
 		fileDir := path.Join(dir, item.OS, item.Arch)
 		filePath := path.Join(dir, item.OS, item.Arch, item.File)
 
