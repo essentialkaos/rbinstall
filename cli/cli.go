@@ -402,7 +402,7 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: path.Join(knf.GetS(STORAGE_URL), INDEX_NAME)}.Get()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
 
 	if err != nil {
 		printErrorAndExit("Can't fetch repository index: %v", err)
@@ -1132,7 +1132,6 @@ func updateRubygems(rubyVersion, gemVersion string) error {
 
 // downloadFile download file from remote host
 func downloadFile(info *index.VersionInfo) (string, error) {
-	url := path.Join(knf.GetS(STORAGE_URL), info.Path, info.File)
 	tmpDir, err := temp.MkDir()
 
 	if err != nil {
@@ -1148,7 +1147,7 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 
 	defer fd.Close()
 
-	resp, err := req.Request{URL: url}.Do()
+	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File}.Do()
 
 	if err != nil {
 		return "", err

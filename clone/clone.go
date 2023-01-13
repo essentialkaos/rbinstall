@@ -284,7 +284,7 @@ func printRepositoryInfo(i *index.Index) {
 
 // fetchIndex downloads remote repository index
 func fetchIndex(url string) (*index.Index, error) {
-	resp, err := req.Request{URL: path.Join(url, INDEX_NAME)}.Get()
+	resp, err := req.Request{URL: url + "/" + INDEX_NAME}.Get()
 
 	if err != nil {
 		return nil, fmtc.Errorf("Can't fetch repository index: %v", err)
@@ -375,7 +375,7 @@ func getItems(repoIndex *index.Index, url string) []FileInfo {
 				for _, version := range repoIndex.Data[os][arch][category] {
 					items = append(items, FileInfo{
 						File: version.File,
-						URL:  path.Join(url, version.Path, version.File),
+						URL:  url + "/" + version.Path + "/" + version.File,
 						OS:   os,
 						Arch: arch,
 						Size: version.Size,
@@ -385,7 +385,7 @@ func getItems(repoIndex *index.Index, url string) []FileInfo {
 						for _, subVersion := range version.Variations {
 							items = append(items, FileInfo{
 								File: subVersion.File,
-								URL:  path.Join(url, subVersion.Path, subVersion.File),
+								URL:  url + "/" + subVersion.Path + "/" + subVersion.File,
 								OS:   os,
 								Arch: arch,
 								Size: subVersion.Size,
