@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v12/sortutil"
+	"github.com/essentialkaos/ek/v12/uuid"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -28,29 +29,39 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Index is rbinstall index
 type Index struct {
-	Meta    *Metadata           `json:"meta"`
-	Data    map[string]DistData `json:"data"`
-	Aliases map[string]string   `json:"aliases,omitempty"`
+	UUID    string            `json:"uuid"`
+	Meta    *Metadata         `json:"meta"`
+	Data    Data              `json:"data"`
+	Aliases map[string]string `json:"aliases,omitempty"`
 }
 
+// Metadata contains basic meta about data
 type Metadata struct {
 	Created int64 `json:"created"` // Index creation timestamp
 	Size    int64 `json:"size"`    // Total data size
 	Items   int   `json:"items"`   // Total number of items in repo
 }
 
+// Data contains all dists data
+type Data map[string]DistData
+
+// DistData contains particular dist data
 type DistData map[string]ArchData
 
+// ArchData contains particular arch data
 type ArchData map[string]CategoryData
 
+// CategoryData contains Ruby versions in particular category
 type CategoryData []*VersionInfo
 
+// VersionInfo contains info about particular version
 type VersionInfo struct {
-	Variations []*VersionInfo `json:"variations,omitempty"` // Info about version variations (railsexpress version for example)
-	Name       string         `json:"name"`                 // Version name
+	Variations []*VersionInfo `json:"variations,omitempty"` // Info about version variations (railsexpress/jemalloc)
+	Name       string         `json:"name"`                 // Base version name
 	File       string         `json:"file"`                 // Full filename (with extension)
-	Path       string         `json:"path"`                 // Relative path to 7z file
+	Path       string         `json:"path"`                 // Relative path to file
 	Hash       string         `json:"hash"`                 // SHA-256 hash
 	Size       int64          `json:"size"`                 // Size in bytes
 	Added      int64          `json:"added"`                // Timestamp with date when version was added to repo
@@ -75,6 +86,7 @@ func (s versionInfoSlice) Less(i, j int) bool {
 // NewIndex return pointer to new index struct
 func NewIndex() *Index {
 	return &Index{
+		UUID: uuid.GenUUID(),
 		Meta: &Metadata{},
 		Data: make(map[string]DistData),
 	}
@@ -155,9 +167,8 @@ func (i *Index) Encode() ([]byte, error) {
 		return nil, errors.New("Index is nil")
 	}
 
-	// Prepare index for encoding
-	i.Sort()
-	i.UpdateMeta()
+	i.Sort()       // Sort data
+	i.UpdateMeta() // Calculate num of items and total size
 
 	data, err := json.MarshalIndent(i, "", "  ")
 
@@ -168,11 +179,13 @@ func (i *Index) Encode() ([]byte, error) {
 	return data, nil
 }
 
-// UpdateMeta updates index metadata
+// UpdateMeta updates index metadata (num of items and total size)
 func (i *Index) UpdateMeta() {
 	if i == nil {
 		return
 	}
+
+	i.Meta.Items, i.Meta.Size = 0, 0
 
 	for _, dist := range i.Data {
 		for _, arch := range dist {
@@ -252,6 +265,63 @@ func (i *Index) Find(dist, arch, name string) (*VersionInfo, string) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Keys returns sorted slice with keys
+func (d Data) Keys() []string {
+	if len(d) == 0 {
+		return nil
+	}
+
+	var keys []string
+
+	for key := range d {
+		keys = append(keys, key)
+	}
+
+	sortutil.StringsNatural(keys)
+
+	return keys
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// Keys returns sorted slice with keys
+func (d DistData) Keys() []string {
+	if len(d) == 0 {
+		return nil
+	}
+
+	var keys []string
+
+	for key := range d {
+		keys = append(keys, key)
+	}
+
+	sortutil.StringsNatural(keys)
+
+	return keys
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// Keys returns sorted slice with keys
+func (d ArchData) Keys() []string {
+	if len(d) == 0 {
+		return nil
+	}
+
+	var keys []string
+
+	for key := range d {
+		keys = append(keys, key)
+	}
+
+	sortutil.StringsNatural(keys)
+
+	return keys
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // Total returns total number of rubies available for installation
 func (d CategoryData) Total() int {
 	if len(d) == 0 {
@@ -269,6 +339,7 @@ func (d CategoryData) Total() int {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// isSameName returns true if is the same version name but with patch level info
 func isSameName(name1, name2 string) bool {
 	if name1 == name2 {
 		return true

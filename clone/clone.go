@@ -8,6 +8,7 @@ package clone
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -23,7 +24,9 @@ import (
 	"github.com/essentialkaos/ek/v12/jsonutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/path"
+	"github.com/essentialkaos/ek/v12/progress"
 	"github.com/essentialkaos/ek/v12/req"
+	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
@@ -47,6 +50,7 @@ const (
 
 // Options
 const (
+	OPT_YES      = "y:yes"
 	OPT_NO_COLOR = "nc:no-color"
 	OPT_HELP     = "h:help"
 	OPT_VER      = "v:version"
@@ -63,7 +67,7 @@ const INDEX_NAME = "index3.json"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// FileInfo contains info about file with data
+// FileInfo contains info about file with Ruby data
 type FileInfo struct {
 	File string
 	URL  string
@@ -75,6 +79,7 @@ type FileInfo struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var optMap = options.Map{
+	OPT_YES:      {Type: options.BOOL},
 	OPT_NO_COLOR: {Type: options.BOOL},
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
@@ -120,13 +125,17 @@ func Init(gitRev string, gomod []byte) {
 		return
 	}
 
-	req.SetUserAgent("RBI-Cloner", VER)
+	req.SetUserAgent("RBInstall-Clone", VER)
 
 	url := args.Get(0).String()
 	dir := args.Get(1).String()
 
+	fmtc.NewLine()
+
 	checkArguments(url, dir)
 	cloneRepository(url, dir)
+
+	fmtc.NewLine()
 }
 
 // configureUI configures user interface
@@ -144,6 +153,11 @@ func configureUI() {
 			fmtc.DisableColors = false
 		}
 	}
+
+	fmtutil.SeparatorSize = 120
+
+	terminal.Prompt = "› "
+	terminal.TitleColorTag = "{s}"
 
 	if options.GetB(OPT_NO_COLOR) {
 		fmtc.DisableColors = true
@@ -166,78 +180,111 @@ func configureUI() {
 // checkArguments checks command line arguments
 func checkArguments(url, dir string) {
 	if !httputil.IsURL(url) {
-		printErrorAndExit("\nUrl %s doesn't looks like valid url\n", url)
+		printErrorAndExit("Url %s doesn't look like valid url", url)
 	}
 
 	if !fsutil.IsExist(dir) {
-		printErrorAndExit("\nDirectory %s does not exist\n", dir)
+		printErrorAndExit("Directory %s does not exist", dir)
 	}
 
 	if !fsutil.IsDir(dir) {
-		printErrorAndExit("\nTarget %s is not a directory\n", dir)
+		printErrorAndExit("Target %s is not a directory", dir)
 	}
 
 	if !fsutil.IsReadable(dir) {
-		printErrorAndExit("\nDirectory %s is not readable\n", dir)
+		printErrorAndExit("Directory %s is not readable", dir)
 	}
 
 	if !fsutil.IsExecutable(dir) {
-		printErrorAndExit("\nDirectory %s is not exectable\n", dir)
-	}
-
-	if !fsutil.IsEmptyDir(dir) {
-		printWarn("\nDirectory %s is not empty", dir)
+		printErrorAndExit("Directory %s is not exectable", dir)
 	}
 }
 
 // cloneRepository start repository clone process
 func cloneRepository(url, dir string) {
-	repoIndex, err := fetchIndex(url)
+	fmtc.Printf("Fetching index from {*}%s{!}…\n", url)
+
+	i, err := fetchIndex(url)
 
 	if err != nil {
 		printErrorAndExit(err.Error())
 	}
 
-	if repoIndex.Meta.Items == 0 {
+	if i.Meta.Items == 0 {
 		printErrorAndExit("Repository is empty")
 	}
 
-	printRepositoryInfo(repoIndex)
+	printRepositoryInfo(i)
 
-	ok, err := terminal.ReadAnswer("Clone this repository?", "y")
+	uuid := getCurrentIndexUUID(dir)
 
-	if !ok || err != nil {
+	if uuid == i.UUID {
+		fmtc.Println("{g}Looks like you already have the same set of data{!}")
+		return
+	}
+
+	if !options.GetB(OPT_YES) {
+		ok, err := terminal.ReadAnswer("Clone this repository?", "N")
 		fmtc.NewLine()
-		os.Exit(0)
+
+		if !ok || err != nil {
+			os.Exit(0)
+		}
+	}
+
+	downloadRepositoryData(i, url, dir)
+	saveIndex(i, dir)
+
+	fmtc.NewLine()
+	fmtc.Printf("{g}Repository successfully cloned to {g*}%s{!}\n", dir)
+}
+
+// printRepositoryInfo prints basic info about repository data
+func printRepositoryInfo(i *index.Index) {
+	fmtutil.Separator(false, "REPOSITORY INFO")
+
+	updated := timeutil.Format(time.Unix(i.Meta.Created, 0), "%Y/%m/%d %H:%M:%S")
+
+	fmtc.Printf("     {*}UUID{!}: %s\n", i.UUID)
+	fmtc.Printf("  {*}Updated{!}: %s\n\n", updated)
+
+	for _, distName := range i.Data.Keys() {
+		size, items := int64(0), 0
+		for archName, arch := range i.Data[distName] {
+			for _, category := range arch {
+				for _, version := range category {
+					size += version.Size
+					items++
+
+					if len(version.Variations) != 0 {
+						for _, variation := range version.Variations {
+							items++
+							size += variation.Size
+						}
+					}
+				}
+			}
+
+			fmtc.Printf(
+				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s\n", distName, archName,
+				fmtutil.PrettyNum(items), fmtutil.PrettySize(size, " "),
+			)
+		}
 	}
 
 	fmtc.NewLine()
-
-	downloadRepositoryData(repoIndex, url, dir)
-
-	fmtutil.Separator(false)
-
-	saveIndex(repoIndex, dir)
-
-	fmtc.Printf("\n{g}Repository successfully cloned to {g*}%s{!}\n\n", dir)
-}
-
-// printRepositoryInfo print basic info about repository data
-func printRepositoryInfo(repoIndex *index.Index) {
-	fmtutil.Separator(false, "REPOSITORY INFO")
-
-	updatedDate := time.Unix(repoIndex.Meta.Created, 0)
-
-	fmtc.Printf("  Updated: %s\n", timeutil.Format(updatedDate, "%Y/%m/%d %H:%M:%S"))
-	fmtc.Printf("  Items: %s\n", fmtutil.PrettyNum(repoIndex.Meta.Items))
-	fmtc.Printf("  Total Size: %s\n", fmtutil.PrettySize(repoIndex.Meta.Size))
+	fmtc.Printf(
+		"  {*}Total:{!} %s {s-}|{!} %s\n",
+		fmtutil.PrettyNum(i.Meta.Items),
+		fmtutil.PrettySize(i.Meta.Size, " "),
+	)
 
 	fmtutil.Separator(false)
 }
 
-// fetchIndex download remote repository index
+// fetchIndex downloads remote repository index
 func fetchIndex(url string) (*index.Index, error) {
-	resp, err := req.Request{URL: url + "/index.json"}.Get()
+	resp, err := req.Request{URL: path.Join(url, INDEX_NAME)}.Get()
 
 	if err != nil {
 		return nil, fmtc.Errorf("Can't fetch repository index: %v", err)
@@ -247,8 +294,7 @@ func fetchIndex(url string) (*index.Index, error) {
 		return nil, fmtc.Errorf("Can't fetch repository index: server return status code %d", resp.StatusCode)
 	}
 
-	repoIndex := index.NewIndex()
-
+	repoIndex := &index.Index{}
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
@@ -258,13 +304,29 @@ func fetchIndex(url string) (*index.Index, error) {
 	return repoIndex, nil
 }
 
-// downloadRepositoryData download all files from repository
-func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
-	items := getItems(repoIndex, url)
+// downloadRepositoryData downloads all files from repository
+func downloadRepositoryData(i *index.Index, url, dir string) {
+	items := getItems(i, url)
 
-	fmtc.Printf("{s-}Downloading %d items…{!}\n\n", len(items))
+	pb := progress.New(int64(len(items)), "Starting…")
+
+	pbs := progress.DefaultSettings
+	pbs.IsSize = false
+	pbs.ShowSpeed = false
+	pbs.ShowRemaining = false
+	pbs.NameColorTag = "{*}"
+	pbs.BarFgColorTag = colorTagApp
+	pbs.PercentColorTag = ""
+	pbs.RemainingColorTag = "{s}"
+	pbs.Width = 120
+	pbs.NameSize = 24
+
+	pb.UpdateSettings(pbs)
+	pb.Start()
 
 	for _, item := range items {
+		pb.SetName(strutil.Exclude(item.File, ".tzst"))
+
 		fileDir := path.Join(dir, item.OS, item.Arch)
 		filePath := path.Join(dir, item.OS, item.Arch, item.File)
 
@@ -272,6 +334,8 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 			err := os.MkdirAll(fileDir, 0755)
 
 			if err != nil {
+				pb.Finish()
+				fmtc.NewLine()
 				printErrorAndExit("Can't create directory %s: %v", fileDir, err)
 			}
 		}
@@ -280,46 +344,40 @@ func downloadRepositoryData(repoIndex *index.Index, url, dir string) {
 			fileSize := fsutil.GetSize(filePath)
 
 			if fileSize == item.Size {
-				fmtc.Printf(
-					"{s-}  %-28s → %s/%s{!}\n",
-					item.File, item.OS, item.Arch,
-				)
-
+				pb.Add(1)
 				continue
-			} else {
-				os.Remove(filePath)
 			}
 		}
 
-		fmtc.Printf(
-			"{g}↓ %-28s{!} → {c}%s/%s{!} ",
-			item.File, item.OS, item.Arch,
-		)
-
-		dlTime, err := downloadFile(item.URL, filePath)
+		err := downloadFile(item.URL, filePath)
 
 		if err != nil {
-			fmtc.Println("{r}ERROR{!}\n")
-			printErrorAndExit("%v\n", err)
+			pb.Finish()
+			fmtc.NewLine()
+			printErrorAndExit("%v", err)
 		}
 
-		fmtc.Printf("{g}DONE{!} {s-}(%s){!}\n", timeutil.PrettyDuration(dlTime))
+		pb.Add(1)
 	}
+
+	pb.Finish()
+
+	fmtc.Printf("\n{g}Repository successfully cloned into %s{!}\n")
 }
 
-// getItems return slice with info about items in repository
+// getItems returns slice with info about items in repository
 func getItems(repoIndex *index.Index, url string) []FileInfo {
 	var items []FileInfo
 
-	for osName, os := range repoIndex.Data {
-		for archName, arch := range os {
-			for _, category := range arch {
-				for _, version := range category {
+	for _, os := range repoIndex.Data.Keys() {
+		for _, arch := range repoIndex.Data[os].Keys() {
+			for _, category := range repoIndex.Data[os][arch].Keys() {
+				for _, version := range repoIndex.Data[os][arch][category] {
 					items = append(items, FileInfo{
 						File: version.File,
-						URL:  url + "/" + version.Path + "/" + version.File,
-						OS:   osName,
-						Arch: archName,
+						URL:  path.Join(url, version.Path, version.File),
+						OS:   os,
+						Arch: arch,
 						Size: version.Size,
 					})
 
@@ -327,9 +385,9 @@ func getItems(repoIndex *index.Index, url string) []FileInfo {
 						for _, subVersion := range version.Variations {
 							items = append(items, FileInfo{
 								File: subVersion.File,
-								URL:  url + "/" + subVersion.Path + "/" + subVersion.File,
-								OS:   osName,
-								Arch: archName,
+								URL:  path.Join(url, subVersion.Path, subVersion.File),
+								OS:   os,
+								Arch: arch,
 								Size: subVersion.Size,
 							})
 						}
@@ -342,10 +400,8 @@ func getItems(repoIndex *index.Index, url string) []FileInfo {
 	return items
 }
 
-// downloadFile download and save remote file
-func downloadFile(url, output string) (time.Duration, error) {
-	start := time.Now()
-
+// downloadFile downloads and saves remote file
+func downloadFile(url, output string) error {
 	if fsutil.IsExist(output) {
 		os.Remove(output)
 	}
@@ -353,7 +409,7 @@ func downloadFile(url, output string) (time.Duration, error) {
 	fd, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
-		return 0, fmtc.Errorf("Can't create output file: %v", err)
+		return fmtc.Errorf("Can't create file: %v", err)
 	}
 
 	defer fd.Close()
@@ -361,23 +417,26 @@ func downloadFile(url, output string) (time.Duration, error) {
 	resp, err := req.Request{URL: url}.Get()
 
 	if err != nil {
-		return time.Since(start), fmtc.Errorf("Can't download file: %v", err)
+		return fmtc.Errorf("Can't download file: %v", err)
 	}
 
 	if resp.StatusCode != 200 {
-		return time.Since(start), fmtc.Errorf("Can't download file: server return status code %d", resp.StatusCode)
+		return fmtc.Errorf("Can't download file: server return status code %d", resp.StatusCode)
 	}
 
-	_, err = io.Copy(fd, resp.Body)
+	w := bufio.NewWriter(fd)
+	_, err = io.Copy(w, resp.Body)
+
+	w.Flush()
 
 	if err != nil {
-		return time.Since(start), fmtc.Errorf("Can't save file: %v", err)
+		return fmtc.Errorf("Can't write file: %v", err)
 	}
 
-	return time.Since(start), nil
+	return nil
 }
 
-// saveIndex encode index to json format and save to file
+// saveIndex encodes index to JSON format and saves it into the file
 func saveIndex(repoIndex *index.Index, dir string) {
 	indexPath := path.Join(dir, INDEX_NAME)
 
@@ -393,19 +452,37 @@ func saveIndex(repoIndex *index.Index, dir string) {
 	fmtc.Println("{g}DONE{!}")
 }
 
+// getCurrentIndexUUID returns current index UUID (if exist)
+func getCurrentIndexUUID(dir string) string {
+	indexFile := path.Join(dir, INDEX_NAME)
+
+	if !fsutil.IsExist(indexFile) {
+		return ""
+	}
+
+	i := &index.Index{}
+
+	if jsonutil.Read(indexFile, i) != nil {
+		return ""
+	}
+
+	return i.UUID
+}
+
 // printError prints error message to console
 func printError(f string, a ...interface{}) {
-	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
 }
 
 // printError prints warning message to console
 func printWarn(f string, a ...interface{}) {
-	fmtc.Fprintf(os.Stderr, "{y}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{y}▲ "+f+"{!}\n", a...)
 }
 
 // printErrorAndExit print error message and exit with non-zero exit code
 func printErrorAndExit(f string, a ...interface{}) {
-	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
+	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
+	fmtc.NewLine()
 	os.Exit(1)
 }
 
@@ -462,12 +539,13 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = "{*}" + colorTagApp
 
+	info.AddOption(OPT_YES, `Answer "yes" to all questions`)
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
 
 	info.AddExample(
-		"https://rbinstall.kaos.io /path/to/clone",
+		"https://rbinstall.kaos.st /path/to/clone",
 		"Clone EK repository to /path/to/clone",
 	)
 

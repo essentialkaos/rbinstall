@@ -379,11 +379,11 @@ func printIndexStats(i *index.Index) {
 
 	i.UpdateMeta()
 
-	for distName, dist := range i.Data {
+	for _, distName := range i.Data.Keys() {
 		size := int64(0)
 		items := 0
 
-		for archName, arch := range dist {
+		for archName, arch := range i.Data[distName] {
 			for _, category := range arch {
 				for _, version := range category {
 					size += version.Size
