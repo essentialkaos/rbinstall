@@ -1,0 +1,67 @@
+# Configuration file for rbinstall
+
+[main]
+
+  # Path to writable temorary directory
+  tmp-dir: /tmp
+
+[storage]
+
+  # URL of rbinstall storage
+  url: https://rbinstall.kaos.st
+
+[proxy]
+
+  # Enable HTTP proxy here
+  enabled: false
+
+  # HTTP proxy URL
+  url: 
+
+[rbenv]
+
+  # Path to rbenv main directory
+  dir: /usr/local/rbenv
+
+  # Allow version overwriting (reinstall)
+  allow-overwrite: true
+
+  # Allow uninstalling
+  allow-uninstall: true
+
+  # Make alias for versions with -p0 suffix
+  make-alias: true
+
+[gems]
+
+  # Update rubygems gem
+  rubygems-update: true
+
+  # Allow gems update
+  allow-update: true
+
+  # Add --no-document to install/update command
+  no-document: true
+
+  # Source for gem install without scheme
+  source: gems.kaos.st
+
+  # If source support https this property must be set to true
+  source-secure: true
+
+  # List of gems to install on each Ruby version
+  install: bundler=1 bundler
+
+[log]
+
+  # Log file dir
+  dir: /var/log/rbinstall
+
+  # Path to log file
+  file: {log:dir}/rbinstall.log
+
+  # Log permissions
+  perms: 644
+
+  # Default log level (debug/info/warn/error/crit)
+  level: info
