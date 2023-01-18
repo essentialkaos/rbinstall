@@ -4,12 +4,14 @@ go 1.17
 
 require (
 	github.com/essentialkaos/depsy v1.0.0
-	github.com/essentialkaos/ek/v12 v12.53.0
-	github.com/essentialkaos/zip7 v1.0.4
+	github.com/essentialkaos/ek/v12 v12.57.1
+	github.com/essentialkaos/npck v1.2.0
 )
 
 require (
+	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/essentialkaos/go-linenoise/v3 v3.4.0 // indirect
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	github.com/klauspost/compress v1.15.14 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 )

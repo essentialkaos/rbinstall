@@ -1,0 +1,45 @@
+## REGISTRY CONFIGURATION ######################################################
+
+ARG REGISTRY="docker.io"
+
+## BUILDER #####################################################################
+
+FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
+
+ARG RUBY_VERSION=3.2.0
+ARG WITH_STATIC=no
+
+RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y -q install rbenv rbinstall libyaml jemalloc && \
+    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    rbinstall ${RUBY_VERSION}-jemalloc --no-progress && \
+    if [ "${WITH_STATIC}" != "no" ] ; then rm -f /usr/local/rbenv/versions/${RUBY_VERSION}/lib/libruby-static.a ; fi
+
+## FINAL IMAGE  ################################################################
+
+FROM ${REGISTRY}/essentialkaos/oraclelinux:8
+
+ARG RUBY_VERSION=3.2.0
+ARG WITH_GCC=no
+
+LABEL org.opencontainers.image.title="rbinstall-ruby" \
+      org.opencontainers.image.description="RBEnv with prebuilt Ruby" \
+      org.opencontainers.image.vendor="ESSENTIAL KAOS" \
+      org.opencontainers.image.authors="Anton Novojilov" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.url="https://kaos.sh/rbinstall" \
+      org.opencontainers.image.source="https://github.com/essentialkaos/rbinstall"
+
+COPY --from=installer /usr/local/rbenv/versions/${RUBY_VERSION}-jemalloc \
+                      /usr/local/rbenv/versions/${RUBY_VERSION}-jemalloc
+
+RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y -q install rbenv libyaml jemalloc && \
+    if [ "${WITH_GCC}" != "no" ] ; then dnf -y -q install gcc ; fi && \
+    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    source /etc/profile.d/rbenv.sh && \
+    rbenv global ${RUBY_VERSION}-jemalloc
+
+ENV PATH /usr/local/rbenv/shims:$PATH
+
+CMD [ "irb" ]

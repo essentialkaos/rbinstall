@@ -2,7 +2,7 @@ package support
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2022 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -161,7 +161,6 @@ func collectPackagesInfo() []Pkg {
 		getPackageInfo("rbinstall"),
 		getPackageInfo("rbinstall-gen"),
 		getPackageInfo("rbinstall-clone"),
-		getPackageInfo("p7zip"),
 		getPackageInfo("rbenv"),
 		getPackageInfo("jemalloc"),
 		getPackageInfo("zlib"),

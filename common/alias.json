@@ -1,3 +1,5 @@
 {
-  "ol-7": "centos-7"
+  "ol-7": "rhel-7",
+  "ol-8": "rhel-8",
+  "ol-9": "rhel-9"
 }

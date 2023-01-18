@@ -16,34 +16,15 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rbinstall-200.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rbinstall-300.gif)](#usage-demo)
 
 ### Installation
 
 #### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
 
 ```bash
-sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rbinstall
-```
-
-#### Using `install.sh`
-We provide simple bash script `install.sh` for installing the application from the sources.
-
-```bash
-# install rbenv, golang and latest 7zip
-# set GOPATH
-
-git clone https://kaos.sh/rbinstall.git
-cd rbinstall
-
-sudo ./install.sh
-```
-
-If you have some issues with installing, try to use script in debug mode:
-
-```bash
-sudo ./install.sh --debug
 ```
 
 ### Usage
