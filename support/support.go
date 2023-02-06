@@ -105,7 +105,6 @@ func showOSInfo() {
 		if osInfo == nil {
 			fmtutil.Separator(false, "SYSTEM INFO")
 			fmtc.Printf("  {*}%-16s{!} %s\n", "Name:", formatValue(systemInfo.OS))
-			fmtc.Printf("  {*}%-16s{!} %s\n", "Version:", formatValue(systemInfo.Version))
 		}
 	}
 
