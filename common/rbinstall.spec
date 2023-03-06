@@ -22,9 +22,9 @@ Source100:      checksum.sha512
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:       rbenv libyaml ca-certificates
+Requires:       rbenv libyaml ca-certificates zlib >= 1.2.11
 
-BuildRequires:  golang >= 1.18
+BuildRequires:  golang >= 1.19
 
 Provides:       %{name} = %{version}-%{release}
 

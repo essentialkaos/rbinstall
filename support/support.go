@@ -8,40 +8,47 @@ package support
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
-	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/hash"
 	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/system"
 
 	"github.com/essentialkaos/depsy"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Pkg contains simple package info
+// Pkg contains basic package info
 type Pkg struct {
 	Name    string
 	Version string
 }
+
+// Pkgs is slice with packages
+type Pkgs []Pkg
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // ShowSupportInfo prints verbose info about application, system, dependencies and
 // important environment
 func ShowSupportInfo(app, ver, gitRev string, gomod []byte) {
-	pkgs := collectPackagesInfo()
+	pkgs := collectEnvInfo()
+
+	fmtutil.SeparatorTitleColorTag = "{s-}"
+	fmtutil.SeparatorFullscreen = false
+	fmtutil.SeparatorColorTag = "{s-}"
+	fmtutil.SeparatorSize = 80
 
 	showApplicationInfo(app, ver, gitRev)
 	showOSInfo()
-	showEnvironmentInfo(pkgs)
+	showEnvInfo(pkgs)
 	showDepsInfo(gomod)
+
 	fmtutil.Separator(false)
 }
 
@@ -51,20 +58,20 @@ func ShowSupportInfo(app, ver, gitRev string, gomod []byte) {
 func showApplicationInfo(app, ver, gitRev string) {
 	fmtutil.Separator(false, "APPLICATION INFO")
 
-	fmtc.Printf("  {*}%-12s{!} %s\n", "Name:", app)
-	fmtc.Printf("  {*}%-12s{!} %s\n", "Version:", ver)
+	printInfo(7, "Name", app)
+	printInfo(7, "Version", ver)
 
-	fmtc.Printf(
-		"  {*}%-12s{!} %s {s}(%s/%s){!}\n", "Go:",
+	printInfo(7, "Go", fmtc.Sprintf(
+		"%s {s}(%s/%s){!}",
 		strings.TrimLeft(runtime.Version(), "go"),
 		runtime.GOOS, runtime.GOARCH,
-	)
+	))
 
 	if gitRev != "" {
 		if !fmtc.DisableColors && fmtc.IsTrueColorSupported() {
-			fmtc.Printf("  {*}%-12s{!} %s {#"+strutil.Head(gitRev, 6)+"}●{!}\n", "Git SHA:", gitRev)
+			printInfo(7, "Git SHA", gitRev+getHashColorBullet(gitRev))
 		} else {
-			fmtc.Printf("  {*}%-12s{!} %s\n", "Git SHA:", gitRev)
+			printInfo(7, "Git SHA", gitRev)
 		}
 	}
 
@@ -74,62 +81,10 @@ func showApplicationInfo(app, ver, gitRev string) {
 	if binSHA != "" {
 		binSHA = strutil.Head(binSHA, 7)
 		if !fmtc.DisableColors && fmtc.IsTrueColorSupported() {
-			fmtc.Printf("  {*}%-12s{!} %s {#"+strutil.Head(binSHA, 6)+"}●{!}\n", "Bin SHA:", binSHA)
+			printInfo(7, "Bin SHA", binSHA+getHashColorBullet(binSHA))
 		} else {
-			fmtc.Printf("  {*}%-12s{!} %s\n", "Bin SHA:", binSHA)
+			printInfo(7, "Bin SHA", binSHA)
 		}
-	}
-}
-
-// showOSInfo shows verbose information about system
-func showOSInfo() {
-	osInfo, err := system.GetOSInfo()
-
-	if err == nil {
-		fmtutil.Separator(false, "OS INFO")
-		fmtc.Printf("  {*}%-16s{!} %s\n", "Name:", formatValue(osInfo.Name))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "Pretty Name:", formatValue(osInfo.PrettyName))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "Version:", formatValue(osInfo.VersionID))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "ID:", formatValue(osInfo.ID))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "ID Like:", formatValue(osInfo.IDLike))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "Version ID:", formatValue(osInfo.VersionID))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "Version Code:", formatValue(osInfo.VersionCodename))
-		fmtc.Printf("  {*}%-16s{!} %s\n", "CPE:", formatValue(osInfo.CPEName))
-	}
-
-	systemInfo, err := system.GetSystemInfo()
-
-	if err != nil {
-		return
-	} else {
-		if osInfo == nil {
-			fmtutil.Separator(false, "SYSTEM INFO")
-			fmtc.Printf("  {*}%-16s{!} %s\n", "Name:", formatValue(systemInfo.OS))
-		}
-	}
-
-	fmtc.Printf("  {*}%-16s{!} %s\n", "Arch:", formatValue(systemInfo.Arch))
-	fmtc.Printf("  {*}%-16s{!} %s\n", "Kernel:", formatValue(systemInfo.Kernel))
-
-	containerEngine := "No"
-
-	switch {
-	case fsutil.IsExist("/.dockerenv"):
-		containerEngine = "Yes (Docker)"
-	case fsutil.IsExist("/run/.containerenv"):
-		containerEngine = "Yes (Podman)"
-	}
-
-	fmtc.NewLine()
-	fmtc.Printf("  {*}%-16s{!} %s\n", "Container:", containerEngine)
-}
-
-// showEnvironmentInfo shows info about environment
-func showEnvironmentInfo(pkgs []Pkg) {
-	fmtutil.Separator(false, "ENVIRONMENT")
-
-	for _, pkg := range pkgs {
-		fmtc.Printf("  {*}%-16s{!} %s\n", pkg.Name+":", formatValue(pkg.Version))
 	}
 }
 
@@ -152,37 +107,40 @@ func showDepsInfo(gomod []byte) {
 	}
 }
 
+// getHashColorBullet return bullet with color from hash
+func getHashColorBullet(v string) string {
+	if len(v) > 6 {
+		v = strutil.Head(v, 6)
+	}
+
+	return fmtc.Sprintf(" {#" + strutil.Head(v, 6) + "}● {!}")
+}
+
+// printInfo formats and prints info record
+func printInfo(size int, name, value string) {
+	name = name + ":"
+	size++
+
+	if value == "" {
+		fm := fmt.Sprintf("  {*}%%-%ds{!}  {s-}—{!}\n", size)
+		fmtc.Printf(fm, name)
+	} else {
+		fm := fmt.Sprintf("  {*}%%-%ds{!}  %%s\n", size)
+		fmtc.Printf(fm, name, value)
+	}
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// collectPackagesInfo collects info with packages versions
-func collectPackagesInfo() []Pkg {
-	return []Pkg{
-		getPackageInfo("rbinstall"),
-		getPackageInfo("rbinstall-gen"),
-		getPackageInfo("rbinstall-clone"),
-		getPackageInfo("rbenv"),
-		getPackageInfo("jemalloc"),
-		getPackageInfo("zlib"),
-	}
-}
+// getMaxSize returns max package name size
+func (p Pkgs) getMaxSize() int {
+	size := 0
 
-// getPackageVersion returns package name from rpm database
-func getPackageInfo(name string) Pkg {
-	cmd := exec.Command("rpm", "-q", name)
-	out, err := cmd.Output()
-
-	if err != nil || len(out) == 0 {
-		return Pkg{name, ""}
+	for _, pkg := range p {
+		if len(pkg.Name) > size {
+			size = len(pkg.Name)
+		}
 	}
 
-	return Pkg{name, strings.TrimRight(string(out), "\n\r")}
-}
-
-// formatValue formats value for output
-func formatValue(v string) string {
-	if v == "" {
-		return fmtc.Sprintf("{s}unknown{!}")
-	}
-
-	return v
+	return size
 }
