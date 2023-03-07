@@ -186,39 +186,34 @@ var useRawOutput = false
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Init(gitRev string, gomod []byte) {
-	var err error
-	var errs []error
-
 	runtime.GOMAXPROCS(2)
 
 	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
-		fmtc.NewLine()
-
-		for _, err = range errs {
+		for _, err := range errs {
 			terminal.PrintErrorMessage(err.Error())
 		}
 
-		exit(1)
+		os.Exit(1)
 	}
 
 	configureUI()
 
 	switch {
 	case options.Has(OPT_COMPLETION):
-		exit(genCompletion())
+		os.Exit(genCompletion())
 	case options.Has(OPT_GENERATE_MAN):
-		exit(genMan())
+		os.Exit(genMan())
 	case options.GetB(OPT_VER):
 		showAbout(gitRev)
-		return
+		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
 		showVerboseAbout(gitRev, gomod)
-		return
+		os.Exit(0)
 	case options.GetB(OPT_HELP):
 		showUsage()
-		return
+		os.Exit(0)
 	}
 
 	if !useRawOutput {
@@ -1727,7 +1722,7 @@ func showAbout(gitRev string) {
 
 // showVerboseAbout prints verbose info about app
 func showVerboseAbout(gitRev string, gomod []byte) {
-	support.ShowSupportInfo(APP, VER, gitRev, gomod)
+	support.Print(APP, VER, gitRev, gomod)
 }
 
 // genCompletion generates completion for different shells

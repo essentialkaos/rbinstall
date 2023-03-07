@@ -135,13 +135,13 @@ func Init(gitRev string, gomod []byte) {
 		os.Exit(genMan())
 	case options.GetB(OPT_VER):
 		showAbout(gitRev)
-		return
+		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
 		showVerboseAbout(gitRev, gomod)
-		return
+		os.Exit(0)
 	case options.GetB(OPT_HELP) || len(args) == 0:
 		showUsage()
-		return
+		os.Exit(0)
 	}
 
 	dataDir := args.Get(0).Clean().String()
@@ -529,7 +529,7 @@ func showAbout(gitRev string) {
 
 // showVerboseAbout prints verbose info about app
 func showVerboseAbout(gitRev string, gomod []byte) {
-	support.ShowSupportInfo(APP, VER, gitRev, gomod)
+	support.Print(APP, VER, gitRev, gomod)
 }
 
 // genCompletion generates completion for different shells
