@@ -185,7 +185,7 @@ var useRawOutput = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func Init(gitRev string, gomod []byte) {
+func Run(gitRev string, gomod []byte) {
 	runtime.GOMAXPROCS(2)
 
 	args, errs := options.Parse(optMap)
@@ -1712,12 +1712,12 @@ func exit(code int) {
 
 // showUsage prints usage info
 func showUsage() {
-	genUsage().Render()
+	genUsage().Print()
 }
 
 // showAbout prints info about version
 func showAbout(gitRev string) {
-	genAbout(gitRev).Render()
+	genAbout(gitRev).Print()
 }
 
 // showVerboseAbout prints verbose info about app

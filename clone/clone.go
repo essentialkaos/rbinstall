@@ -94,7 +94,7 @@ var colorTagVer string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func Init(gitRev string, gomod []byte) {
+func Run(gitRev string, gomod []byte) {
 	runtime.GOMAXPROCS(1)
 
 	args, errs := options.Parse(optMap)
@@ -491,12 +491,12 @@ func printErrorAndExit(f string, a ...interface{}) {
 
 // showUsage prints usage info
 func showUsage() {
-	genUsage().Render()
+	genUsage().Print()
 }
 
 // showAbout prints info about version
 func showAbout(gitRev string) {
-	genAbout(gitRev).Render()
+	genAbout(gitRev).Print()
 }
 
 // showVerboseAbout prints verbose info about app
