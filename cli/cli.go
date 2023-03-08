@@ -186,15 +186,14 @@ var useRawOutput = false
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 func Run(gitRev string, gomod []byte) {
+	preConfigureUI()
+
 	runtime.GOMAXPROCS(2)
 
 	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
-		for _, err := range errs {
-			terminal.PrintErrorMessage(err.Error())
-		}
-
+		terminal.PrintErrorMessage(errs[0].Error())
 		os.Exit(1)
 	}
 
@@ -202,17 +201,18 @@ func Run(gitRev string, gomod []byte) {
 
 	switch {
 	case options.Has(OPT_COMPLETION):
-		os.Exit(genCompletion())
+		os.Exit(printCompletion())
 	case options.Has(OPT_GENERATE_MAN):
-		os.Exit(genMan())
+		printMan()
+		os.Exit(0)
 	case options.GetB(OPT_VER):
-		showAbout(gitRev)
+		genAbout(gitRev).Print()
 		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		showVerboseAbout(gitRev, gomod)
+		support.Print(APP, VER, gitRev, gomod)
 		os.Exit(0)
 	case options.GetB(OPT_HELP):
-		showUsage()
+		genUsage().Print()
 		os.Exit(0)
 	}
 
@@ -232,13 +232,11 @@ func Run(gitRev string, gomod []byte) {
 	exit(0)
 }
 
-// configureUI configure user interface
-func configureUI() {
-	envVars := env.Get()
-	term := envVars.GetS("TERM")
+// preConfigureUI preconfigures UI based on information about user terminal
+func preConfigureUI() {
+	term := os.Getenv("TERM")
 
 	fmtc.DisableColors = true
-	fmtutil.SizeSeparator = " "
 
 	if term != "" {
 		switch {
@@ -249,19 +247,18 @@ func configureUI() {
 		}
 	}
 
-	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
-
-	if options.GetB(OPT_NO_PROGRESS) {
-		spinner.DisableAnimation = true
-	}
-
-	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
 		fmtc.DisableColors = true
 		useRawOutput = true
 	}
 
+	if os.Getenv("NO_COLOR") != "" {
+		fmtc.DisableColors = true
+	}
+}
+
+// configureUI configure user interface
+func configureUI() {
 	switch {
 	case fmtc.IsTrueColorSupported():
 		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
@@ -1710,23 +1707,8 @@ func exit(code int) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// showUsage prints usage info
-func showUsage() {
-	genUsage().Print()
-}
-
-// showAbout prints info about version
-func showAbout(gitRev string) {
-	genAbout(gitRev).Print()
-}
-
-// showVerboseAbout prints verbose info about app
-func showVerboseAbout(gitRev string, gomod []byte) {
-	support.Print(APP, VER, gitRev, gomod)
-}
-
-// genCompletion generates completion for different shells
-func genCompletion() int {
+// printCompletion prints completion for given shell
+func printCompletion() int {
 	info := genUsage()
 
 	switch options.GetS(OPT_COMPLETION) {
@@ -1743,16 +1725,14 @@ func genCompletion() int {
 	return 0
 }
 
-// genMan generates man page
-func genMan() int {
+// printMan prints man page
+func printMan() {
 	fmt.Println(
 		man.Generate(
 			genUsage(),
 			genAbout(""),
 		),
 	)
-
-	return 0
 }
 
 // genUsage generates usage info
