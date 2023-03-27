@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/env"
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fsutil"
@@ -44,7 +43,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.0.0"
+	VER  = "3.0.1"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -94,16 +93,15 @@ var colorTagVer string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func Init(gitRev string, gomod []byte) {
+func Run(gitRev string, gomod []byte) {
 	runtime.GOMAXPROCS(1)
+
+	preConfigureUI()
 
 	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
-		for _, err := range errs {
-			printError(err.Error())
-		}
-
+		printError(errs[0].Error())
 		os.Exit(1)
 	}
 
@@ -111,18 +109,19 @@ func Init(gitRev string, gomod []byte) {
 
 	switch {
 	case options.Has(OPT_COMPLETION):
-		os.Exit(genCompletion())
+		os.Exit(printCompletion())
 	case options.Has(OPT_GENERATE_MAN):
-		os.Exit(genMan())
+		printMan()
+		os.Exit(0)
 	case options.GetB(OPT_VER):
-		showAbout(gitRev)
-		return
+		genAbout(gitRev).Print()
+		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		showVerboseAbout(gitRev, gomod)
-		return
+		support.Print(APP, VER, gitRev, gomod)
+		os.Exit(0)
 	case options.GetB(OPT_HELP) || len(args) != 2:
-		showUsage()
-		return
+		genUsage().Print()
+		os.Exit(0)
 	}
 
 	req.SetUserAgent("RBInstall-Clone", VER)
@@ -138,10 +137,9 @@ func Init(gitRev string, gomod []byte) {
 	fmtc.NewLine()
 }
 
-// configureUI configures user interface
-func configureUI() {
-	envVars := env.Get()
-	term := envVars.GetS("TERM")
+// preConfigureUI preconfigures UI based on information about user terminal
+func preConfigureUI() {
+	term := os.Getenv("TERM")
 
 	fmtc.DisableColors = true
 
@@ -154,14 +152,21 @@ func configureUI() {
 		}
 	}
 
+	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
+		fmtc.DisableColors = true
+	}
+
+	if os.Getenv("NO_COLOR") != "" {
+		fmtc.DisableColors = true
+	}
+}
+
+// configureUI configures user interface
+func configureUI() {
 	terminal.Prompt = "› "
 	terminal.TitleColorTag = "{s}"
 
 	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
-
-	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
 		fmtc.DisableColors = true
 	}
 
@@ -489,23 +494,8 @@ func printErrorAndExit(f string, a ...interface{}) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// showUsage prints usage info
-func showUsage() {
-	genUsage().Render()
-}
-
-// showAbout prints info about version
-func showAbout(gitRev string) {
-	genAbout(gitRev).Render()
-}
-
-// showVerboseAbout prints verbose info about app
-func showVerboseAbout(gitRev string, gomod []byte) {
-	support.ShowSupportInfo(APP, VER, gitRev, gomod)
-}
-
-// genCompletion generates completion for different shells
-func genCompletion() int {
+// printCompletion prints completion for given shell
+func printCompletion() int {
 	info := genUsage()
 
 	switch options.GetS(OPT_COMPLETION) {
@@ -522,16 +512,14 @@ func genCompletion() int {
 	return 0
 }
 
-// genMan generates man page
-func genMan() int {
+// printMan prints man page
+func printMan() {
 	fmt.Println(
 		man.Generate(
 			genUsage(),
 			genAbout(""),
 		),
 	)
-
-	return 0
 }
 
 // genUsage generates usage info
@@ -555,7 +543,7 @@ func genUsage() *usage.Info {
 
 // genAbout generates info about version
 func genAbout(gitRev string) *usage.About {
-	return &usage.About{
+	about := &usage.About{
 		App:     APP,
 		Version: VER,
 		Desc:    DESC,
@@ -566,4 +554,10 @@ func genAbout(gitRev string) *usage.About {
 		AppNameColorTag: "{*}" + colorTagApp,
 		VersionColorTag: colorTagVer,
 	}
+
+	if gitRev != "" {
+		about.Build = "git:" + gitRev
+	}
+
+	return about
 }

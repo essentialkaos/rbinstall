@@ -1,0 +1,164 @@
+# Bibop recipe for rbinstall (EL7/EL8/EL9)
+# See more: https://kaos.sh/bibop
+
+################################################################################
+
+pkg rbinstall rbenv jemalloc jre11
+
+################################################################################
+
+require-root yes
+unsafe-actions yes
+fast-finish yes
+
+################################################################################
+
+var config /etc/rbinstall.knf
+var data_dir {ENV:RBENV_ROOT}/versions
+var log_file /var/log/rbinstall/rbinstall.log
+
+var ruby2_ver "2.7.7"
+var ruby3_ver "3.1.3"
+var jruby_ver "9.3.9.0"
+var truff_ver "22.3.0"
+
+var deadline 600
+
+## PREPARE #####################################################################
+
+command "-" "Check binary"
+  app rbinstall
+
+command "-" "Check RBEnv"
+  app rbenv
+  env RBENV_ROOT /usr/local/rbenv
+  dir {ENV:RBENV_ROOT}/versions
+
+command "-" "Check original configuration"
+  mode {config} 644
+
+command "-" "Backup original configuration"
+  backup {config}
+
+command "-" "Replace original configuration with test configuration"
+  copy rbinstall_fast.knf {config}
+
+command:full "-" "Replace original configuration with default configuration"
+  copy rbinstall_default.knf {config}
+
+command "-" "Clear old log files"
+  touch {log_file}
+  truncate {log_file}
+
+## INSTALL #####################################################################
+
+command "rbinstall {ruby2_ver} -np -nc" "Install Ruby 2.x"
+  exit 0 {deadline}
+  dir {data_dir}/{ruby2_ver}
+  exist {data_dir}/{ruby2_ver}/bin/ruby
+  mode {data_dir}/{ruby2_ver}/bin/ruby 755
+
+command "rbinstall {ruby2_ver}-jemalloc -np -nc" "Install Ruby 2.x (jemalloc)"
+  exit 0 {deadline}
+  dir {data_dir}/{ruby2_ver}-jemalloc
+  exist {data_dir}/{ruby2_ver}-jemalloc/bin/ruby
+  mode {data_dir}/{ruby2_ver}-jemalloc/bin/ruby 755
+
+command "rbinstall {ruby3_ver} -np -nc" "Install Ruby 3.x"
+  exit 0 {deadline}
+  dir {data_dir}/{ruby3_ver}
+  exist {data_dir}/{ruby3_ver}/bin/ruby
+  mode {data_dir}/{ruby3_ver}/bin/ruby 755
+
+command "rbinstall {ruby3_ver}-jemalloc -np -nc" "Install Ruby 3.x (jemalloc)"
+  exit 0 {deadline}
+  dir {data_dir}/{ruby3_ver}-jemalloc
+  exist {data_dir}/{ruby3_ver}-jemalloc/bin/ruby
+  mode {data_dir}/{ruby3_ver}-jemalloc/bin/ruby 755
+
+command "rbinstall jruby-{jruby_ver} -np -nc" "Install JRuby"
+  exit 0 {deadline}
+  dir {data_dir}/jruby-{jruby_ver}
+  exist {data_dir}/jruby-{jruby_ver}/bin/ruby
+  mode {data_dir}/jruby-{jruby_ver}/bin/ruby 755
+
+command "rbinstall truffleruby-{truff_ver} -np -nc" "Install TruffleRuby"
+  exit 0 {deadline}
+  dir {data_dir}/truffleruby-{truff_ver}
+  exist {data_dir}/truffleruby-{truff_ver}/bin/ruby
+  mode {data_dir}/truffleruby-{truff_ver}/bin/ruby 755
+
+## CHECK #######################################################################
+
+command "rbenv local {ruby2_ver}" "Set current local version to {ruby2_ver}"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "ruby {ruby2_ver}"
+
+command "rbenv local {ruby2_ver}-jemalloc" "Set current local version to {ruby2_ver}-jemalloc"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "ruby {ruby2_ver}"
+
+command "rbenv local {ruby3_ver}" "Set current local version to {ruby3_ver}"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "ruby {ruby3_ver}"
+
+command "rbenv local {ruby3_ver}-jemalloc" "Set current local version to {ruby3_ver}-jemalloc"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "ruby {ruby3_ver}"
+
+command "rbenv local jruby-{jruby_ver}" "Set current local version to jruby-{jruby_ver}"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "jruby {jruby_ver}"
+
+command "rbenv local truffleruby-{truff_ver}" "Set current local version to truffleruby-{truff_ver}"
+  exit 0
+
+command "ruby --version" "Check Ruby version info"
+  exit 0
+  output-contains "truffleruby {truff_ver}"
+
+## FINISH ######################################################################
+
+command "-" "Remove local version info"
+  remove ".ruby-version"
+
+command "-" "Clear log files"
+  truncate {log_file}
+
+command:teardown "-" "Remove Ruby 2.x"
+  remove {data_dir}/{ruby2_ver}
+
+command:teardown "-" "Remove Ruby 2.x (jemalloc)"
+  remove {data_dir}/{ruby2_ver}-jemalloc
+
+command:teardown "-" "Remove Ruby 3.x"
+  remove {data_dir}/{ruby3_ver}
+
+command:teardown "-" "Remove Ruby 3.x (jemalloc)"
+  remove {data_dir}/{ruby3_ver}-jemalloc
+
+command:teardown "-" "Remove JRuby"
+  remove {data_dir}/jruby-{jruby_ver}
+
+command:teardown "-" "Remove TruffleRuby"
+  remove {data_dir}/truffleruby-{truff_ver}
+
+command:teardown "-" "Configuration restore"
+  backup-restore {config}
+
+################################################################################

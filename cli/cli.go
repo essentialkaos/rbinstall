@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.0"
+	VER  = "3.0.1"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -185,40 +185,35 @@ var useRawOutput = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-func Init(gitRev string, gomod []byte) {
-	var err error
-	var errs []error
+func Run(gitRev string, gomod []byte) {
+	preConfigureUI()
 
 	runtime.GOMAXPROCS(2)
 
 	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
-		fmtc.NewLine()
-
-		for _, err = range errs {
-			terminal.PrintErrorMessage(err.Error())
-		}
-
-		exit(1)
+		terminal.PrintErrorMessage(errs[0].Error())
+		os.Exit(1)
 	}
 
 	configureUI()
 
 	switch {
 	case options.Has(OPT_COMPLETION):
-		exit(genCompletion())
+		os.Exit(printCompletion())
 	case options.Has(OPT_GENERATE_MAN):
-		exit(genMan())
+		printMan()
+		os.Exit(0)
 	case options.GetB(OPT_VER):
-		showAbout(gitRev)
-		return
+		genAbout(gitRev).Print()
+		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		showVerboseAbout(gitRev, gomod)
-		return
+		support.Print(APP, VER, gitRev, gomod)
+		os.Exit(0)
 	case options.GetB(OPT_HELP):
-		showUsage()
-		return
+		genUsage().Print()
+		os.Exit(0)
 	}
 
 	if !useRawOutput {
@@ -237,13 +232,11 @@ func Init(gitRev string, gomod []byte) {
 	exit(0)
 }
 
-// configureUI configure user interface
-func configureUI() {
-	envVars := env.Get()
-	term := envVars.GetS("TERM")
+// preConfigureUI preconfigures UI based on information about user terminal
+func preConfigureUI() {
+	term := os.Getenv("TERM")
 
 	fmtc.DisableColors = true
-	fmtutil.SizeSeparator = " "
 
 	if term != "" {
 		switch {
@@ -254,19 +247,18 @@ func configureUI() {
 		}
 	}
 
-	if options.GetB(OPT_NO_COLOR) {
-		fmtc.DisableColors = true
-	}
-
-	if options.GetB(OPT_NO_PROGRESS) {
-		spinner.DisableAnimation = true
-	}
-
-	if !fsutil.IsCharacterDevice("/dev/stdout") && envVars.GetS("FAKETTY") == "" {
+	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
 		fmtc.DisableColors = true
 		useRawOutput = true
 	}
 
+	if os.Getenv("NO_COLOR") != "" {
+		fmtc.DisableColors = true
+	}
+}
+
+// configureUI configure user interface
+func configureUI() {
 	switch {
 	case fmtc.IsTrueColorSupported():
 		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
@@ -1715,23 +1707,8 @@ func exit(code int) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// showUsage prints usage info
-func showUsage() {
-	genUsage().Render()
-}
-
-// showAbout prints info about version
-func showAbout(gitRev string) {
-	genAbout(gitRev).Render()
-}
-
-// showVerboseAbout prints verbose info about app
-func showVerboseAbout(gitRev string, gomod []byte) {
-	support.ShowSupportInfo(APP, VER, gitRev, gomod)
-}
-
-// genCompletion generates completion for different shells
-func genCompletion() int {
+// printCompletion prints completion for given shell
+func printCompletion() int {
 	info := genUsage()
 
 	switch options.GetS(OPT_COMPLETION) {
@@ -1748,16 +1725,14 @@ func genCompletion() int {
 	return 0
 }
 
-// genMan generates man page
-func genMan() int {
+// printMan prints man page
+func printMan() {
 	fmt.Println(
 		man.Generate(
 			genUsage(),
 			genAbout(""),
 		),
 	)
-
-	return 0
 }
 
 // genUsage generates usage info
