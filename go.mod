@@ -11,7 +11,7 @@ require (
 require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/essentialkaos/go-linenoise/v3 v3.4.0 // indirect
-	github.com/klauspost/compress v1.16.3 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	github.com/klauspost/compress v1.16.4 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 )
