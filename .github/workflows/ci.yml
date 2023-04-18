@@ -84,3 +84,16 @@ jobs:
         uses: essentialkaos/hadolint-action@v1
         with:
           files: .docker/ruby.docker .docker/ruby-jemalloc.docker .docker/ruby-railsexpress.docker .docker/jruby.docker
+
+  Typos:
+    name: Typos
+    runs-on: ubuntu-latest
+
+    needs: Go
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check spelling
+        uses: crate-ci/typos@master
