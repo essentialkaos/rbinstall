@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.1"
+	VER  = "3.0.2"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -394,7 +394,10 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
+	resp, err := req.Request{
+		URL:   knf.GetS(STORAGE_URL) + "/" + INDEX_NAME,
+		Query: req.Query{"r": time.Now().UnixMicro()},
+	}.Get()
 
 	if err != nil {
 		printErrorAndExit("Can't fetch repository index: %v", err)
@@ -1139,7 +1142,10 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 
 	defer fd.Close()
 
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File}.Do()
+	resp, err := req.Request{
+		URL:   knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File,
+		Query: req.Query{"hash": info.Hash},
+	}.Get()
 
 	if err != nil {
 		return "", err

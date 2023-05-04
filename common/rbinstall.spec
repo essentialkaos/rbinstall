@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.0.1
+Version:        3.0.2
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -24,7 +24,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:       rbenv libyaml ca-certificates zlib >= 1.2.11
 
-BuildRequires:  golang >= 1.19
+BuildRequires:  golang >= 1.20
 
 Provides:       %{name} = %{version}-%{release}
 
@@ -118,6 +118,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Fri May 05 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.2-0
+- [cli] Better caching handling
+- Dependencies update
+
 * Mon Mar 27 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.1-0
 - [cli|gen|clone] Added verbose version output
 - Dependencies update
