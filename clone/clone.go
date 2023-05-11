@@ -199,7 +199,7 @@ func checkArguments(url, dir string) {
 	}
 
 	if !fsutil.IsExecutable(dir) {
-		printErrorAndExit("Directory %s is not exectable", dir)
+		printErrorAndExit("Directory %s is not executable", dir)
 	}
 }
 

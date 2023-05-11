@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.1"
+	VER  = "3.0.2"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -151,8 +151,8 @@ var optMap = options.Map{
 	OPT_INFO:          {Type: options.BOOL},
 	OPT_NO_COLOR:      {Type: options.BOOL},
 	OPT_NO_PROGRESS:   {Type: options.BOOL},
-	OPT_HELP:          {Type: options.BOOL, Alias: "u:usage"},
-	OPT_VER:           {Type: options.BOOL, Alias: "ver"},
+	OPT_HELP:          {Type: options.BOOL},
+	OPT_VER:           {Type: options.MIXED},
 
 	OPT_VERB_VER:     {Type: options.BOOL},
 	OPT_COMPLETION:   {},
@@ -206,7 +206,7 @@ func Run(gitRev string, gomod []byte) {
 		printMan()
 		os.Exit(0)
 	case options.GetB(OPT_VER):
-		genAbout(gitRev).Print()
+		genAbout(gitRev).Print(options.GetS(OPT_VER))
 		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
 		support.Print(APP, VER, gitRev, gomod)
@@ -394,7 +394,10 @@ func validateConfig() {
 
 // fetchIndex download index from remote repository
 func fetchIndex() {
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + INDEX_NAME}.Get()
+	resp, err := req.Request{
+		URL:   knf.GetS(STORAGE_URL) + "/" + INDEX_NAME,
+		Query: req.Query{"r": time.Now().UnixMicro()},
+	}.Get()
 
 	if err != nil {
 		printErrorAndExit("Can't fetch repository index: %v", err)
@@ -1139,7 +1142,10 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 
 	defer fd.Close()
 
-	resp, err := req.Request{URL: knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File}.Do()
+	resp, err := req.Request{
+		URL:   knf.GetS(STORAGE_URL) + "/" + info.Path + "/" + info.File,
+		Query: req.Query{"hash": info.Hash},
+	}.Get()
 
 	if err != nil {
 		return "", err

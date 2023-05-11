@@ -236,7 +236,7 @@ func checkDir(dataDir string) {
 	}
 
 	if !fsutil.IsExecutable(dataDir) {
-		printErrorAndExit("Directory %s is not exectable", dataDir)
+		printErrorAndExit("Directory %s is not executable", dataDir)
 	}
 
 	if options.GetS(OPT_OUTPUT) == "" && !fsutil.IsWritable(dataDir) {

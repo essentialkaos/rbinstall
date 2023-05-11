@@ -2,7 +2,7 @@
 
 [main]
 
-  # Path to writable temorary directory
+  # Path to writable temporary directory
   tmp-dir: /tmp
 
 [storage]
