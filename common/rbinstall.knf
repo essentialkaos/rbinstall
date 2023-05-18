@@ -44,7 +44,7 @@
   no-document: true
 
   # Source for gem install without scheme
-  source: gems.kaos.st
+  source: 
 
   # If source support https this property must be set to true
   source-secure: true
