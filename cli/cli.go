@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.2"
+	VER  = "3.0.3"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -1104,6 +1104,10 @@ func updateRubygems(rubyVersion, gemVersion string) error {
 		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system")
 	} else {
 		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system", gemVersion)
+	}
+
+	if knf.GetB(GEMS_NO_DOCUMENT) {
+		gemCmd.Args = append(gemCmd.Args, "--no-document")
 	}
 
 	if knf.GetS(GEMS_SOURCE) != "" {
