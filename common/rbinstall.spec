@@ -119,6 +119,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue May 23 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.4-0
+- Fixed bug with disabling spinner animation
 - Minor code refactoring
 
 * Thu May 18 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.3-0
