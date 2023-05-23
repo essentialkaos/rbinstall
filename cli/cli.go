@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.3"
+	VER  = "3.0.4"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -1595,7 +1595,7 @@ func getSystemInfo() (string, string, error) {
 	}
 
 	if strings.Contains(osInfo.IDLike, "rhel") {
-		os = fmt.Sprintf("rhel-%d", osVersion.Major())
+		os = fmt.Sprintf("el-%d", osVersion.Major())
 	} else {
 		os = fmt.Sprintf("%s-%d", osInfo.ID, osVersion.Major())
 	}
