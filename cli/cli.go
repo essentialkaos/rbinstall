@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.3"
+	VER  = "3.0.4"
 	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
 )
 
@@ -182,6 +182,7 @@ var colorTagApp string
 var colorTagVer string
 
 var useRawOutput = false
+var noProgress = false
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -279,6 +280,11 @@ func configureUI() {
 	progress.DefaultSettings.ProgressColorTag = "{s}"
 	progress.DefaultSettings.SpeedColorTag = "{s}"
 	progress.DefaultSettings.RemainingColorTag = "{s}"
+
+	if os.Getenv("CI") != "" || options.GetB(OPT_NO_PROGRESS) {
+		spinner.DisableAnimation = true
+		noProgress = true
+	}
 }
 
 // prepare do some preparations for installing ruby
@@ -671,7 +677,7 @@ func installCommand(rubyVersion string) {
 	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
 	fmtc.NameColor("category", "{"+categoryColor[category]+"}")
 
-	if !options.GetB(OPT_NO_PROGRESS) {
+	if !noProgress {
 		fmtc.Printf("Fetching {*}{?category}%s{!} from storage…\n", info.Name)
 		file, err = downloadFile(info)
 	} else {
@@ -697,7 +703,7 @@ func installCommand(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	if !options.GetB(OPT_NO_PROGRESS) {
+	if !noProgress {
 		fmtc.Printf("Unpacking {*}{?category}%s{!} data…\n", info.Name)
 		err = unpackFile(file, getUnpackDirPath())
 	} else {
@@ -1161,7 +1167,7 @@ func downloadFile(info *index.VersionInfo) (string, error) {
 		return "", fmtc.Errorf("Server return error code %d", resp.StatusCode)
 	}
 
-	if options.GetB(OPT_NO_PROGRESS) {
+	if noProgress {
 		_, err = io.Copy(fd, resp.Body)
 	} else {
 		pb := progress.New(resp.ContentLength, "")
@@ -1183,7 +1189,7 @@ func unpackFile(file, outputDir string) error {
 		return fmt.Errorf("Can't unpack %s: %w", file, err)
 	}
 
-	if options.GetB(OPT_NO_PROGRESS) {
+	if noProgress {
 		err = tzst.Read(bufio.NewReader(fd), outputDir)
 	} else {
 		pb := progress.New(fsutil.GetSize(file), "")
@@ -1595,7 +1601,7 @@ func getSystemInfo() (string, string, error) {
 	}
 
 	if strings.Contains(osInfo.IDLike, "rhel") {
-		os = fmt.Sprintf("rhel-%d", osVersion.Major())
+		os = fmt.Sprintf("el-%d", osVersion.Major())
 	} else {
 		os = fmt.Sprintf("%s-%d", osInfo.ID, osVersion.Major())
 	}

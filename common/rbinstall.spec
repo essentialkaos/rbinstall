@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.0.3
+Version:        3.0.4
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -118,6 +118,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue May 23 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.4-0
+- Fixed bug with disabling spinner animation
+- Minor code refactoring
+
 * Thu May 18 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.3-0
 - [cli] Don't install documentation while updating RubyGems gem
 - Disable using EK rubygems proxy by default
