@@ -41,7 +41,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.0.1"
+	VER  = "3.0.2"
 	DESC = "Utility for generating RBInstall index"
 )
 
