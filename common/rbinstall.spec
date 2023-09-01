@@ -38,7 +38,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.0.2
+Version:  3.0.3
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -50,7 +50,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.0.2
+Version:  3.0.3
 Release:  0%{?dist}
 Group:    Development/Tools
 
