@@ -460,11 +460,11 @@ func process(args options.Arguments) {
 		case options.GetB(OPT_UNINSTALL):
 			uninstallVersion(rubyVersion)
 		default:
-			installVersion(rubyVersion)
+			installVersion(rubyVersion, false)
 		}
 	} else {
 		switch {
-		case options.GetB(OPT_UNINSTALL):
+		case options.GetB(OPT_REINSTALL_UPDATED):
 			reinstallUpdatedVersions()
 		default:
 			listCommand()
@@ -648,8 +648,8 @@ func printRawListing(dist, arch string) {
 }
 
 // installVersion install given version of ruby
-func installVersion(rubyVersion string) {
-	if isVersionInstalled(rubyVersion) {
+func installVersion(rubyVersion string, reinstall bool) {
+	if isVersionInstalled(rubyVersion) && !reinstall {
 		terminal.Warn("Version %s already installed", rubyVersion)
 		exit(0)
 	}
@@ -867,9 +867,9 @@ func reinstallVersion(rubyVersion string) {
 		printErrorAndExit("Reinstalling is not allowed")
 	}
 
-	fmtc.Printf("{y}Reinstalling %s…{!}\n\n", rubyVersion)
+	terminal.Warn("Reinstalling %s…\n", rubyVersion)
 
-	installVersion(rubyVersion)
+	installVersion(rubyVersion, true)
 }
 
 // reinstallUpdatedVersions reinstalls all rebuilt versions
@@ -880,6 +880,8 @@ func reinstallUpdatedVersions() {
 		terminal.Warn("There is no installed versions")
 		return
 	}
+
+	var hasUpdates bool
 
 	for rubyVersion := range installed {
 		info, _, err := getVersionInfo(rubyVersion)
@@ -897,13 +899,26 @@ func reinstallUpdatedVersions() {
 		}
 
 		if installDate.Unix() >= info.Added {
-			fmtc.Printf("{g}Version %s is up-to-date{!}\n", rubyVersion)
 			continue
 		}
 
-		fmtc.Printf("{y}Reinstalling %s…{!}\n\n", rubyVersion)
+		if !hasUpdates {
+			checkPerms()
+			setupLogger()
+			setupTemp()
+		} else {
+			fmtc.NewLine()
+		}
 
-		installVersion(rubyVersion)
+		terminal.Warn("Reinstalling %s…\n", rubyVersion)
+
+		installVersion(rubyVersion, true)
+
+		hasUpdates = true
+	}
+
+	if !hasUpdates {
+		fmtc.Println("{g}All versions are up-to-date{!}")
 	}
 }
 
