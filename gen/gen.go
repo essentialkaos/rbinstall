@@ -9,7 +9,6 @@ package gen
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"sort"
@@ -433,7 +432,7 @@ func saveIndex(outputFile string, i *index.Index) {
 		fsutil.MoveFile(outputFile, outputFile+".bkp", 0600)
 	}
 
-	err = ioutil.WriteFile(outputFile, indexData, 0644)
+	err = os.WriteFile(outputFile, indexData, 0644)
 
 	if err != nil {
 		printErrorAndExit(err.Error())

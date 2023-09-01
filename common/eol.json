@@ -11,5 +11,6 @@
   "jruby-1.6": true,
   "jruby-1.7": true,
   "jruby-9.0": true,
-  "jruby-9.1": true
+  "jruby-9.1": true,
+  "jruby-9.2": true
 }

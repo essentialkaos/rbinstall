@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.0.5
+Version:        3.1.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -118,6 +118,11 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Fri Sep 01 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.0-0
+- Added option -X/--reinstall-updated for updating rebuilt versions
+- Dependencies update
+- Code refactoring
+
 * Tue Jul 04 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.5-0
 - Dependencies update
 
