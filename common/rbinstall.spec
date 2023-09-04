@@ -119,10 +119,10 @@ rm -rf %{buildroot}
 
 %changelog
 * Fri Sep 01 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.0-0
-- Added option -X/--reinstall-updated for updating rebuilt versions
-- Fixed color disabling using -nc/--no-color option
+- [cli] Added option -X/--reinstall-updated for updating rebuilt versions
+- [cli] Fixed color disabling using -nc/--no-color option
+- [cli|gen|clone] Code refactoring
 - Dependencies update
-- Code refactoring
 
 * Tue Jul 04 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.5-0
 - Dependencies update
