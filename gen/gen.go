@@ -9,7 +9,6 @@ package gen
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"sort"
@@ -41,7 +40,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.0.2"
+	VER  = "3.0.3"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -433,7 +432,7 @@ func saveIndex(outputFile string, i *index.Index) {
 		fsutil.MoveFile(outputFile, outputFile+".bkp", 0600)
 	}
 
-	err = ioutil.WriteFile(outputFile, indexData, 0644)
+	err = os.WriteFile(outputFile, indexData, 0644)
 
 	if err != nil {
 		printErrorAndExit(err.Error())

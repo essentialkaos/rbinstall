@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -66,26 +65,27 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.0.5"
-	DESC = "Utility for installing prebuilt Ruby versions to RBEnv"
+	VER  = "3.1.0"
+	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // List of supported command-line arguments
 const (
-	OPT_REINSTALL     = "R:reinstall"
-	OPT_UNINSTALL     = "U:uninstall"
-	OPT_GEMS_UPDATE   = "G:gems-update"
-	OPT_REHASH        = "H:rehash"
-	OPT_GEMS_INSECURE = "s:gems-insecure"
-	OPT_RUBY_VERSION  = "r:ruby-version"
-	OPT_INFO          = "i:info"
-	OPT_ALL           = "a:all"
-	OPT_NO_COLOR      = "nc:no-color"
-	OPT_NO_PROGRESS   = "np:no-progress"
-	OPT_HELP          = "h:help"
-	OPT_VER           = "v:version"
+	OPT_REINSTALL         = "R:reinstall"
+	OPT_UNINSTALL         = "U:uninstall"
+	OPT_REINSTALL_UPDATED = "X:reinstall-updated"
+	OPT_GEMS_UPDATE       = "G:gems-update"
+	OPT_REHASH            = "H:rehash"
+	OPT_GEMS_INSECURE     = "s:gems-insecure"
+	OPT_RUBY_VERSION      = "r:ruby-version"
+	OPT_INFO              = "i:info"
+	OPT_ALL               = "a:all"
+	OPT_NO_COLOR          = "nc:no-color"
+	OPT_NO_PROGRESS       = "np:no-progress"
+	OPT_HELP              = "h:help"
+	OPT_VER               = "v:version"
 
 	OPT_VERB_VER     = "vv:verbose-version"
 	OPT_COMPLETION   = "completion"
@@ -141,18 +141,19 @@ const (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var optMap = options.Map{
-	OPT_REINSTALL:     {Type: options.BOOL, Conflicts: OPT_UNINSTALL},
-	OPT_UNINSTALL:     {Type: options.BOOL, Conflicts: OPT_REINSTALL},
-	OPT_GEMS_UPDATE:   {Type: options.BOOL},
-	OPT_GEMS_INSECURE: {Type: options.BOOL},
-	OPT_RUBY_VERSION:  {Type: options.BOOL},
-	OPT_REHASH:        {Type: options.BOOL},
-	OPT_ALL:           {Type: options.BOOL},
-	OPT_INFO:          {Type: options.BOOL},
-	OPT_NO_COLOR:      {Type: options.BOOL},
-	OPT_NO_PROGRESS:   {Type: options.BOOL},
-	OPT_HELP:          {Type: options.BOOL},
-	OPT_VER:           {Type: options.MIXED},
+	OPT_REINSTALL:         {Type: options.BOOL, Conflicts: OPT_UNINSTALL},
+	OPT_UNINSTALL:         {Type: options.BOOL, Conflicts: OPT_REINSTALL},
+	OPT_REINSTALL_UPDATED: {Type: options.BOOL, Conflicts: OPT_UNINSTALL},
+	OPT_GEMS_UPDATE:       {Type: options.BOOL},
+	OPT_GEMS_INSECURE:     {Type: options.BOOL},
+	OPT_RUBY_VERSION:      {Type: options.BOOL},
+	OPT_REHASH:            {Type: options.BOOL},
+	OPT_ALL:               {Type: options.BOOL},
+	OPT_INFO:              {Type: options.BOOL},
+	OPT_NO_COLOR:          {Type: options.BOOL},
+	OPT_NO_PROGRESS:       {Type: options.BOOL},
+	OPT_HELP:              {Type: options.BOOL},
+	OPT_VER:               {Type: options.MIXED},
 
 	OPT_VERB_VER:     {Type: options.BOOL},
 	OPT_COMPLETION:   {},
@@ -194,7 +195,7 @@ func Run(gitRev string, gomod []byte) {
 	args, errs := options.Parse(optMap)
 
 	if len(errs) != 0 {
-		terminal.PrintErrorMessage(errs[0].Error())
+		terminal.Error(errs[0].Error())
 		os.Exit(1)
 	}
 
@@ -260,6 +261,10 @@ func preConfigureUI() {
 
 // configureUI configure user interface
 func configureUI() {
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
 	switch {
 	case fmtc.IsTrueColorSupported():
 		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
@@ -388,10 +393,10 @@ func validateConfig() {
 	})
 
 	if len(errs) != 0 {
-		terminal.PrintErrorMessage("Error while config validation:")
+		terminal.Error("Error while config validation:")
 
 		for _, err := range errs {
-			terminal.PrintErrorMessage("  %v", err)
+			terminal.Error("  %v", err)
 		}
 
 		exit(1)
@@ -418,7 +423,7 @@ func fetchIndex() {
 	err = resp.JSON(repoIndex)
 
 	if err != nil {
-		printErrorAndExit("Can't decode repository index json: %v", err)
+		printErrorAndExit("Can't decode repository index JSON: %v", err)
 	}
 
 	repoIndex.Sort()
@@ -454,13 +459,20 @@ func process(args options.Arguments) {
 		switch {
 		case options.GetB(OPT_GEMS_UPDATE):
 			updateGems(rubyVersion)
+		case options.GetB(OPT_REINSTALL):
+			reinstallVersion(rubyVersion)
 		case options.GetB(OPT_UNINSTALL):
-			uninstallCommand(rubyVersion)
+			uninstallVersion(rubyVersion)
 		default:
-			installCommand(rubyVersion)
+			installVersion(rubyVersion, false)
 		}
 	} else {
-		listCommand()
+		switch {
+		case options.GetB(OPT_REINSTALL_UPDATED):
+			reinstallUpdatedVersions()
+		default:
+			listCommand()
+		}
 	}
 }
 
@@ -525,7 +537,7 @@ func listCommand() {
 	}
 
 	if !repoIndex.HasData(dist, arch) {
-		terminal.PrintWarnMessage(
+		terminal.Warn(
 			"Prebuilt binaries not found for this system (%s/%s)",
 			dist, arch,
 		)
@@ -639,8 +651,13 @@ func printRawListing(dist, arch string) {
 	fmt.Print(strings.Join(result, "\n"))
 }
 
-// installCommand install some version of ruby
-func installCommand(rubyVersion string) {
+// installVersion install given version of ruby
+func installVersion(rubyVersion string, reinstall bool) {
+	if isVersionInstalled(rubyVersion) && !reinstall {
+		terminal.Warn("Version %s already installed", rubyVersion)
+		exit(0)
+	}
+
 	info, category, err := getVersionInfo(rubyVersion)
 
 	if err != nil {
@@ -649,15 +666,6 @@ func installCommand(rubyVersion string) {
 
 	checkRBEnv()
 	checkDependencies(info, category)
-
-	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
-			fmtc.Printf("{y}Reinstalling %s…{!}\n\n", info.Name)
-		} else {
-			terminal.PrintWarnMessage("Version %s already installed", info.Name)
-			exit(0)
-		}
-	}
 
 	if !fsutil.IsExist(getUnpackDirPath()) {
 		err = os.Mkdir(getUnpackDirPath(), 0770)
@@ -730,12 +738,10 @@ func installCommand(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if isVersionInstalled(info.Name) {
-		if knf.GetB(RBENV_ALLOW_OVERWRITE) && options.GetB(OPT_REINSTALL) {
-			err = os.RemoveAll(getVersionPath(info.Name))
+		err = os.RemoveAll(getVersionPath(info.Name))
 
-			if err != nil {
-				printErrorAndExit("Can't remove %s: %v", info.Name, err)
-			}
+		if err != nil {
+			printErrorAndExit("Can't remove %s: %v", info.Name, err)
 		}
 	}
 
@@ -755,7 +761,7 @@ func installCommand(rubyVersion string) {
 		spinner.Done(err == nil)
 
 		if err != nil {
-			terminal.PrintWarnMessage(err.Error())
+			terminal.Warn(err.Error())
 		}
 	}
 
@@ -777,7 +783,7 @@ func installCommand(rubyVersion string) {
 			spinner.Done(err == nil)
 
 			if err != nil {
-				terminal.PrintWarnMessage(err.Error())
+				terminal.Warn(err.Error())
 			}
 		}
 	}
@@ -795,7 +801,7 @@ func installCommand(rubyVersion string) {
 
 			if err != nil {
 				fmtc.Println("{r}✖  {!}Creating alias")
-				terminal.PrintWarnMessage(err.Error())
+				terminal.Warn(err.Error())
 			} else {
 				fmtc.Println("{g}✔  {!}Creating alias")
 				aliasCreated = true
@@ -818,8 +824,8 @@ func installCommand(rubyVersion string) {
 	}
 }
 
-// uninstallCommand unistall some version of ruby
-func uninstallCommand(rubyVersion string) {
+// uninstallVersion unistall given version of ruby
+func uninstallVersion(rubyVersion string) {
 	if !knf.GetB(RBENV_ALLOW_UNINSTALL, false) {
 		printErrorAndExit("Uninstalling is not allowed")
 	}
@@ -853,6 +859,71 @@ func uninstallCommand(rubyVersion string) {
 
 	log.Info("[%s] Uninstalled version %s", currentUser.RealName, info.Name)
 	fmtc.Printf("{g}Version {*}%s{!*} successfully uninstalled{!}\n", rubyVersion)
+}
+
+// reinstallVersion reinstalls given version of ruby
+func reinstallVersion(rubyVersion string) {
+	if !isVersionInstalled(rubyVersion) {
+		printErrorAndExit("Version %s in not installed", rubyVersion)
+	}
+
+	if !knf.GetB(RBENV_ALLOW_OVERWRITE, false) {
+		printErrorAndExit("Reinstalling is not allowed")
+	}
+
+	terminal.Warn("Reinstalling %s…\n", rubyVersion)
+
+	installVersion(rubyVersion, true)
+}
+
+// reinstallUpdatedVersions reinstalls all rebuilt versions
+func reinstallUpdatedVersions() {
+	installed := getInstalledVersionsMap()
+
+	if len(installed) == 0 {
+		terminal.Warn("There is no installed versions")
+		return
+	}
+
+	checkPerms()
+	setupLogger()
+	setupTemp()
+
+	var hasUpdates bool
+
+	for rubyVersion := range installed {
+		info, _, err := getVersionInfo(rubyVersion)
+
+		if err != nil {
+			continue
+		}
+
+		installDate, err := fsutil.GetMTime(getVersionPath(rubyVersion))
+
+		if err != nil {
+			fmtc.NewLine()
+			terminal.Error("Can't check install date of version %s: %v", rubyVersion, err)
+			continue
+		}
+
+		if installDate.Unix() >= info.Added {
+			continue
+		}
+
+		if hasUpdates {
+			fmtc.NewLine()
+		}
+
+		terminal.Warn("Reinstalling %s…\n", rubyVersion)
+
+		installVersion(rubyVersion, true)
+
+		hasUpdates = true
+	}
+
+	if !hasUpdates {
+		fmtc.Println("{g}All versions are up-to-date{!}")
+	}
 }
 
 // rehashShims run 'rbenv rehash' command
@@ -987,7 +1058,7 @@ func updateGems(rubyVersion string) {
 		spinner.Done(err == nil)
 
 		if err != nil {
-			terminal.PrintWarnMessage(err.Error())
+			terminal.Warn(err.Error())
 		}
 
 		installed = true
@@ -1025,7 +1096,7 @@ func updateGems(rubyVersion string) {
 					)
 				}
 			} else {
-				terminal.PrintWarnMessage(err.Error())
+				terminal.Warn(err.Error())
 			}
 		}
 
@@ -1421,7 +1492,7 @@ func getVersionFromFile() (string, error) {
 		return "", fmtc.Errorf("Can't find proper version file")
 	}
 
-	versionData, err := ioutil.ReadFile(versionFile)
+	versionData, err := os.ReadFile(versionFile)
 
 	if err != nil {
 		return "", fmtc.Errorf("Can't read version file: %v", err)
@@ -1466,7 +1537,7 @@ func getVersionInfo(rubyVersion string) (*index.VersionInfo, string, error) {
 	return info, category, nil
 }
 
-// getInstalledVersionsMap return map with names of installed versions
+// getInstalledVersionsMap returns map with names of installed versions
 func getInstalledVersionsMap() map[string]bool {
 	result := make(map[string]bool)
 	versions := fsutil.List(
@@ -1485,7 +1556,7 @@ func getInstalledVersionsMap() map[string]bool {
 	return result
 }
 
-// getVersionGemPath return path to directory with installed gems
+// getVersionGemPath returns path to directory with installed gems
 func getVersionGemDirPath(rubyVersion string) string {
 	gemsPath := getVersionPath(rubyVersion) + "/lib/ruby/gems"
 
@@ -1535,7 +1606,7 @@ func getGemSourceURL(rubyVersion string) string {
 	return "http://" + knf.GetS(GEMS_SOURCE)
 }
 
-// checkRBEnv check RBEnv directory and state
+// checkRBEnv check rbenv directory and state
 func checkRBEnv() {
 	versionsDir := getRBEnvVersionsPath()
 
@@ -1677,7 +1748,7 @@ func parseGemInfo(data string) (string, string) {
 // to this log file
 func logFailedAction(message string) (string, error) {
 	if len(message) == 0 {
-		return "", errors.New("Output data is empty")
+		return "", errors.New("Output is empty")
 	}
 
 	logSuffix := passwd.GenPassword(8, passwd.STRENGTH_WEAK)
@@ -1688,7 +1759,7 @@ func logFailedAction(message string) (string, error) {
 	}
 
 	data := append([]byte(message), []byte("\n\n")...)
-	err := ioutil.WriteFile(tmpName, data, 0666)
+	err := os.WriteFile(tmpName, data, 0666)
 
 	if err != nil {
 		return "", err
@@ -1707,7 +1778,7 @@ func intSignalHandler() {
 
 // printErrorAndExit print error message and exit with non-zero exit code
 func printErrorAndExit(f string, a ...interface{}) {
-	terminal.PrintErrorMessage(f, a...)
+	terminal.Error(f, a...)
 	exit(1)
 }
 
@@ -1757,9 +1828,10 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = "{*}" + colorTagApp
 
-	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in config){!}")
-	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in config){!}")
-	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in config){!}")
+	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in configuration file){!}")
+	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in configuration file){!}")
+	info.AddOption(OPT_REINSTALL_UPDATED, "Reinstall all updated (rebuilt) versions {s-}(if allowed in configuration file){!}")
+	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in configuration file){!}")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")

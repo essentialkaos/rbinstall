@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
+  <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#ci-status">CI Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
 </p>
 
 `rbinstall` is a utility for installing prebuilt Ruby to [rbenv](https://github.com/rbenv/rbenv).
@@ -21,10 +21,10 @@
 
 ### Installation
 
-#### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
+#### From [ESSENTIAL KAOS Public Repository](https://pkgs.kaos.st)
 
 ```bash
-sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
+sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rbinstall
 ```
 
@@ -34,18 +34,19 @@ Usage: rbinstall {options} version
 
 Options
 
-  --reinstall, -R        Reinstall already installed version (if allowed in config)
-  --uninstall, -U        Uninstall already installed version (if allowed in config)
-  --gems-update, -G      Update gems for some version (if allowed in config)
-  --rehash, -H           Rehash rbenv shims
-  --gems-insecure, -s    Use HTTP instead of HTTPS for installing gems
-  --ruby-version, -r     Install version defined in version file
-  --info, -i             Print detailed info about version
-  --all, -a              Print all available versions
-  --no-progress, -np     Disable progress bar and spinner
-  --no-color, -nc        Disable colors in output
-  --help, -h             Show this help message
-  --version, -v          Show version
+  --reinstall, -R            Reinstall already installed version (if allowed in configuration file)
+  --uninstall, -U            Uninstall already installed version (if allowed in configuration file)
+  --reinstall-updated, -X    Reinstall all updated (rebuilt) versions (if allowed in configuration file)
+  --gems-update, -G          Update gems for some version (if allowed in configuration file)
+  --rehash, -H               Rehash rbenv shims
+  --gems-insecure, -s        Use HTTP instead of HTTPS for installing gems
+  --ruby-version, -r         Install version defined in version file
+  --info, -i                 Print detailed info about version
+  --all, -a                  Print all available versions
+  --no-progress, -np         Disable progress bar and spinner
+  --no-color, -nc            Disable colors in output
+  --help, -h                 Show this help message
+  --version, -v              Show version
 
 Examples
 
@@ -71,7 +72,7 @@ Examples
   Install version defined in .ruby-version file
 ```
 
-### Build Status
+### CI Status
 
 | Branch | Status |
 |--------|--------|
