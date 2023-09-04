@@ -261,6 +261,10 @@ func preConfigureUI() {
 
 // configureUI configure user interface
 func configureUI() {
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
 	switch {
 	case fmtc.IsTrueColorSupported():
 		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"

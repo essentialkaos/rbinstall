@@ -120,6 +120,7 @@ rm -rf %{buildroot}
 %changelog
 * Fri Sep 01 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.0-0
 - Added option -X/--reinstall-updated for updating rebuilt versions
+- Fixed color disabling using -nc/--no-color option
 - Dependencies update
 - Code refactoring
 
