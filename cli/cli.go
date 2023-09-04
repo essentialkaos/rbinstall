@@ -881,19 +881,23 @@ func reinstallUpdatedVersions() {
 		return
 	}
 
+	checkPerms()
+	setupLogger()
+	setupTemp()
+
 	var hasUpdates bool
 
 	for rubyVersion := range installed {
 		info, _, err := getVersionInfo(rubyVersion)
 
 		if err != nil {
-			terminal.Error("Can't find info for version %s: %v", rubyVersion, err)
 			continue
 		}
 
 		installDate, err := fsutil.GetMTime(getVersionPath(rubyVersion))
 
 		if err != nil {
+			fmtc.NewLine()
 			terminal.Error("Can't check install date of version %s: %v", rubyVersion, err)
 			continue
 		}
@@ -902,11 +906,7 @@ func reinstallUpdatedVersions() {
 			continue
 		}
 
-		if !hasUpdates {
-			checkPerms()
-			setupLogger()
-			setupTemp()
-		} else {
+		if hasUpdates {
 			fmtc.NewLine()
 		}
 
