@@ -40,7 +40,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.0.3"
+	VER  = "3.0.4"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -250,7 +250,7 @@ func buildIndex(dataDir string) {
 	fileList := fsutil.ListAllFiles(
 		dataDir, true,
 		fsutil.ListingFilter{
-			Perms:         "FR",
+			Perms:         "FRS",
 			MatchPatterns: []string{"*.tzst"},
 		})
 
@@ -367,8 +367,8 @@ func processFiles(files []string) []FileInfo {
 		result = append(result, FileInfo{
 			OS:       fileInfoSlice[0],
 			Arch:     fileInfoSlice[1],
-			Category: guessCategory(fileInfoSlice[2]),
 			File:     fileInfoSlice[2],
+			Category: guessCategory(fileInfoSlice[2]),
 		})
 	}
 
@@ -500,6 +500,8 @@ func getVariationBaseName(name string) string {
 func fmtVersionName(v string) string {
 	v = strings.ReplaceAll(v, ".tzst", "")
 	v = strings.ReplaceAll(v, "-p", ".")
+	v = strings.ReplaceAll(v, "-railsexpress", ".1")
+	v = strings.ReplaceAll(v, "-jemalloc", ".2")
 	return v
 }
 
