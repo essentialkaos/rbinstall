@@ -40,7 +40,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.0.4"
+	VER  = "3.1.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -80,10 +80,7 @@ type fileInfoSlice []FileInfo
 func (s fileInfoSlice) Len() int      { return len(s) }
 func (s fileInfoSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s fileInfoSlice) Less(i, j int) bool {
-	return sortutil.VersionCompare(
-		fmtVersionName(s[i].File),
-		fmtVersionName(s[j].File),
-	)
+	return sortutil.VersionCompare(fmtVersionName(s[i].File), fmtVersionName(s[j].File))
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -93,8 +90,8 @@ var aliasInfo map[string]string
 
 var optMap = options.Map{
 	OPT_OUTPUT:   {Value: INDEX_NAME},
-	OPT_EOL:      {},
-	OPT_ALIAS:    {},
+	OPT_EOL:      {Value: "eol.json"},
+	OPT_ALIAS:    {Value: "alias.json"},
 	OPT_NO_COLOR: {Type: options.BOOL},
 	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
 	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
@@ -190,18 +187,20 @@ func configureUI() {
 	}
 }
 
-// loadEOLInfo load EOL info from file
+// loadEOLInfo loads EOL info from file
 func loadEOLInfo() {
 	eolInfo = make(map[string]bool)
 
-	if !options.Has(OPT_EOL) {
-		return
+	if !fsutil.CheckPerms("FRS", options.GetS(OPT_EOL)) {
+		if !options.Has(OPT_EOL) {
+			return
+		}
 	}
 
 	err := jsonutil.Read(options.GetS(OPT_EOL), &eolInfo)
 
 	if err != nil {
-		printErrorAndExit(err.Error())
+		printErrorAndExit("Can't read EOL data: %v", err)
 	}
 }
 
@@ -209,14 +208,16 @@ func loadEOLInfo() {
 func loadAliasInfo() {
 	aliasInfo = make(map[string]string)
 
-	if !options.Has(OPT_ALIAS) {
-		return
+	if !fsutil.CheckPerms("FRS", options.GetS(OPT_ALIAS)) {
+		if !options.Has(OPT_ALIAS) {
+			return
+		}
 	}
 
 	err := jsonutil.Read(options.GetS(OPT_ALIAS), &aliasInfo)
 
 	if err != nil {
-		printErrorAndExit(err.Error())
+		printErrorAndExit("Can't read alias data: %v", err)
 	}
 }
 
@@ -330,6 +331,10 @@ func buildIndex(dataDir string) {
 	}
 
 	printIndexStats(newIndex)
+	printExtraInfo()
+
+	fmtutil.Separator(false)
+
 	saveIndex(outputFile, newIndex)
 
 	fmtc.Printf(
@@ -415,8 +420,28 @@ func printIndexStats(i *index.Index) {
 		fmtutil.PrettyNum(i.Meta.Items),
 		fmtutil.PrettySize(i.Meta.Size, " "),
 	)
+}
 
-	fmtutil.Separator(false)
+// printExtraInfo prints info about used alias/eol data
+func printExtraInfo() {
+	fmtutil.Separator(false, "EXTRA")
+
+	eolModTime, _ := fsutil.GetMTime(options.GetS(OPT_EOL))
+	aliasModTime, _ := fsutil.GetMTime(options.GetS(OPT_ALIAS))
+
+	fmtc.If(len(eolInfo) == 0).Println("  {*}EOL:  {!} {s}—{!}")
+	fmtc.If(len(eolInfo) != 0).Printf(
+		"  {*}EOL:  {!} %s {s-}(%s){!}\n",
+		options.GetS(OPT_EOL),
+		timeutil.Format(eolModTime, "%Y/%m/%d %H:%M"),
+	)
+
+	fmtc.If(len(aliasInfo) == 0).Println("  {*}Alias:{!} {s}—{!}")
+	fmtc.If(len(aliasInfo) != 0).Printf(
+		"  {*}Alias:{!} %s {s-}(%s){!}\n",
+		options.GetS(OPT_ALIAS),
+		timeutil.Format(aliasModTime, "%Y/%m/%d %H:%M"),
+	)
 }
 
 // saveIndex saves index data as JSON to file
@@ -435,7 +460,7 @@ func saveIndex(outputFile string, i *index.Index) {
 	err = os.WriteFile(outputFile, indexData, 0644)
 
 	if err != nil {
-		printErrorAndExit(err.Error())
+		printErrorAndExit("Can't save index: %v", err)
 	}
 
 	os.Chmod(outputFile, 0644)
@@ -558,8 +583,8 @@ func genUsage() *usage.Info {
 	info.AppNameColorTag = "{*}" + colorTagApp
 
 	info.AddOption(OPT_OUTPUT, "Custom index output {s-}(default: index.json){!}", "file")
-	info.AddOption(OPT_EOL, "File with EOL information", "file")
-	info.AddOption(OPT_ALIAS, "File with aliases information", "file")
+	info.AddOption(OPT_EOL, "File with EOL information {s-}(default: eol.json){!}", "file")
+	info.AddOption(OPT_ALIAS, "File with aliases information {s-}(default: alias.json){!}", "file")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VER, "Show version")
