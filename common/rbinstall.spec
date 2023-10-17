@@ -120,6 +120,7 @@ rm -rf %{buildroot}
 %changelog
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.2-0
 - [gen] Improved alias and eol info handling
+- [cli|gen|clone] Improve verbose version info
 - Dependencies update
 
 * Tue Oct 03 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.1-0
