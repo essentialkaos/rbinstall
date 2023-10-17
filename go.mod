@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/essentialkaos/go-linenoise/v3 v3.4.0 // indirect
-	github.com/klauspost/compress v1.17.0 // indirect
+	github.com/klauspost/compress v1.17.1 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 )
