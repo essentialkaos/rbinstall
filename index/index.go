@@ -75,8 +75,8 @@ type versionInfoSlice []*VersionInfo
 func (s versionInfoSlice) Len() int      { return len(s) }
 func (s versionInfoSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s versionInfoSlice) Less(i, j int) bool {
-	iv := strings.Replace(s[i].Name, "-", ".", -1)
-	jv := strings.Replace(s[j].Name, "-", ".", -1)
+	iv := strings.ReplaceAll(s[i].Name, "-", ".")
+	jv := strings.ReplaceAll(s[j].Name, "-", ".")
 
 	return sortutil.VersionCompare(iv, jv)
 }
@@ -86,7 +86,7 @@ func (s versionInfoSlice) Less(i, j int) bool {
 // NewIndex return pointer to new index struct
 func NewIndex() *Index {
 	return &Index{
-		UUID: uuid.GenUUID(),
+		UUID: uuid.UUID4().String(),
 		Meta: &Metadata{},
 		Data: make(map[string]DistData),
 	}
