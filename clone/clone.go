@@ -500,11 +500,11 @@ func printCompletion() int {
 
 	switch options.GetS(OPT_COMPLETION) {
 	case "bash":
-		fmt.Printf(bash.Generate(info, "rbinstall-clone"))
+		fmt.Print(bash.Generate(info, "rbinstall-clone"))
 	case "fish":
-		fmt.Printf(fish.Generate(info, "rbinstall-clone"))
+		fmt.Print(fish.Generate(info, "rbinstall-clone"))
 	case "zsh":
-		fmt.Printf(zsh.Generate(info, optMap, "rbinstall-clone"))
+		fmt.Print(zsh.Generate(info, optMap, "rbinstall-clone"))
 	default:
 		return 1
 	}

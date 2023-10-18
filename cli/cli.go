@@ -1498,7 +1498,7 @@ func getVersionFromFile() (string, error) {
 		return "", fmtc.Errorf("Can't read version file: %v", err)
 	}
 
-	versionName := strings.Trim(string(versionData[:]), " \n\r")
+	versionName := strings.Trim(string(versionData), " \n\r")
 
 	if versionName == "" {
 		return "", fmtc.Errorf("Can't use version file - file malformed")
@@ -1731,7 +1731,7 @@ func isVersionSupportedByBundler(rubyVersion string) bool {
 
 // getNameWithoutPatchLevel return name without -p0
 func getNameWithoutPatchLevel(name string) string {
-	return strings.Replace(name, "-p0", "", -1)
+	return strings.ReplaceAll(name, "-p0", "")
 }
 
 // parseGemInfo extract name and version of gem
@@ -1800,11 +1800,11 @@ func printCompletion() int {
 
 	switch options.GetS(OPT_COMPLETION) {
 	case "bash":
-		fmt.Printf(bash.Generate(info, "rbinstall"))
+		fmt.Print(bash.Generate(info, "rbinstall"))
 	case "fish":
-		fmt.Printf(fish.Generate(info, "rbinstall"))
+		fmt.Print(fish.Generate(info, "rbinstall"))
 	case "zsh":
-		fmt.Printf(zsh.Generate(info, optMap, "rbinstall"))
+		fmt.Print(zsh.Generate(info, optMap, "rbinstall"))
 	default:
 		return 1
 	}
