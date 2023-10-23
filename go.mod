@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/essentialkaos/depsy v1.1.0
-	github.com/essentialkaos/ek/v12 v12.82.0
+	github.com/essentialkaos/ek/v12 v12.83.0
 	github.com/essentialkaos/npck v1.6.1
 )
 
