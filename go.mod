@@ -4,13 +4,13 @@ go 1.18
 
 require (
 	github.com/essentialkaos/depsy v1.1.0
-	github.com/essentialkaos/ek/v12 v12.83.2
+	github.com/essentialkaos/ek/v12 v12.84.0
 	github.com/essentialkaos/npck v1.6.1
 )
 
 require (
 	github.com/essentialkaos/go-linenoise/v3 v3.4.0 // indirect
 	github.com/klauspost/compress v1.17.1 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
 )
