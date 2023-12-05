@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
@@ -27,6 +26,7 @@ import (
 	"github.com/essentialkaos/ek/v12/progress"
 	"github.com/essentialkaos/ek/v12/req"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/completion/bash"
@@ -43,7 +43,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.0.3"
+	VER  = "3.1.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -139,24 +139,11 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
-	}
-
-	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
+	if fmtc.IsColorsSupported() {
 		fmtc.DisableColors = true
 	}
 
-	if os.Getenv("NO_COLOR") != "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 	}
 }
@@ -172,11 +159,11 @@ func configureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+		colorTagApp, colorTagVer = "{*}{#CC1E2C}", "{#CC1E2C}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{#160}", "{#160}"
+		colorTagApp, colorTagVer = "{*}{#160}", "{#160}"
 	default:
-		colorTagApp, colorTagVer = "{r}", "{r}"
+		colorTagApp, colorTagVer = "{*}{r}", "{r}"
 	}
 }
 
@@ -526,7 +513,7 @@ func printMan() {
 func genUsage() *usage.Info {
 	info := usage.NewInfo("", "url", "path")
 
-	info.AppNameColorTag = "{*}" + colorTagApp
+	info.AppNameColorTag = colorTagApp
 
 	info.AddOption(OPT_YES, `Answer "yes" to all questions`)
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
@@ -548,11 +535,13 @@ func genAbout(gitRev string) *usage.About {
 		Version: VER,
 		Desc:    DESC,
 		Year:    2006,
+
+		AppNameColorTag: colorTagApp,
+		VersionColorTag: colorTagVer,
+		DescSeparator:   "{s}—{!}",
+
 		Owner:   "ESSENTIAL KAOS",
 		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-
-		AppNameColorTag: "{*}" + colorTagApp,
-		VersionColorTag: colorTagVer,
 	}
 
 	if gitRev != "" {

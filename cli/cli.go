@@ -39,6 +39,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/terminal/window"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/tmp"
@@ -65,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.1.0"
+	VER  = "3.2.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -236,26 +237,13 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
+	if fmtc.IsColorsSupported() {
+		fmtc.DisableColors = true
 	}
 
-	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 		useRawOutput = true
-	}
-
-	if os.Getenv("NO_COLOR") != "" {
-		fmtc.DisableColors = true
 	}
 }
 
@@ -267,11 +255,11 @@ func configureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+		colorTagApp, colorTagVer = "{*}{#CC1E2C}", "{#CC1E2C}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{#160}", "{#160}"
+		colorTagApp, colorTagVer = "{*}{#160}", "{#160}"
 	default:
-		colorTagApp, colorTagVer = "{r}", "{r}"
+		colorTagApp, colorTagVer = "{*}{r}", "{r}"
 	}
 
 	if fmtc.IsTrueColorSupported() || fmtc.Is256ColorsSupported() {
@@ -1826,7 +1814,7 @@ func printMan() {
 func genUsage() *usage.Info {
 	info := usage.NewInfo("", "version")
 
-	info.AppNameColorTag = "{*}" + colorTagApp
+	info.AppNameColorTag = colorTagApp
 
 	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in configuration file){!}")
 	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in configuration file){!}")
@@ -1856,10 +1844,15 @@ func genUsage() *usage.Info {
 // genAbout generates info about version
 func genAbout(gitRev string) *usage.About {
 	about := &usage.About{
-		App:           APP,
-		Version:       VER,
-		Desc:          DESC,
-		Year:          2006,
+		App:     APP,
+		Version: VER,
+		Desc:    DESC,
+		Year:    2006,
+
+		AppNameColorTag: colorTagApp,
+		VersionColorTag: colorTagVer,
+		DescSeparator:   "{s}—{!}",
+
 		Owner:         "ESSENTIAL KAOS",
 		License:       "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
@@ -1867,11 +1860,6 @@ func genAbout(gitRev string) *usage.About {
 
 	if gitRev != "" {
 		about.Build = "git:" + gitRev
-	}
-
-	if fmtc.Is256ColorsSupported() {
-		about.AppNameColorTag = "{*}" + colorTagApp
-		about.VersionColorTag = colorTagVer
 	}
 
 	return about
