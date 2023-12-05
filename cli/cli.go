@@ -29,6 +29,7 @@ import (
 	"github.com/essentialkaos/ek/v12/knf"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/progress"
@@ -83,6 +84,7 @@ const (
 	OPT_RUBY_VERSION      = "r:ruby-version"
 	OPT_INFO              = "i:info"
 	OPT_ALL               = "a:all"
+	OPT_PAGER             = "P:pager"
 	OPT_NO_COLOR          = "nc:no-color"
 	OPT_NO_PROGRESS       = "np:no-progress"
 	OPT_HELP              = "h:help"
@@ -151,6 +153,7 @@ var optMap = options.Map{
 	OPT_REHASH:            {Type: options.BOOL},
 	OPT_ALL:               {Type: options.BOOL},
 	OPT_INFO:              {Type: options.BOOL},
+	OPT_PAGER:             {Type: options.BOOL},
 	OPT_NO_COLOR:          {Type: options.BOOL},
 	OPT_NO_PROGRESS:       {Type: options.BOOL},
 	OPT_HELP:              {Type: options.BOOL},
@@ -541,6 +544,12 @@ func listCommand() {
 
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
+	if options.GetB(OPT_PAGER) {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
+	}
+
 	ruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, options.GetB(OPT_ALL))
 	jruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, options.GetB(OPT_ALL))
 	truffle := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, options.GetB(OPT_ALL))
@@ -1825,6 +1834,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(OPT_INFO, "Print detailed info about version")
 	info.AddOption(OPT_ALL, "Print all available versions")
+	info.AddOption(OPT_PAGER, "Use pager for long output")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
