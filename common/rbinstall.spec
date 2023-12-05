@@ -118,6 +118,12 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Dec 06 2023 Anton Novojilov <andy@essentialkaos.com> - 3.2.0-0
+- [cli] Added '-P'/'--pager' option to use pager for long output of versions
+- [cli|gen|clone] Improve verbose version info
+- [cli|gen|clone] Code refactoring
+- Dependencies update
+
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.2-0
 - [gen] Improved alias and eol info handling
 - [cli|gen|clone] Improve verbose version info
