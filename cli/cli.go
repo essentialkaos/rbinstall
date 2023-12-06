@@ -183,8 +183,7 @@ var categorySize = map[string]int{
 	index.CATEGORY_OTHER:   0,
 }
 
-var colorTagApp string
-var colorTagVer string
+var colorTagApp, colorTagVer string
 
 var useRawOutput = false
 var noProgress = false
