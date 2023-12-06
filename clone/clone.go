@@ -88,8 +88,7 @@ var optMap = options.Map{
 	OPT_GENERATE_MAN: {Type: options.BOOL},
 }
 
-var colorTagApp string
-var colorTagVer string
+var colorTagApp, colorTagVer string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 

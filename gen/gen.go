@@ -104,8 +104,7 @@ var optMap = options.Map{
 
 var variations = []string{"railsexpress", "jemalloc"}
 
-var colorTagApp string
-var colorTagVer string
+var colorTagApp, colorTagVer string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -597,6 +596,11 @@ func genAbout(gitRev string) *usage.About {
 		Version: VER,
 		Desc:    DESC,
 		Year:    2006,
+
+		AppNameColorTag: colorTagApp,
+		VersionColorTag: colorTagVer,
+		DescSeparator:   "{s}—{!}",
+
 		Owner:   "ESSENTIAL KAOS",
 		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 	}
