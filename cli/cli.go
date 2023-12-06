@@ -29,6 +29,7 @@ import (
 	"github.com/essentialkaos/ek/v12/knf"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/progress"
@@ -39,6 +40,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/terminal/window"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/tmp"
@@ -65,7 +67,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.1.0"
+	VER  = "3.2.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -82,6 +84,7 @@ const (
 	OPT_RUBY_VERSION      = "r:ruby-version"
 	OPT_INFO              = "i:info"
 	OPT_ALL               = "a:all"
+	OPT_PAGER             = "P:pager"
 	OPT_NO_COLOR          = "nc:no-color"
 	OPT_NO_PROGRESS       = "np:no-progress"
 	OPT_HELP              = "h:help"
@@ -150,6 +153,7 @@ var optMap = options.Map{
 	OPT_REHASH:            {Type: options.BOOL},
 	OPT_ALL:               {Type: options.BOOL},
 	OPT_INFO:              {Type: options.BOOL},
+	OPT_PAGER:             {Type: options.BOOL},
 	OPT_NO_COLOR:          {Type: options.BOOL},
 	OPT_NO_PROGRESS:       {Type: options.BOOL},
 	OPT_HELP:              {Type: options.BOOL},
@@ -236,26 +240,13 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
+	if !fmtc.IsColorsSupported() {
+		fmtc.DisableColors = true
 	}
 
-	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 		useRawOutput = true
-	}
-
-	if os.Getenv("NO_COLOR") != "" {
-		fmtc.DisableColors = true
 	}
 }
 
@@ -267,11 +258,11 @@ func configureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+		colorTagApp, colorTagVer = "{*}{#CC1E2C}", "{#CC1E2C}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{#160}", "{#160}"
+		colorTagApp, colorTagVer = "{*}{#160}", "{#160}"
 	default:
-		colorTagApp, colorTagVer = "{r}", "{r}"
+		colorTagApp, colorTagVer = "{*}{r}", "{r}"
 	}
 
 	if fmtc.IsTrueColorSupported() || fmtc.Is256ColorsSupported() {
@@ -553,6 +544,12 @@ func listCommand() {
 
 // printPrettyListing print info about listing with colors in table view
 func printPrettyListing(dist, arch string) {
+	if options.GetB(OPT_PAGER) {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
+	}
+
 	ruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, options.GetB(OPT_ALL))
 	jruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, options.GetB(OPT_ALL))
 	truffle := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, options.GetB(OPT_ALL))
@@ -1826,7 +1823,7 @@ func printMan() {
 func genUsage() *usage.Info {
 	info := usage.NewInfo("", "version")
 
-	info.AppNameColorTag = "{*}" + colorTagApp
+	info.AppNameColorTag = colorTagApp
 
 	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in configuration file){!}")
 	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in configuration file){!}")
@@ -1837,6 +1834,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
 	info.AddOption(OPT_INFO, "Print detailed info about version")
 	info.AddOption(OPT_ALL, "Print all available versions")
+	info.AddOption(OPT_PAGER, "Use pager for long output")
 	info.AddOption(OPT_NO_PROGRESS, "Disable progress bar and spinner")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
@@ -1856,10 +1854,15 @@ func genUsage() *usage.Info {
 // genAbout generates info about version
 func genAbout(gitRev string) *usage.About {
 	about := &usage.About{
-		App:           APP,
-		Version:       VER,
-		Desc:          DESC,
-		Year:          2006,
+		App:     APP,
+		Version: VER,
+		Desc:    DESC,
+		Year:    2006,
+
+		AppNameColorTag: colorTagApp,
+		VersionColorTag: colorTagVer,
+		DescSeparator:   "{s}—{!}",
+
 		Owner:         "ESSENTIAL KAOS",
 		License:       "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
@@ -1867,11 +1870,6 @@ func genAbout(gitRev string) *usage.About {
 
 	if gitRev != "" {
 		about.Build = "git:" + gitRev
-	}
-
-	if fmtc.Is256ColorsSupported() {
-		about.AppNameColorTag = "{*}" + colorTagApp
-		about.VersionColorTag = colorTagVer
 	}
 
 	return about

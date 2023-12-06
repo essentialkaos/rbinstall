@@ -24,6 +24,7 @@ import (
 	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/sortutil"
 	"github.com/essentialkaos/ek/v12/strutil"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/completion/bash"
@@ -40,7 +41,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.1.0"
+	VER  = "3.2.0"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -149,24 +150,11 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
-	}
-
-	if !fsutil.IsCharacterDevice("/dev/stdout") && os.Getenv("FAKETTY") == "" {
+	if !fmtc.IsColorsSupported() {
 		fmtc.DisableColors = true
 	}
 
-	if os.Getenv("NO_COLOR") != "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 	}
 }
@@ -179,11 +167,11 @@ func configureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{#CC1E2C}", "{#CC1E2C}"
+		colorTagApp, colorTagVer = "{*}{#CC1E2C}", "{#CC1E2C}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{#160}", "{#160}"
+		colorTagApp, colorTagVer = "{*}{#160}", "{#160}"
 	default:
-		colorTagApp, colorTagVer = "{r}", "{r}"
+		colorTagApp, colorTagVer = "{*}{r}", "{r}"
 	}
 }
 
@@ -580,7 +568,7 @@ func printMan() {
 func genUsage() *usage.Info {
 	info := usage.NewInfo("", "dir")
 
-	info.AppNameColorTag = "{*}" + colorTagApp
+	info.AppNameColorTag = colorTagApp
 
 	info.AddOption(OPT_OUTPUT, "Custom index output {s-}(default: index.json){!}", "file")
 	info.AddOption(OPT_EOL, "File with EOL information {s-}(default: eol.json){!}", "file")
@@ -611,9 +599,6 @@ func genAbout(gitRev string) *usage.About {
 		Year:    2006,
 		Owner:   "ESSENTIAL KAOS",
 		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-
-		AppNameColorTag: "{*}" + colorTagApp,
-		VersionColorTag: colorTagVer,
 	}
 
 	if gitRev != "" {

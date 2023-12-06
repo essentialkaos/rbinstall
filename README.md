@@ -21,7 +21,7 @@
 
 ### Installation
 
-#### From [ESSENTIAL KAOS Public Repository](https://pkgs.kaos.st)
+#### From [ESSENTIAL KAOS Public Repository](https://kaos.sh/kaos-repo)
 
 ```bash
 sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
@@ -43,6 +43,7 @@ Options
   --ruby-version, -r         Install version defined in version file
   --info, -i                 Print detailed info about version
   --all, -a                  Print all available versions
+  --pager, -P                Use pager for long output
   --no-progress, -np         Disable progress bar and spinner
   --no-color, -nc            Disable colors in output
   --help, -h                 Show this help message

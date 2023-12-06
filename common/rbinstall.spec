@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.1.2
+Version:        3.2.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -38,7 +38,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.1.0
+Version:  3.2.0
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -50,7 +50,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.0.5
+Version:  3.1.0
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -118,6 +118,12 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Dec 06 2023 Anton Novojilov <andy@essentialkaos.com> - 3.2.0-0
+- [cli] Added '-P'/'--pager' option to use pager for long output of versions
+- [cli|gen|clone] Improve verbose version info
+- [cli|gen|clone] Code refactoring
+- Dependencies update
+
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.2-0
 - [gen] Improved alias and eol info handling
 - [cli|gen|clone] Improve verbose version info
