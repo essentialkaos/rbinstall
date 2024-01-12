@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.3.0"
+	VER  = "3.3.1"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -768,10 +768,12 @@ func installVersion(rubyVersion string, reinstall bool) {
 			gemName, gemVersion := parseGemInfo(gem)
 			taskDesc := fmt.Sprintf("Installing %s", gemName)
 
-			if gemVersion != "" {
+			if gemVersion == "" || gemVersion == "latest" {
+				taskDesc += fmt.Sprintf(" (latest)")
+			} else if strings.Count(gemVersion, ".") < 2 {
 				taskDesc += fmt.Sprintf(" (%s.x)", gemVersion)
 			} else {
-				taskDesc += fmt.Sprintf(" (latest)")
+				taskDesc += fmt.Sprintf(" (%s)", gemVersion)
 			}
 
 			spinner.Show(taskDesc)
@@ -941,18 +943,18 @@ func unistallTaskHandler(versionName string) error {
 
 	var err error
 
-	// Remove symlink
-	if fsutil.IsExist(path.Join(versionsDir, cleanVersionName)) {
-		err = os.Remove(path.Join(versionsDir, cleanVersionName))
+	// Remove directory with files
+	if fsutil.IsExist(path.Join(versionsDir, versionName)) {
+		err = os.RemoveAll(path.Join(versionsDir, versionName))
 
 		if err != nil {
 			return err
 		}
 	}
 
-	// Remove directory with files
-	if fsutil.IsExist(path.Join(versionsDir, versionName)) {
-		err = os.RemoveAll(path.Join(versionsDir, versionName))
+	// Remove symlink
+	if fsutil.IsExist(path.Join(versionsDir, cleanVersionName)) {
+		err = os.Remove(path.Join(versionsDir, cleanVersionName))
 
 		if err != nil {
 			return err
@@ -1068,10 +1070,12 @@ func updateGems(rubyVersion string) {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
 
-			if gemVersion != "" {
+			if gemVersion == "" || gemVersion == "latest" {
+				gemVerInfo = fmt.Sprintf("(latest)")
+			} else if strings.Count(gemVersion, ".") < 2 {
 				gemVerInfo = fmt.Sprintf("(%s.x)", gemVersion)
 			} else {
-				gemVerInfo = fmt.Sprintf("(latest)")
+				gemVerInfo = fmt.Sprintf("(%s)", gemVersion)
 			}
 
 			if isGemInstalled(rubyVersion, gemName) {
@@ -1119,7 +1123,11 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem, "--force")
 
 	if gemVersion != "" {
-		gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s", gemVersion))
+		if strings.Count(gemVersion, ".") >= 2 {
+			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("%s", gemVersion))
+		} else {
+			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s.0", gemVersion))
+		}
 	}
 
 	if knf.GetB(GEMS_NO_DOCUMENT) {
