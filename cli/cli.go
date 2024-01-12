@@ -746,13 +746,8 @@ func installVersion(rubyVersion string, reinstall bool) {
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) && strutil.HasPrefixAny(info.Name, "1", "2", "3") {
 		rgVersion := getAdvisableRubyGemsVersion(info.Name)
-		gemVersion := rgVersion
 
-		if gemVersion != "latest" && strings.Count(gemVersion, ".") < 2 {
-			gemVersion += ".x"
-		}
-
-		spinner.Show("Updating RubyGems to %s", gemVersion)
+		spinner.Show("Updating RubyGems to %s", formatGemVersion(rgVersion))
 		err = updateRubygemsTaskHandler(info.Name, rgVersion)
 		spinner.Done(err == nil)
 
@@ -766,17 +761,8 @@ func installVersion(rubyVersion string, reinstall bool) {
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
-			taskDesc := fmt.Sprintf("Installing %s", gemName)
 
-			if gemVersion == "" || gemVersion == "latest" {
-				taskDesc += fmt.Sprintf(" (latest)")
-			} else if strings.Count(gemVersion, ".") < 2 {
-				taskDesc += fmt.Sprintf(" (%s.x)", gemVersion)
-			} else {
-				taskDesc += fmt.Sprintf(" (%s)", gemVersion)
-			}
-
-			spinner.Show(taskDesc)
+			spinner.Show(fmt.Sprintf("Installing %s (%s)", gemName, formatGemVersion(gemVersion)))
 			_, err = installGemTaskHandler(info.Name, gemName, gemVersion)
 			spinner.Done(err == nil)
 
@@ -1065,24 +1051,16 @@ func updateGems(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if knf.GetS(GEMS_INSTALL) != "" {
-		var gemVerInfo, installedVersion string
+		var installedVersion string
 
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
 
-			if gemVersion == "" || gemVersion == "latest" {
-				gemVerInfo = fmt.Sprintf("(latest)")
-			} else if strings.Count(gemVersion, ".") < 2 {
-				gemVerInfo = fmt.Sprintf("(%s.x)", gemVersion)
-			} else {
-				gemVerInfo = fmt.Sprintf("(%s)", gemVersion)
-			}
-
 			if isGemInstalled(rubyVersion, gemName) {
-				spinner.Show("Updating %s %s", gemName, gemVerInfo)
+				spinner.Show("Updating %s (%s)", gemName, formatGemVersion(gemVersion))
 				installedVersion, err = updateGemTaskHandler(rubyVersion, gemName, gemVersion)
 			} else {
-				spinner.Show("Installing %s %s", gemName, gemVerInfo)
+				spinner.Show("Installing %s (%s)", gemName, formatGemVersion(gemVersion))
 				installedVersion, err = installGemTaskHandler(rubyVersion, gemName, gemVersion)
 			}
 
@@ -1150,28 +1128,28 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 		return version, nil
 	}
 
-	if gemVersion == "" {
-		gemVersion = "latest"
-	} else if strings.Count(gemVersion, ".") < 2 {
-		gemVersion += ".x"
-	}
-
 	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmtc.Errorf("Can't update gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
+			return "", fmtc.Errorf(
+				"Can't update gem %s (%s). Gem command output saved as %s.",
+				gem, formatGemVersion(gemVersion), actionLog,
+			)
 		default:
-			return "", fmtc.Errorf("Can't install gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
+			return "", fmtc.Errorf(
+				"Can't install gem %s (%s). Gem command output saved as %s.",
+				gem, formatGemVersion(gemVersion), actionLog,
+			)
 		}
 	}
 
 	switch cmd {
 	case "update":
-		return "", fmtc.Errorf("Can't update gem %s (%s)", gem, gemVersion)
+		return "", fmtc.Errorf("Can't update gem %s (%s)", gem, formatGemVersion(gemVersion))
 	default:
-		return "", fmtc.Errorf("Can't install gem %s (%s)", gem, gemVersion)
+		return "", fmtc.Errorf("Can't install gem %s (%s)", gem, formatGemVersion(gemVersion))
 	}
 }
 
@@ -1475,6 +1453,17 @@ func isGemInstalled(rubyVersion string, gemName string) bool {
 	}
 
 	return false
+}
+
+// formatGemVersion formats info about gem
+func formatGemVersion(gemVersion string) string {
+	if gemVersion == "" || gemVersion == "latest" {
+		return "latest"
+	} else if strings.Count(gemVersion, ".") < 2 {
+		return fmt.Sprintf("%s.x", gemVersion)
+	}
+
+	return gemVersion
 }
 
 // isVersionInstalled return true is given version already installed
