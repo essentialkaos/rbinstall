@@ -746,8 +746,13 @@ func installVersion(rubyVersion string, reinstall bool) {
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) && strutil.HasPrefixAny(info.Name, "1", "2", "3") {
 		rgVersion := getAdvisableRubyGemsVersion(info.Name)
+		gemVersion := rgVersion
 
-		spinner.Show("Updating RubyGems to %s", rgVersion)
+		if gemVersion != "latest" && strings.Count(gemVersion, ".") < 2 {
+			gemVersion += ".x"
+		}
+
+		spinner.Show("Updating RubyGems to %s", gemVersion)
 		err = updateRubygemsTaskHandler(info.Name, rgVersion)
 		spinner.Done(err == nil)
 
