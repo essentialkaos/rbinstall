@@ -86,6 +86,7 @@ func collectEnvInfo() Pkgs {
 		getPackageInfo("rbenv"),
 		getPackageInfo("jemalloc"),
 		getPackageInfo("zlib"),
+		getPackageInfo("gcc"),
 		getPackageInfo(
 			"jre8", "jre11", "jre17", "jdk8", "jdk11", "jdk17",
 			"java-1.8.0-openjdk", "java-11-openjdk", "java-17-openjdk",

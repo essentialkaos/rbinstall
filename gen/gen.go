@@ -41,7 +41,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.2.0"
+	VER  = "3.2.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -94,8 +94,8 @@ var optMap = options.Map{
 	OPT_EOL:      {Value: "eol.json"},
 	OPT_ALIAS:    {Value: "alias.json"},
 	OPT_NO_COLOR: {Type: options.BOOL},
-	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
-	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
+	OPT_HELP:     {Type: options.BOOL},
+	OPT_VER:      {Type: options.BOOL},
 
 	OPT_VERB_VER:     {Type: options.BOOL},
 	OPT_COMPLETION:   {},
@@ -518,17 +518,17 @@ func fmtVersionName(v string) string {
 }
 
 // printError prints error message to console
-func printError(f string, a ...interface{}) {
+func printError(f string, a ...any) {
 	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
 }
 
 // printError prints warning message to console
-func printWarn(f string, a ...interface{}) {
+func printWarn(f string, a ...any) {
 	fmtc.Fprintf(os.Stderr, "{y}"+f+"{!}\n", a...)
 }
 
 // printErrorAndExit print error message and exit with non-zero exit code
-func printErrorAndExit(f string, a ...interface{}) {
+func printErrorAndExit(f string, a ...any) {
 	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
 	os.Exit(1)
 }

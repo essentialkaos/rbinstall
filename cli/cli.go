@@ -41,7 +41,6 @@ import (
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
-	"github.com/essentialkaos/ek/v12/terminal/window"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/tmp"
 	"github.com/essentialkaos/ek/v12/usage"
@@ -67,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.2.0"
+	VER  = "3.3.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -106,6 +105,7 @@ const (
 	RBENV_ALLOW_UNINSTALL = "rbenv:allow-uninstall"
 	RBENV_MAKE_ALIAS      = "rbenv:make-alias"
 	GEMS_RUBYGEMS_UPDATE  = "gems:rubygems-update"
+	GEMS_RUBYGEMS_VERSION = "gems:rubygems-version"
 	GEMS_ALLOW_UPDATE     = "gems:allow-update"
 	GEMS_NO_DOCUMENT      = "gems:no-document"
 	GEMS_SOURCE           = "gems:source"
@@ -134,11 +134,6 @@ const (
 	ARCH_X32 = "x32"
 	ARCH_X64 = "x64"
 	ARCH_ARM = "arm"
-)
-
-// RubyGems versions used for old versions of Ruby
-const (
-	MIN_RUBYGEMS_VERSION_BASE = "2.7.9"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -1144,7 +1139,7 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 
 	if gemVersion == "" {
 		gemVersion = "latest"
-	} else {
+	} else if strings.Count(gemVersion, ".") < 2 {
 		gemVersion += ".x"
 	}
 
@@ -1357,7 +1352,7 @@ func getInstallBullet(installed bool, color string) string {
 }
 
 // printSized render format with given size and print text with give arguments
-func printSized(format string, size int, a ...interface{}) {
+func printSized(format string, size int, a ...any) {
 	fmtc.Printf(fmtc.Sprintf(format, size), a...)
 }
 
@@ -1368,7 +1363,7 @@ func printRubyVersion(category, name string) {
 
 // configureCategorySizes configure column size for each category
 func configureCategorySizes(data map[string]index.CategoryData) {
-	terminalWidth := window.GetWidth()
+	terminalWidth := tty.GetWidth()
 
 	if terminalWidth == -1 || terminalWidth > 150 {
 		categorySize[index.CATEGORY_RUBY] = DEFAULT_CATEGORY_SIZE
@@ -1477,12 +1472,7 @@ func isVersionInstalled(rubyVersion string) bool {
 
 // getVersionFromFile try to read version file and return defined version
 func getVersionFromFile() (string, error) {
-	versionFile := fsutil.ProperPath("FRS",
-		[]string{
-			".ruby-version",
-			".rbenv-version",
-		},
-	)
+	versionFile := fsutil.ProperPath("FRS", []string{".ruby-version", ".rbenv-version"})
 
 	if versionFile == "" {
 		return "", fmtc.Errorf("Can't find proper version file")
@@ -1506,14 +1496,26 @@ func getVersionFromFile() (string, error) {
 // getAdvisableRubyGemsVersion returns recommended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
-	v, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
-	minVer, _ := version.Parse("2.3.0")
+	ver, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
 
-	if err != nil || v.Less(minVer) {
-		return MIN_RUBYGEMS_VERSION_BASE
+	if err != nil {
+		return "2.3"
 	}
 
-	return "latest"
+	v23, _ := version.Parse("2.3.0")
+	v26, _ := version.Parse("2.6.0")
+	v30, _ := version.Parse("3.0.0")
+
+	switch {
+	case ver.Less(v23):
+		return "2.3"
+	case ver.Less(v26):
+		return "3.3"
+	case ver.Less(v30):
+		return "3.4"
+	}
+
+	return knf.GetS(GEMS_RUBYGEMS_VERSION, "latest")
 }
 
 // getVersionInfo finds info about given version in index
@@ -1773,7 +1775,7 @@ func intSignalHandler() {
 }
 
 // printErrorAndExit print error message and exit with non-zero exit code
-func printErrorAndExit(f string, a ...interface{}) {
+func printErrorAndExit(f string, a ...any) {
 	terminal.Error(f, a...)
 	exit(1)
 }

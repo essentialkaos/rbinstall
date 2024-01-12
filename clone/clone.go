@@ -43,7 +43,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.1.0"
+	VER  = "3.1.1"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -462,17 +462,12 @@ func getCurrentIndexUUID(dir string) string {
 }
 
 // printError prints error message to console
-func printError(f string, a ...interface{}) {
+func printError(f string, a ...any) {
 	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
 }
 
-// printError prints warning message to console
-func printWarn(f string, a ...interface{}) {
-	fmtc.Fprintf(os.Stderr, "{y}▲ "+f+"{!}\n", a...)
-}
-
 // printErrorAndExit print error message and exit with non-zero exit code
-func printErrorAndExit(f string, a ...interface{}) {
+func printErrorAndExit(f string, a ...any) {
 	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
 	fmtc.NewLine()
 	os.Exit(1)
