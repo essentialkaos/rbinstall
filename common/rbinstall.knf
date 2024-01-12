@@ -37,6 +37,9 @@
   # Update rubygems gem
   rubygems-update: true
 
+  # Update rubygems gem to defined version
+  rubygems-version: latest
+
   # Allow gems update
   allow-update: true
 
