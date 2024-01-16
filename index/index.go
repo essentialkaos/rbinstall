@@ -58,7 +58,7 @@ type CategoryData []*VersionInfo
 
 // VersionInfo contains info about particular version
 type VersionInfo struct {
-	Variations []*VersionInfo `json:"variations,omitempty"` // Info about version variations (railsexpress/jemalloc)
+	Variations []*VersionInfo `json:"variations,omitempty"` // Info about version variations (jemalloc)
 	Name       string         `json:"name"`                 // Base version name
 	File       string         `json:"file"`                 // Full filename (with extension)
 	Path       string         `json:"path"`                 // Relative path to file

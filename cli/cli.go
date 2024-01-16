@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.3.0"
+	VER  = "3.4.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -544,12 +544,22 @@ func printPrettyListing(dist, arch string) {
 		}
 	}
 
-	ruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, options.GetB(OPT_ALL))
-	jruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, options.GetB(OPT_ALL))
-	truffle := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, options.GetB(OPT_ALL))
-	other := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_OTHER, options.GetB(OPT_ALL))
+	ruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, true)
+	jruby := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, true)
+	truffle := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, true)
+	other := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_OTHER, true)
+
+	rubyTotal := ruby.Total()
+	jrubyTotal := jruby.Total()
+	truffleTotal := truffle.Total()
+	otherTotal := other.Total()
 
 	installed := getInstalledVersionsMap()
+
+	ruby = filterCategoryData(ruby, installed)
+	jruby = filterCategoryData(jruby, installed)
+	truffle = filterCategoryData(truffle, installed)
+	other = filterCategoryData(other, installed)
 
 	configureCategorySizes(map[string]index.CategoryData{
 		index.CATEGORY_RUBY:    ruby,
@@ -558,11 +568,6 @@ func printPrettyListing(dist, arch string) {
 		index.CATEGORY_OTHER:   other,
 	})
 
-	rubyTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_RUBY, true).Total()
-	jrubyTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_JRUBY, true).Total()
-	truffleTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_TRUFFLE, true).Total()
-	otherTotal := repoIndex.GetCategoryData(dist, arch, index.CATEGORY_OTHER, true).Total()
-
 	headerTemplate := getCategoryHeaderStyle(index.CATEGORY_RUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_JRUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_TRUFFLE) + " " +
@@ -570,10 +575,10 @@ func printPrettyListing(dist, arch string) {
 
 	fmtc.Printf(
 		headerTemplate,
-		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_RUBY), rubyTotal),
-		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_JRUBY), jrubyTotal),
-		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_TRUFFLE), truffleTotal),
-		fmt.Sprintf("%s (%d)", strings.ToUpper(index.CATEGORY_OTHER), otherTotal),
+		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_RUBY), countVersions(ruby), rubyTotal),
+		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_JRUBY), countVersions(jruby), jrubyTotal),
+		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_TRUFFLE), countVersions(truffle), truffleTotal),
+		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_OTHER), countVersions(other), otherTotal),
 	)
 
 	var counter int
@@ -597,7 +602,7 @@ func printPrettyListing(dist, arch string) {
 
 	if !options.GetB(OPT_ALL) {
 		fmtc.NewLine()
-		fmtc.Println("{s-}For listing outdated versions use option '--all'{!}")
+		fmtc.Printf("{s-}For listing outdated versions use option '%s'{!}\n", options.Format(OPT_ALL))
 	}
 }
 
@@ -655,6 +660,10 @@ func installVersion(rubyVersion string, reinstall bool) {
 		printErrorAndExit(err.Error())
 	}
 
+	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
+	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
+	fmtc.NameColor("category", "{"+categoryColor[category]+"}")
+
 	checkRBEnv()
 	checkDependencies(info, category)
 
@@ -671,10 +680,6 @@ func installVersion(rubyVersion string, reinstall bool) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	var file string
-
-	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
-	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
-	fmtc.NameColor("category", "{"+categoryColor[category]+"}")
 
 	if !noProgress {
 		fmtc.Printf("Fetching {*}{?category}%s{!} from storage…\n", info.Name)
@@ -746,13 +751,8 @@ func installVersion(rubyVersion string, reinstall bool) {
 
 	if knf.GetB(GEMS_RUBYGEMS_UPDATE) && strutil.HasPrefixAny(info.Name, "1", "2", "3") {
 		rgVersion := getAdvisableRubyGemsVersion(info.Name)
-		gemVersion := rgVersion
 
-		if gemVersion != "latest" && strings.Count(gemVersion, ".") < 2 {
-			gemVersion += ".x"
-		}
-
-		spinner.Show("Updating RubyGems to %s", gemVersion)
+		spinner.Show("Updating RubyGems to %s", formatGemVersion(rgVersion))
 		err = updateRubygemsTaskHandler(info.Name, rgVersion)
 		spinner.Done(err == nil)
 
@@ -766,15 +766,8 @@ func installVersion(rubyVersion string, reinstall bool) {
 	if knf.GetS(GEMS_INSTALL) != "" {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
-			taskDesc := fmt.Sprintf("Installing %s", gemName)
 
-			if gemVersion != "" {
-				taskDesc += fmt.Sprintf(" (%s.x)", gemVersion)
-			} else {
-				taskDesc += fmt.Sprintf(" (latest)")
-			}
-
-			spinner.Show(taskDesc)
+			spinner.Show(fmt.Sprintf("Installing %s (%s)", gemName, formatGemVersion(gemVersion)))
 			_, err = installGemTaskHandler(info.Name, gemName, gemVersion)
 			spinner.Done(err == nil)
 
@@ -941,18 +934,18 @@ func unistallTaskHandler(versionName string) error {
 
 	var err error
 
-	// Remove symlink
-	if fsutil.IsExist(path.Join(versionsDir, cleanVersionName)) {
-		err = os.Remove(path.Join(versionsDir, cleanVersionName))
+	// Remove directory with files
+	if fsutil.IsExist(path.Join(versionsDir, versionName)) {
+		err = os.RemoveAll(path.Join(versionsDir, versionName))
 
 		if err != nil {
 			return err
 		}
 	}
 
-	// Remove directory with files
-	if fsutil.IsExist(path.Join(versionsDir, versionName)) {
-		err = os.RemoveAll(path.Join(versionsDir, versionName))
+	// Remove symlink
+	if fsutil.IsExist(path.Join(versionsDir, cleanVersionName)) {
+		err = os.Remove(path.Join(versionsDir, cleanVersionName))
 
 		if err != nil {
 			return err
@@ -1037,12 +1030,21 @@ func updateGems(rubyVersion string) {
 		printErrorAndExit("Version %s is not installed", rubyVersion)
 	}
 
+	_, category, err := getVersionInfo(rubyVersion)
+
+	if err == nil {
+		fmtc.NameColor("category", "{"+categoryColor[category]+"}")
+		spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
+	} else {
+		fmtc.NameColor("category", "{"+categoryColor[index.CATEGORY_RUBY]+"}")
+	}
+
 	checkRBEnv()
 
 	runDate = time.Now()
 	installed := false
 
-	fmtc.Printf("Updating gems for {c}%s{!}…\n\n", rubyVersion)
+	fmtc.Printf("Updating gems for {?category}%s{!}…\n\n", rubyVersion)
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
@@ -1063,22 +1065,16 @@ func updateGems(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if knf.GetS(GEMS_INSTALL) != "" {
-		var gemVerInfo, installedVersion string
+		var installedVersion string
 
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
 
-			if gemVersion != "" {
-				gemVerInfo = fmt.Sprintf("(%s.x)", gemVersion)
-			} else {
-				gemVerInfo = fmt.Sprintf("(latest)")
-			}
-
 			if isGemInstalled(rubyVersion, gemName) {
-				spinner.Show("Updating %s %s", gemName, gemVerInfo)
+				spinner.Show("Updating %s (%s)", gemName, formatGemVersion(gemVersion))
 				installedVersion, err = updateGemTaskHandler(rubyVersion, gemName, gemVersion)
 			} else {
-				spinner.Show("Installing %s %s", gemName, gemVerInfo)
+				spinner.Show("Installing %s (%s)", gemName, formatGemVersion(gemVersion))
 				installedVersion, err = installGemTaskHandler(rubyVersion, gemName, gemVersion)
 			}
 
@@ -1119,7 +1115,11 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", cmd, gem, "--force")
 
 	if gemVersion != "" {
-		gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s", gemVersion))
+		if strings.Count(gemVersion, ".") >= 2 {
+			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("%s", gemVersion))
+		} else {
+			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s.0", gemVersion))
+		}
 	}
 
 	if knf.GetB(GEMS_NO_DOCUMENT) {
@@ -1142,45 +1142,38 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 		return version, nil
 	}
 
-	if gemVersion == "" {
-		gemVersion = "latest"
-	} else if strings.Count(gemVersion, ".") < 2 {
-		gemVersion += ".x"
-	}
-
 	actionLog, err := logFailedAction(strings.TrimRight(string(output), "\r\n"))
 
 	if err == nil {
 		switch cmd {
 		case "update":
-			return "", fmtc.Errorf("Can't update gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
+			return "", fmtc.Errorf(
+				"Can't update gem %s (%s). Gem command output saved as %s.",
+				gem, formatGemVersion(gemVersion), actionLog,
+			)
 		default:
-			return "", fmtc.Errorf("Can't install gem %s (%s). Gem command output saved as %s.", gem, gemVersion, actionLog)
+			return "", fmtc.Errorf(
+				"Can't install gem %s (%s). Gem command output saved as %s.",
+				gem, formatGemVersion(gemVersion), actionLog,
+			)
 		}
 	}
 
 	switch cmd {
 	case "update":
-		return "", fmtc.Errorf("Can't update gem %s (%s)", gem, gemVersion)
+		return "", fmtc.Errorf("Can't update gem %s (%s)", gem, formatGemVersion(gemVersion))
 	default:
-		return "", fmtc.Errorf("Can't install gem %s (%s)", gem, gemVersion)
+		return "", fmtc.Errorf("Can't install gem %s (%s)", gem, formatGemVersion(gemVersion))
 	}
 }
 
 // updateRubygems update rubygems to defined version
 func updateRubygems(rubyVersion, gemVersion string) error {
-	var gemCmd *exec.Cmd
-
 	rubyPath := getVersionPath(rubyVersion)
+	gemCmd := exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--no-document", "--system")
 
-	if gemVersion == "latest" {
-		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system")
-	} else {
-		gemCmd = exec.Command(rubyPath+"/bin/ruby", rubyPath+"/bin/gem", "update", "--system", gemVersion)
-	}
-
-	if knf.GetB(GEMS_NO_DOCUMENT) {
-		gemCmd.Args = append(gemCmd.Args, "--no-document")
+	if gemVersion != "latest" {
+		gemCmd.Args = append(gemCmd.Args, gemVersion)
 	}
 
 	if knf.GetS(GEMS_SOURCE) != "" {
@@ -1306,7 +1299,7 @@ func printCurrentVersionName(category string, versions index.CategoryData, insta
 		}
 	}
 
-	printRubyVersion(category, prettyName)
+	printRubyVersion(category, prettyName, info.EOL)
 
 	return true
 }
@@ -1362,8 +1355,12 @@ func printSized(format string, size int, a ...any) {
 }
 
 // printRubyVersion print version with align spaces
-func printRubyVersion(category, name string) {
-	fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), categorySize[category]) + " ")
+func printRubyVersion(category, name string, eol bool) {
+	if !eol {
+		fmtc.Printf(" " + name + getAlignSpaces(fmtc.Clean(name), categorySize[category]) + " ")
+	} else {
+		fmtc.Printf(" {s}" + name + "{!}" + getAlignSpaces(fmtc.Clean(name), categorySize[category]) + " ")
+	}
 }
 
 // configureCategorySizes configure column size for each category
@@ -1469,6 +1466,17 @@ func isGemInstalled(rubyVersion string, gemName string) bool {
 	return false
 }
 
+// formatGemVersion formats info about gem
+func formatGemVersion(gemVersion string) string {
+	if gemVersion == "" || gemVersion == "latest" {
+		return "latest"
+	} else if strings.Count(gemVersion, ".") < 2 {
+		return fmt.Sprintf("%s.x", gemVersion)
+	}
+
+	return gemVersion
+}
+
 // isVersionInstalled return true is given version already installed
 func isVersionInstalled(rubyVersion string) bool {
 	fullPath := getVersionPath(rubyVersion)
@@ -1559,6 +1567,49 @@ func getInstalledVersionsMap() map[string]bool {
 	return result
 }
 
+// filterCategoryData filters category data removing EOL versions
+func filterCategoryData(versions index.CategoryData, installed map[string]bool) index.CategoryData {
+	var result index.CategoryData
+
+	showAll := options.GetB(OPT_ALL)
+
+MAIN:
+	for _, info := range versions {
+		if info.EOL && !showAll {
+			for _, vInfo := range info.Variations {
+				if installed[vInfo.Name] {
+					result = append(result, info)
+					continue MAIN
+				}
+			}
+
+			if installed[info.Name] {
+				result = append(result, info)
+				continue MAIN
+			}
+		} else {
+			result = append(result, info)
+		}
+	}
+
+	return result
+}
+
+// countVersions counts versions in category data
+func countVersions(versions index.CategoryData) int {
+	var result int
+
+	for _, info := range versions {
+		if info.EOL {
+			continue
+		}
+
+		result += len(info.Variations) + 1
+	}
+
+	return result
+}
+
 // getVersionGemPath returns path to directory with installed gems
 func getVersionGemDirPath(rubyVersion string) string {
 	gemsPath := getVersionPath(rubyVersion) + "/lib/ruby/gems"
@@ -1583,12 +1634,12 @@ func getVersionPath(rubyVersion string) string {
 
 // getRBEnvVersionsPath return path to rbenv directory with all versions
 func getRBEnvVersionsPath() string {
-	return knf.GetS(RBENV_DIR) + "/versions"
+	return path.Join(knf.GetS(RBENV_DIR), "versions")
 }
 
 // getUnpackDirPath return path to directory for unpacking data
 func getUnpackDirPath() string {
-	return getRBEnvVersionsPath() + "/.rbinstall"
+	return path.Join(getRBEnvVersionsPath(), ".rbinstall")
 }
 
 // getAlignSpaces return spaces for output align
@@ -1598,15 +1649,22 @@ func getAlignSpaces(t string, l int) string {
 
 // getGemSourceURL return url of gem source
 func getGemSourceURL(rubyVersion string) string {
+	source := knf.GetS(GEMS_SOURCE)
+
+	if strutil.HasPrefixAny(source, "https://", "http://") {
+		source = strutil.Exclude(source, "https://")
+		source = strutil.Exclude(source, "http://")
+	}
+
 	if strings.HasPrefix(rubyVersion, "1.8") {
-		return "http://" + knf.GetS(GEMS_SOURCE)
+		return "http://" + source
 	}
 
 	if !options.GetB(OPT_GEMS_INSECURE) && knf.GetB(GEMS_SOURCE_SECURE, false) {
-		return "https://" + knf.GetS(GEMS_SOURCE)
+		return "https://" + source
 	}
 
-	return "http://" + knf.GetS(GEMS_SOURCE)
+	return "http://" + source
 }
 
 // checkRBEnv check rbenv directory and state

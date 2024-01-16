@@ -15,6 +15,9 @@
 
 `rbinstall` is a utility for installing prebuilt Ruby to [rbenv](https://github.com/rbenv/rbenv).
 
+> [!NOTE]
+> Take a look at our [FAQ](https://kaos.sh/rbinstall/w/FAQ) for more information.
+
 ### Usage demo
 
 [![demo](https://gh.kaos.st/rbinstall-300.gif)](#usage-demo)
