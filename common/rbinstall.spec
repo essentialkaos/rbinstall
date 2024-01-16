@@ -38,8 +38,8 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.2.1
-Release:  1%{?dist}
+Version:  3.2.2
+Release:  0%{?dist}
 Group:    Development/Tools
 
 %description gen
@@ -50,8 +50,8 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.1.1
-Release:  1%{?dist}
+Version:  3.1.2
+Release:  0%{?dist}
 Group:    Development/Tools
 
 %description clone
@@ -123,6 +123,7 @@ rm -rf %{buildroot}
 - [cli] Fixed bug with uninstalling
 - [cli] UI fixes
 - [cli] Code refactoring
+- Dependencies update
 
 * Fri Jan 12 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.0-0
 - [cli] Improved rubygems gem update

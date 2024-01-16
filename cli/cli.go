@@ -602,7 +602,7 @@ func printPrettyListing(dist, arch string) {
 
 	if !options.GetB(OPT_ALL) {
 		fmtc.NewLine()
-		fmtc.Println("{s-}For listing outdated versions use option '--all/-a'{!}")
+		fmtc.Printf("{s-}For listing outdated versions use option '%s'{!}\n", options.Format(OPT_ALL))
 	}
 }
 
