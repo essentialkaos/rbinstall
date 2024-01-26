@@ -66,7 +66,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.0"
+	VER  = "3.4.1"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -1254,7 +1254,7 @@ func unpackFile(file, outputDir string) error {
 	} else {
 		pb := progress.New(fsutil.GetSize(file), "")
 		pb.Start()
-		err = tzst.Read(pb.Reader(bufio.NewReader(fd)), outputDir)
+		err = tzst.Read(bufio.NewReader(pb.Reader(fd)), outputDir)
 		pb.Finish()
 	}
 
