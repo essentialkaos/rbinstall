@@ -1509,7 +1509,7 @@ func getVersionFromFile() (string, error) {
 // getAdvisableRubyGemsVersion returns recommended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
-	ver, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
+	ver, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, '-'))
 
 	if err != nil {
 		return "2.3"
@@ -1756,7 +1756,7 @@ func isLibLoaded(glob string) bool {
 		}
 
 		line = strings.TrimSpace(line)
-		line = strutil.ReadField(line, 0, false, " ")
+		line = strutil.ReadField(line, 0, false, ' ')
 
 		match, _ := filepath.Match(glob, line)
 
@@ -1781,7 +1781,7 @@ func isVersionSupportedByBundler(rubyVersion string) bool {
 		return false
 	}
 
-	minor := strutil.ReadField(rubyVersion, 1, false, ".")
+	minor := strutil.ReadField(rubyVersion, 1, false, '.')
 
 	if strings.ContainsAny(minor, "012") {
 		return false
@@ -1801,8 +1801,8 @@ func parseGemInfo(data string) (string, string) {
 		return data, ""
 	}
 
-	return strutil.ReadField(data, 0, false, "="),
-		strutil.ReadField(data, 1, false, "=")
+	return strutil.ReadField(data, 0, false, '='),
+		strutil.ReadField(data, 1, false, '=')
 }
 
 // logFailedAction save data to temporary log file and return path
