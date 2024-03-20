@@ -38,6 +38,9 @@ import (
 	"github.com/essentialkaos/ek/v12/sortutil"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
+	"github.com/essentialkaos/ek/v12/support"
+	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
@@ -58,7 +61,6 @@ import (
 	"github.com/essentialkaos/npck/tzst"
 
 	"github.com/essentialkaos/rbinstall/index"
-	"github.com/essentialkaos/rbinstall/support"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -66,7 +68,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.1"
+	VER  = "3.4.2"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -209,7 +211,15 @@ func Run(gitRev string, gomod []byte) {
 		genAbout(gitRev).Print(options.GetS(OPT_VER))
 		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		support.Print(APP, VER, gitRev, gomod)
+		support.Collect(APP, VER).
+			WithRevision(gitRev).
+			WithDeps(deps.Extract(gomod)).
+			WithPackages(pkgs.Collect(
+				"rbinstall", "rbinstall-gen", "rbinstall-clone", "rbenv",
+				"jemalloc", "openssl", "zlib", "gcc",
+				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
+			)).
+			Print()
 		os.Exit(0)
 	case options.GetB(OPT_HELP):
 		genUsage().Print()
