@@ -219,6 +219,7 @@ func Run(gitRev string, gomod []byte) {
 				"jemalloc", "openssl", "zlib", "gcc",
 				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
 			)).
+			WithChecks(checkRepositoryAvailability()).
 			Print()
 		os.Exit(0)
 	case options.GetB(OPT_HELP):
@@ -1864,6 +1865,34 @@ func exit(code int) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+// checkRepositoryAccess checks availability
+func checkRepositoryAvailability() support.Check {
+	chk := support.Check{Status: support.CHECK_OK, Title: "EK Repository availability"}
+
+	resp, err := req.Request{
+		URL:         "https://rbinstall.kaos.st/" + INDEX_NAME,
+		AutoDiscard: true,
+	}.Head()
+
+	if err != nil {
+		chk.Status, chk.Message = support.CHECK_ERROR, err.Error()
+		return chk
+	}
+
+	if resp.StatusCode != 200 {
+		chk.Status = support.CHECK_ERROR
+		chk.Message = fmt.Sprintf("Repository returned non-ok status code (%d)", resp.StatusCode)
+		return chk
+	}
+
+	chk.Message = fmt.Sprintf(
+		"Status: %d; Updated: %s",
+		resp.StatusCode, resp.Response.Header.Get("last-modified"),
+	)
+
+	return chk
+}
 
 // printCompletion prints completion for given shell
 func printCompletion() int {
