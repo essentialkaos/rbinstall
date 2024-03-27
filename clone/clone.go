@@ -2,7 +2,7 @@ package clone
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -25,6 +25,8 @@ import (
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/progress"
 	"github.com/essentialkaos/ek/v12/req"
+	"github.com/essentialkaos/ek/v12/support"
+	"github.com/essentialkaos/ek/v12/support/deps"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
@@ -35,7 +37,6 @@ import (
 	"github.com/essentialkaos/ek/v12/usage/man"
 
 	"github.com/essentialkaos/rbinstall/index"
-	"github.com/essentialkaos/rbinstall/support"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -43,7 +44,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.1.3"
+	VER  = "3.1.4"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -80,8 +81,8 @@ type FileInfo struct {
 var optMap = options.Map{
 	OPT_YES:      {Type: options.BOOL},
 	OPT_NO_COLOR: {Type: options.BOOL},
-	OPT_HELP:     {Type: options.BOOL, Alias: "u:usage"},
-	OPT_VER:      {Type: options.BOOL, Alias: "ver"},
+	OPT_HELP:     {Type: options.BOOL},
+	OPT_VER:      {Type: options.MIXED},
 
 	OPT_VERB_VER:     {Type: options.BOOL},
 	OPT_COMPLETION:   {},
@@ -113,10 +114,11 @@ func Run(gitRev string, gomod []byte) {
 		printMan()
 		os.Exit(0)
 	case options.GetB(OPT_VER):
-		genAbout(gitRev).Print()
+		genAbout(gitRev).Print(options.GetS(OPT_VER))
 		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		support.Print(APP, VER, gitRev, gomod)
+		support.Collect(APP, VER).WithRevision(gitRev).
+			WithDeps(deps.Extract(gomod)).Print()
 		os.Exit(0)
 	case options.GetB(OPT_HELP) || len(args) != 2:
 		genUsage().Print()

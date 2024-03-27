@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -38,6 +38,9 @@ import (
 	"github.com/essentialkaos/ek/v12/sortutil"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
+	"github.com/essentialkaos/ek/v12/support"
+	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
@@ -58,7 +61,6 @@ import (
 	"github.com/essentialkaos/npck/tzst"
 
 	"github.com/essentialkaos/rbinstall/index"
-	"github.com/essentialkaos/rbinstall/support"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -66,7 +68,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.1"
+	VER  = "3.4.2"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -209,7 +211,16 @@ func Run(gitRev string, gomod []byte) {
 		genAbout(gitRev).Print(options.GetS(OPT_VER))
 		os.Exit(0)
 	case options.GetB(OPT_VERB_VER):
-		support.Print(APP, VER, gitRev, gomod)
+		support.Collect(APP, VER).
+			WithRevision(gitRev).
+			WithDeps(deps.Extract(gomod)).
+			WithPackages(pkgs.Collect(
+				"rbinstall", "rbinstall-gen", "rbinstall-clone", "rbenv",
+				"jemalloc", "openssl", "zlib", "gcc",
+				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
+			)).
+			WithChecks(checkRepositoryAvailability()).
+			Print()
 		os.Exit(0)
 	case options.GetB(OPT_HELP):
 		genUsage().Print()
@@ -1509,7 +1520,7 @@ func getVersionFromFile() (string, error) {
 // getAdvisableRubyGemsVersion returns recommended RubyGems version for
 // given version of Ruby
 func getAdvisableRubyGemsVersion(rubyVersion string) string {
-	ver, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, "-"))
+	ver, err := version.Parse(strutil.ReadField(rubyVersion, 0, false, '-'))
 
 	if err != nil {
 		return "2.3"
@@ -1756,7 +1767,7 @@ func isLibLoaded(glob string) bool {
 		}
 
 		line = strings.TrimSpace(line)
-		line = strutil.ReadField(line, 0, false, " ")
+		line = strutil.ReadField(line, 0, false, ' ')
 
 		match, _ := filepath.Match(glob, line)
 
@@ -1781,7 +1792,7 @@ func isVersionSupportedByBundler(rubyVersion string) bool {
 		return false
 	}
 
-	minor := strutil.ReadField(rubyVersion, 1, false, ".")
+	minor := strutil.ReadField(rubyVersion, 1, false, '.')
 
 	if strings.ContainsAny(minor, "012") {
 		return false
@@ -1801,8 +1812,8 @@ func parseGemInfo(data string) (string, string) {
 		return data, ""
 	}
 
-	return strutil.ReadField(data, 0, false, "="),
-		strutil.ReadField(data, 1, false, "=")
+	return strutil.ReadField(data, 0, false, '='),
+		strutil.ReadField(data, 1, false, '=')
 }
 
 // logFailedAction save data to temporary log file and return path
@@ -1854,6 +1865,34 @@ func exit(code int) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+// checkRepositoryAccess checks availability
+func checkRepositoryAvailability() support.Check {
+	chk := support.Check{Status: support.CHECK_OK, Title: "EK Repository availability"}
+
+	resp, err := req.Request{
+		URL:         "https://rbinstall.kaos.st/" + INDEX_NAME,
+		AutoDiscard: true,
+	}.Head()
+
+	if err != nil {
+		chk.Status, chk.Message = support.CHECK_ERROR, err.Error()
+		return chk
+	}
+
+	if resp.StatusCode != 200 {
+		chk.Status = support.CHECK_ERROR
+		chk.Message = fmt.Sprintf("Repository returned non-ok status code (%d)", resp.StatusCode)
+		return chk
+	}
+
+	chk.Message = fmt.Sprintf(
+		"Status: %d; Updated: %s",
+		resp.StatusCode, resp.Response.Header.Get("last-modified"),
+	)
+
+	return chk
+}
 
 // printCompletion prints completion for given shell
 func printCompletion() int {
