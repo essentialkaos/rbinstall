@@ -412,7 +412,7 @@ rm -rf %{buildroot}
 - [cli] Using real user uid/gid for fail log file
 
 * Thu Apr 28 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.2-0
-- [cli] Fixed availabile versions listing without root privileges
+- [cli] Fixed available versions listing without root privileges
 - [cli] z7.v2 package usage
 
 * Mon Apr 25 2016 Anton Novojilov <andy@essentialkaos.com> - 0.6.1-0
