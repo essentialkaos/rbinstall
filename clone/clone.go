@@ -28,6 +28,7 @@ import (
 	"github.com/essentialkaos/ek/v12/support"
 	"github.com/essentialkaos/ek/v12/support/deps"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
@@ -44,7 +45,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.1.4"
+	VER  = "3.1.5"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -100,8 +101,9 @@ func Run(gitRev string, gomod []byte) {
 
 	args, errs := options.Parse(optMap)
 
-	if len(errs) != 0 {
-		printError(errs[0].Error())
+	if !errs.IsEmpty() {
+		terminal.Error("Options parsing errors:")
+		terminal.Error(errs.String())
 		os.Exit(1)
 	}
 
@@ -125,8 +127,6 @@ func Run(gitRev string, gomod []byte) {
 		os.Exit(0)
 	}
 
-	req.SetUserAgent("RBInstall-Clone", VER)
-
 	url := args.Get(0).String()
 	dir := args.Get(1).String()
 
@@ -140,21 +140,7 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	if !fmtc.IsColorsSupported() {
-		fmtc.DisableColors = true
-	}
-
 	if !tty.IsTTY() {
-		fmtc.DisableColors = true
-	}
-}
-
-// configureUI configures user interface
-func configureUI() {
-	terminal.Prompt = "› "
-	terminal.TitleColorTag = "{s}"
-
-	if options.GetB(OPT_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
@@ -166,6 +152,18 @@ func configureUI() {
 	default:
 		colorTagApp, colorTagVer = "{*}{r}", "{r}"
 	}
+}
+
+// configureUI configures user interface
+func configureUI() {
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
+	}
+
+	input.Prompt = "› "
+	input.TitleColorTag = "{s}"
+
+	req.SetUserAgent("RBInstall-Clone", VER)
 }
 
 // checkArguments checks command line arguments
@@ -215,7 +213,7 @@ func cloneRepository(url, dir string) {
 	}
 
 	if !options.GetB(OPT_YES) {
-		ok, err := terminal.ReadAnswer("Clone this repository?", "N")
+		ok, err := input.ReadAnswer("Clone this repository?", "N")
 		fmtc.NewLine()
 
 		if !ok || err != nil {
@@ -463,14 +461,9 @@ func getCurrentIndexUUID(dir string) string {
 	return i.UUID
 }
 
-// printError prints error message to console
-func printError(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
-}
-
 // printErrorAndExit print error message and exit with non-zero exit code
 func printErrorAndExit(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{r}▲ "+f+"{!}\n", a...)
+	terminal.Error(f, a...)
 	fmtc.NewLine()
 	os.Exit(1)
 }
@@ -497,12 +490,7 @@ func printCompletion() int {
 
 // printMan prints man page
 func printMan() {
-	fmt.Println(
-		man.Generate(
-			genUsage(),
-			genAbout(""),
-		),
-	)
+	fmt.Println(man.Generate(genUsage(), genAbout("")))
 }
 
 // genUsage generates usage info

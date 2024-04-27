@@ -26,6 +26,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/support"
 	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/usage"
@@ -42,7 +43,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.2.4"
+	VER  = "3.2.5"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -116,8 +117,9 @@ func Run(gitRev string, gomod []byte) {
 
 	args, errs := options.Parse(optMap)
 
-	if len(errs) != 0 {
-		printError(errs[0].Error())
+	if !errs.IsEmpty() {
+		terminal.Error("Options parsing errors:")
+		terminal.Error(errs.String())
 		os.Exit(1)
 	}
 
@@ -151,18 +153,7 @@ func Run(gitRev string, gomod []byte) {
 
 // preConfigureUI preconfigures UI based on information about user terminal
 func preConfigureUI() {
-	if !fmtc.IsColorsSupported() {
-		fmtc.DisableColors = true
-	}
-
 	if !tty.IsTTY() {
-		fmtc.DisableColors = true
-	}
-}
-
-// configureUI configures user interface
-func configureUI() {
-	if options.GetB(OPT_NO_COLOR) {
 		fmtc.DisableColors = true
 	}
 
@@ -173,6 +164,13 @@ func configureUI() {
 		colorTagApp, colorTagVer = "{*}{#160}", "{#160}"
 	default:
 		colorTagApp, colorTagVer = "{*}{r}", "{r}"
+	}
+}
+
+// configureUI configures user interface
+func configureUI() {
+	if options.GetB(OPT_NO_COLOR) {
+		fmtc.DisableColors = true
 	}
 }
 
@@ -291,7 +289,7 @@ func buildIndex(dataDir string) {
 			baseVersionInfo, _ := newIndex.Find(fileInfo.OS, fileInfo.Arch, baseVersionName)
 
 			if baseVersionInfo == nil {
-				printWarn("Can't find base version info for %s", fileName)
+				terminal.Warn("Can't find base version info for %s", fileName)
 				continue
 			}
 
@@ -483,7 +481,7 @@ func getExistentIndex(file string) *index.Index {
 	err := jsonutil.Read(file, i)
 
 	if err != nil {
-		printWarn("Can't reuse existing index: %v\n", err)
+		terminal.Warn("Can't reuse existing index: %v\n", err)
 		return nil
 	}
 
@@ -519,19 +517,9 @@ func fmtVersionName(v string) string {
 	return v
 }
 
-// printError prints error message to console
-func printError(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
-}
-
-// printError prints warning message to console
-func printWarn(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{y}"+f+"{!}\n", a...)
-}
-
 // printErrorAndExit print error message and exit with non-zero exit code
 func printErrorAndExit(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
+	terminal.Error(f, a...)
 	os.Exit(1)
 }
 
@@ -557,12 +545,7 @@ func printCompletion() int {
 
 // printMan prints man page
 func printMan() {
-	fmt.Println(
-		man.Generate(
-			genUsage(),
-			genAbout(""),
-		),
-	)
+	fmt.Println(man.Generate(genUsage(), genAbout("")))
 }
 
 // genUsage generates usage info
