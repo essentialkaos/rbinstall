@@ -42,6 +42,7 @@ import (
 	"github.com/essentialkaos/ek/v12/support/deps"
 	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
+	"github.com/essentialkaos/ek/v12/system/container"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
@@ -283,7 +284,9 @@ func configureUI() {
 	progress.DefaultSettings.SpeedColorTag = "{s}"
 	progress.DefaultSettings.RemainingColorTag = "{s}"
 
-	if os.Getenv("CI") != "" || options.GetB(OPT_NO_PROGRESS) {
+	if os.Getenv("CI") != "" ||
+		container.IsContainer() ||
+		options.GetB(OPT_NO_PROGRESS) {
 		spinner.DisableAnimation = true
 		noProgress = true
 	}

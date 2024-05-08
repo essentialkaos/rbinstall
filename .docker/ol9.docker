@@ -2,6 +2,16 @@
 
 ARG REGISTRY="docker.io"
 
+## BUILDER #####################################################################
+
+FROM ${REGISTRY}/essentialkaos/golang:ol9 as builder
+
+WORKDIR /go/src/github.com/essentialkaos/rbinstall
+
+COPY . .
+
+RUN make deps && make all
+
 ## FINAL IMAGE  ################################################################
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:9
@@ -16,7 +26,11 @@ LABEL org.opencontainers.image.title="rbinstall-installer-ol9" \
 
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el9.noarch.rpm && \
     dnf -y -q install rbenv rbinstall libyaml jemalloc jre11 && \
-    dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.*
+    dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    mkdir -p /var/log/rbinstall && ln -sf /dev/null var/log/rbinstall/rbinstall.log
+
+COPY --from=builder /go/src/github.com/essentialkaos/rbinstall/rbinstall /usr/bin/
+COPY --from=builder /go/src/github.com/essentialkaos/rbinstall/common/rbinstall.knf /etc/
 
 ENV PATH /usr/local/rbenv/shims:$PATH
 
