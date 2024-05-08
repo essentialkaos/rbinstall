@@ -2,17 +2,14 @@
 
 ARG REGISTRY="docker.io"
 
-## BUILDER #####################################################################
+## INSTALLER ###################################################################
 
-FROM ${REGISTRY}/essentialkaos/oraclelinux:8 as installer
+FROM ${REGISTRY}/essentialkaos/rbinstall:ol8 as installer
 
 ARG RUBY_VERSION=3.2.0
 ARG WITH_STATIC=no
 
-RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y -q install rbenv rbinstall libyaml jemalloc && \
-    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
-    rbinstall ${RUBY_VERSION}-jemalloc --no-progress && \
+RUN rbinstall ${RUBY_VERSION}-jemalloc && \
     if [ "${WITH_STATIC}" != "no" ] ; then rm -f /usr/local/rbenv/versions/${RUBY_VERSION}/lib/libruby-static.a ; fi
 
 ## FINAL IMAGE  ################################################################
@@ -36,7 +33,9 @@ COPY --from=installer /usr/local/rbenv/versions/${RUBY_VERSION}-jemalloc \
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install rbenv libyaml jemalloc && \
     if [ "${WITH_GCC}" != "no" ] ; then dnf -y -q install gcc ; fi && \
-    dnf -y -q module disable "*" && dnf clean all && rm -rf /var/cache/dnf /var/log/dnf.* && \
+    dnf -y -q module disable "*" && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf /var/log/dnf.* && \
     source /etc/profile.d/rbenv.sh && \
     rbenv global ${RUBY_VERSION}-jemalloc
 
