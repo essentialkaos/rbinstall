@@ -42,6 +42,7 @@ import (
 	"github.com/essentialkaos/ek/v12/support/deps"
 	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
+	"github.com/essentialkaos/ek/v12/system/container"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/timeutil"
@@ -68,7 +69,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.2"
+	VER  = "3.4.3"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -194,8 +195,9 @@ func Run(gitRev string, gomod []byte) {
 
 	args, errs := options.Parse(optMap)
 
-	if len(errs) != 0 {
-		terminal.Error(errs[0].Error())
+	if !errs.IsEmpty() {
+		terminal.Error("Options parsing errors:")
+		terminal.Error(errs.String())
 		os.Exit(1)
 	}
 
@@ -282,7 +284,9 @@ func configureUI() {
 	progress.DefaultSettings.SpeedColorTag = "{s}"
 	progress.DefaultSettings.RemainingColorTag = "{s}"
 
-	if os.Getenv("CI") != "" || options.GetB(OPT_NO_PROGRESS) {
+	if os.Getenv("CI") != "" ||
+		container.IsContainer() ||
+		options.GetB(OPT_NO_PROGRESS) {
 		spinner.DisableAnimation = true
 		noProgress = true
 	}
@@ -1914,12 +1918,7 @@ func printCompletion() int {
 
 // printMan prints man page
 func printMan() {
-	fmt.Println(
-		man.Generate(
-			genUsage(),
-			genAbout(""),
-		),
-	)
+	fmt.Println(man.Generate(genUsage(), genAbout("")))
 }
 
 // genUsage generates usage info
@@ -1966,13 +1965,16 @@ func genAbout(gitRev string) *usage.About {
 		VersionColorTag: colorTagVer,
 		DescSeparator:   "{s}—{!}",
 
-		Owner:         "ESSENTIAL KAOS",
-		License:       "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-		UpdateChecker: usage.UpdateChecker{"essentialkaos/rbinstall", update.GitHubChecker},
+		Owner:   "ESSENTIAL KAOS",
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 	}
 
 	if gitRev != "" {
 		about.Build = "git:" + gitRev
+		about.UpdateChecker = usage.UpdateChecker{
+			"essentialkaos/rbinstall",
+			update.GitHubChecker,
+		}
 	}
 
 	return about
