@@ -33,7 +33,7 @@ sudo yum install rbinstall
 
 ### Usage
 
-<img src=".github/image/usage.svg" />
+<img src=".github/images/usage.svg" />
 
 ### CI Status
 
