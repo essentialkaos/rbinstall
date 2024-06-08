@@ -32,49 +32,8 @@ sudo yum install rbinstall
 ```
 
 ### Usage
-```
-Usage: rbinstall {options} version
 
-Options
-
-  --reinstall, -R            Reinstall already installed version (if allowed in configuration file)
-  --uninstall, -U            Uninstall already installed version (if allowed in configuration file)
-  --reinstall-updated, -X    Reinstall all updated (rebuilt) versions (if allowed in configuration file)
-  --gems-update, -G          Update gems for some version (if allowed in configuration file)
-  --rehash, -H               Rehash rbenv shims
-  --gems-insecure, -s        Use HTTP instead of HTTPS for installing gems
-  --ruby-version, -r         Install version defined in version file
-  --info, -i                 Print detailed info about version
-  --all, -a                  Print all available versions
-  --pager, -P                Use pager for long output
-  --no-progress, -np         Disable progress bar and spinner
-  --no-color, -nc            Disable colors in output
-  --help, -h                 Show this help message
-  --version, -v              Show version
-
-Examples
-
-  rbinstall 2.0.0-p598
-  Install 2.0.0-p598
-
-  rbinstall 2.0.0
-  Install latest available release in 2.0.0
-
-  rbinstall 2.0.0 -i
-  Show details and available variations for 2.0.0
-
-  rbinstall 2.0.0-p598-railsexpress
-  Install 2.0.0-p598 with railsexpress patches
-
-  rbinstall 2.0.0-p598 -G
-  Update gems installed for 2.0.0-p598
-
-  rbinstall 2.0.0-p598 --reinstall
-  Reinstall 2.0.0-p598
-
-  rbinstall -r
-  Install version defined in .ruby-version file
-```
+<img src=".github/image/usage.svg" />
 
 ### CI Status
 
