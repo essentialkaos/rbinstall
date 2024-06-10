@@ -40,6 +40,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/support"
 	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/network"
 	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/system/container"
@@ -69,7 +70,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.3"
+	VER  = "3.4.4"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -221,6 +222,7 @@ func Run(gitRev string, gomod []byte) {
 				"jemalloc", "openssl", "zlib", "gcc",
 				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
 			)).
+			WithNetwork(network.Collect("https://kaos.st/cdn-cgi/trace")).
 			WithChecks(checkRepositoryAvailability()).
 			Print()
 		os.Exit(0)
