@@ -44,8 +44,9 @@
 
   </style>
 
-  <rect width="830" height="892" x="0" y="0" rx="8" ry="8" class="bg" />
-  <path class="window" d="M0 8a8 8 0 0 1 8-8h814a8 8 0 0 1 8 8v28H0V8Z" />
+  <rect width="830" height="892" x="0" y="0" rx="10" ry="10" class="bg" />
+  <path class="window" d="M0 8a8 8 0 0 1 8-8h810a8 8 0 0 1 8 8v28H0V8Z" />
+  <path class="window" d="M0 10C0 4.477 4.477 0 10 0h810c5.523 0 10 4.477 10 10v26H0V10Z" />
 
   <circle r="6" cx="16" cy="18" fill="#FC615D" />
   <circle r="6" cx="32" cy="18" fill="#FDBE41" />
@@ -53,37 +54,37 @@
 
   <text x="50%" y="24" text-anchor="middle"><tspan class="terminal">Terminal</tspan></text>
 
-  <text x="12" y="56"><tspan class="bold">Usage:</tspan> <tspan class="bold" fill="#CC1E2C">rbinstall</tspan> <tspan class="g">{options}</tspan> version</text>
-  <text x="12" y="96"><tspan class="bold">Options</tspan></text>
-  <text x="12" y="136">  <tspan class="g">--reinstall</tspan><tspan class="LG">, </tspan><tspan class="g">-R</tspan> <tspan class="DG">..........</tspan> Reinstall already installed version</text>
-  <text x="12" y="156">  <tspan class="g">--uninstall</tspan><tspan class="LG">, </tspan><tspan class="g">-U</tspan> <tspan class="DG">..........</tspan> Uninstall already installed version</text>
-  <text x="12" y="176">  <tspan class="g">--reinstall-updated</tspan><tspan class="LG">, </tspan><tspan class="g">-X</tspan> <tspan class="DG">..</tspan> Reinstall all updated (rebuilt) versions</text>
-  <text x="12" y="196">  <tspan class="g">--gems-update</tspan><tspan class="LG">, </tspan><tspan class="g">-G</tspan> <tspan class="DG">........</tspan> Update gems for some version</text>
-  <text x="12" y="216">  <tspan class="g">--rehash</tspan><tspan class="LG">, </tspan><tspan class="g">-H</tspan> <tspan class="DG">.............</tspan> Rehash rbenv shims</text>
-  <text x="12" y="236">  <tspan class="g">--gems-insecure</tspan><tspan class="LG">, </tspan><tspan class="g">-s</tspan> <tspan class="DG">......</tspan> Use HTTP instead of HTTPS for installing gems</text>
-  <text x="12" y="256">  <tspan class="g">--ruby-version</tspan><tspan class="LG">, </tspan><tspan class="g">-r</tspan> <tspan class="DG">.......</tspan> Install version defined in version file</text>
-  <text x="12" y="276">  <tspan class="g">--info</tspan><tspan class="LG">, </tspan><tspan class="g">-i</tspan> <tspan class="DG">...............</tspan> Print detailed info about version</text>
-  <text x="12" y="296">  <tspan class="g">--all</tspan><tspan class="LG">, </tspan><tspan class="g">-a</tspan> <tspan class="DG">................</tspan> Print all available versions</text>
-  <text x="12" y="316">  <tspan class="g">--pager</tspan><tspan class="LG">, </tspan><tspan class="g">-P</tspan> <tspan class="DG">..............</tspan> Use pager for long output</text>
-  <text x="12" y="336">  <tspan class="g">--no-progress</tspan><tspan class="LG">, </tspan><tspan class="g">-np</tspan> <tspan class="DG">.......</tspan> Disable progress bar and spinner</text>
-  <text x="12" y="356">  <tspan class="g">--no-color</tspan><tspan class="LG">, </tspan><tspan class="g">-nc</tspan> <tspan class="DG">..........</tspan> Disable colors in output</text>
-  <text x="12" y="376">  <tspan class="g">--help</tspan><tspan class="LG">, </tspan><tspan class="g">-h</tspan> <tspan class="DG">...............</tspan> Show this help message</text>
-  <text x="12" y="396">  <tspan class="g">--version</tspan><tspan class="LG">, </tspan><tspan class="g">-v</tspan> <tspan class="DG">............</tspan> Show version</text>
-  <text x="12" y="436"><tspan class="bold">Examples</tspan></text>
-  <text x="12" y="476">  rbinstall 2.0.0-p598</text>
-  <text x="12" y="496">  <tspan class="italic DG">Install 2.0.0-p598</tspan></text>
-  <text x="12" y="536">  rbinstall 2.0.0</text>
-  <text x="12" y="556">  <tspan class="italic DG">Install latest available release in 2.0.0</tspan></text>
-  <text x="12" y="596">  rbinstall 2.0.0 -i</text>
-  <text x="12" y="616">  <tspan class="italic DG">Show details and available variations for 2.0.0</tspan></text>
-  <text x="12" y="656">  rbinstall 2.0.0-p598-railsexpress</text>
-  <text x="12" y="676">  <tspan class="italic DG">Install 2.0.0-p598 with railsexpress patches</tspan></text>
-  <text x="12" y="716">  rbinstall 2.0.0-p598 -G</text>
-  <text x="12" y="736">  <tspan class="italic DG">Update gems installed for 2.0.0-p598</tspan></text>
-  <text x="12" y="776">  rbinstall 2.0.0-p598 --reinstall</text>
-  <text x="12" y="796">  <tspan class="italic DG">Reinstall 2.0.0-p598</tspan></text>
-  <text x="12" y="836">  rbinstall -r</text>
-  <text x="12" y="856">  <tspan class="italic DG">Install version defined in .ruby-version file</tspan></text>
+  <text x="12" y="60"><tspan class="bold">Usage:</tspan> <tspan class="bold" fill="#CC1E2C">rbinstall</tspan> <tspan class="g">{options}</tspan> version</text>
+  <text x="12" y="100"><tspan class="bold">Options</tspan></text>
+  <text x="12" y="140">  <tspan class="g">--reinstall</tspan><tspan class="LG">, </tspan><tspan class="g">-R</tspan> <tspan class="DG">..........</tspan> Reinstall already installed version</text>
+  <text x="12" y="160">  <tspan class="g">--uninstall</tspan><tspan class="LG">, </tspan><tspan class="g">-U</tspan> <tspan class="DG">..........</tspan> Uninstall already installed version</text>
+  <text x="12" y="180">  <tspan class="g">--reinstall-updated</tspan><tspan class="LG">, </tspan><tspan class="g">-X</tspan> <tspan class="DG">..</tspan> Reinstall all updated (rebuilt) versions</text>
+  <text x="12" y="200">  <tspan class="g">--gems-update</tspan><tspan class="LG">, </tspan><tspan class="g">-G</tspan> <tspan class="DG">........</tspan> Update gems for some version</text>
+  <text x="12" y="220">  <tspan class="g">--rehash</tspan><tspan class="LG">, </tspan><tspan class="g">-H</tspan> <tspan class="DG">.............</tspan> Rehash rbenv shims</text>
+  <text x="12" y="240">  <tspan class="g">--gems-insecure</tspan><tspan class="LG">, </tspan><tspan class="g">-s</tspan> <tspan class="DG">......</tspan> Use HTTP instead of HTTPS for installing gems</text>
+  <text x="12" y="260">  <tspan class="g">--ruby-version</tspan><tspan class="LG">, </tspan><tspan class="g">-r</tspan> <tspan class="DG">.......</tspan> Install version defined in version file</text>
+  <text x="12" y="280">  <tspan class="g">--info</tspan><tspan class="LG">, </tspan><tspan class="g">-i</tspan> <tspan class="DG">...............</tspan> Print detailed info about version</text>
+  <text x="12" y="300">  <tspan class="g">--all</tspan><tspan class="LG">, </tspan><tspan class="g">-a</tspan> <tspan class="DG">................</tspan> Print all available versions</text>
+  <text x="12" y="320">  <tspan class="g">--pager</tspan><tspan class="LG">, </tspan><tspan class="g">-P</tspan> <tspan class="DG">..............</tspan> Use pager for long output</text>
+  <text x="12" y="340">  <tspan class="g">--no-progress</tspan><tspan class="LG">, </tspan><tspan class="g">-np</tspan> <tspan class="DG">.......</tspan> Disable progress bar and spinner</text>
+  <text x="12" y="360">  <tspan class="g">--no-color</tspan><tspan class="LG">, </tspan><tspan class="g">-nc</tspan> <tspan class="DG">..........</tspan> Disable colors in output</text>
+  <text x="12" y="380">  <tspan class="g">--help</tspan><tspan class="LG">, </tspan><tspan class="g">-h</tspan> <tspan class="DG">...............</tspan> Show this help message</text>
+  <text x="12" y="400">  <tspan class="g">--version</tspan><tspan class="LG">, </tspan><tspan class="g">-v</tspan> <tspan class="DG">............</tspan> Show version</text>
+  <text x="12" y="440"><tspan class="bold">Examples</tspan></text>
+  <text x="12" y="480">  rbinstall 2.0.0-p598</text>
+  <text x="12" y="500">  <tspan class="italic DG">Install 2.0.0-p598</tspan></text>
+  <text x="12" y="540">  rbinstall 2.0.0</text>
+  <text x="12" y="560">  <tspan class="italic DG">Install latest available release in 2.0.0</tspan></text>
+  <text x="12" y="600">  rbinstall 2.0.0 -i</text>
+  <text x="12" y="620">  <tspan class="italic DG">Show details and available variations for 2.0.0</tspan></text>
+  <text x="12" y="660">  rbinstall 2.0.0-p598-railsexpress</text>
+  <text x="12" y="680">  <tspan class="italic DG">Install 2.0.0-p598 with railsexpress patches</tspan></text>
+  <text x="12" y="720">  rbinstall 2.0.0-p598 -G</text>
+  <text x="12" y="740">  <tspan class="italic DG">Update gems installed for 2.0.0-p598</tspan></text>
+  <text x="12" y="780">  rbinstall 2.0.0-p598 --reinstall</text>
+  <text x="12" y="800">  <tspan class="italic DG">Reinstall 2.0.0-p598</tspan></text>
+  <text x="12" y="840">  rbinstall -r</text>
+  <text x="12" y="860">  <tspan class="italic DG">Install version defined in .ruby-version file</tspan></text>
 
   <rect x="800" y="36" width="30.3" height="842" fill="url(#fog)"/>
 </svg>
