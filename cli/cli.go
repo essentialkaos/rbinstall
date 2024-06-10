@@ -1929,10 +1929,10 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = colorTagApp
 
-	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_REINSTALL_UPDATED, "Reinstall all updated (rebuilt) versions {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in configuration file){!}")
+	info.AddOption(OPT_REINSTALL, "Reinstall already installed version")
+	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version")
+	info.AddOption(OPT_REINSTALL_UPDATED, "Reinstall all updated (rebuilt) versions")
+	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")
