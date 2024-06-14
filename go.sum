@@ -5,10 +5,10 @@ github.com/essentialkaos/ek/v12 v12.126.1 h1:K4tCpu9T3k5Bv6hJ1lmW7Ou0GxjgjBIKRso
 github.com/essentialkaos/ek/v12 v12.126.1/go.mod h1:71IJ7m82hgjrvWnhL+z0vIhguxz47/rfVma5/CeI5Fw=
 github.com/essentialkaos/go-linenoise/v3 v3.6.0 h1:deLcrodtLIkcHjNyW/MoQpjznXPVqvwlspxk7s/5YeY=
 github.com/essentialkaos/go-linenoise/v3 v3.6.0/go.mod h1:Fi6kLdZdURkXHpRkIiX2nFGORNv81CXTZ2Mn72i/cn0=
-github.com/essentialkaos/npck v1.6.2 h1:OqV74UfA9qoRYbFVsZ+KYH9kY//1nU6uX/HBfAltUQ4=
-github.com/essentialkaos/npck v1.6.2/go.mod h1:7ziKy4mdUrSMTihDTZKAaxf6uDH2uAlOzsD3Mj2WTyI=
-github.com/klauspost/compress v1.17.8 h1:YcnTYrq7MikUT7k0Yb5eceMmALQPYBW/Xltxn0NAMnU=
-github.com/klauspost/compress v1.17.8/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+github.com/essentialkaos/npck v1.6.3 h1:isUq6nkPuL6/PD8lcN1lvFmJEDP8smeGhINmkTFG1Ho=
+github.com/essentialkaos/npck v1.6.3/go.mod h1:ZQOPKznWzmoq1mMU2jWfJTbJ418P49hNlM/U1K+b0V0=
+github.com/klauspost/compress v1.17.9 h1:6KIumPrER1LHsvBVuDa0r5xaG0Es51mhhB9BQB2qeMA=
+github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=
