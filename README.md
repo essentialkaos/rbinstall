@@ -1,4 +1,4 @@
-<p align="center"><a href="#readme"><img src="https://gh.kaos.st/rbinstall.svg"/></a></p>
+<p align="center"><a href="#readme"><img src=".github/images/card.svg"/></a></p>
 
 <p align="center">
   <a href="https://kaos.sh/r/rbinstall"><img src="https://kaos.sh/r/rbinstall.svg" alt="GoReportCard" /></a>
@@ -6,7 +6,7 @@
   <a href="https://kaos.sh/b/rbinstall"><img src="https://kaos.sh/b/b78de32a-6867-4bd3-9135-8244d4813531.svg" alt="codebeat badge" /></a>
   <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci.svg" alt="GitHub Actions CI Status" /></a>
   <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://kaos.sh/w/rbinstall/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
-  <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
+  <a href="#license"><img src=".github/images/license.svg"/></a>
 </p>
 
 <p align="center">
@@ -33,7 +33,17 @@ sudo yum install rbinstall
 
 ### Usage
 
-<img src=".github/images/usage.svg" />
+#### `rbinstall`
+
+<p align="center"><img src=".github/images/rbinstall-usage.svg"/></p>
+
+#### `rbinstall-clone`
+
+<p align="center"><img src=".github/images/rbinstall-clone-usage.svg"/></p>
+
+#### `rbinstall-gen`
+
+<p align="center"><img src=".github/images/rbinstall-gen-usage.svg"/></p>
 
 ### CI Status
 
