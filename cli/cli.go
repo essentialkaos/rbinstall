@@ -40,6 +40,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/support"
 	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/network"
 	"github.com/essentialkaos/ek/v12/support/pkgs"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/system/container"
@@ -69,7 +70,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.4.3"
+	VER  = "3.4.4"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -221,6 +222,7 @@ func Run(gitRev string, gomod []byte) {
 				"jemalloc", "openssl", "zlib", "gcc",
 				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
 			)).
+			WithNetwork(network.Collect("https://kaos.st/cdn-cgi/trace")).
 			WithChecks(checkRepositoryAvailability()).
 			Print()
 		os.Exit(0)
@@ -1927,10 +1929,10 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = colorTagApp
 
-	info.AddOption(OPT_REINSTALL, "Reinstall already installed version {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_REINSTALL_UPDATED, "Reinstall all updated (rebuilt) versions {s-}(if allowed in configuration file){!}")
-	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version {s-}(if allowed in configuration file){!}")
+	info.AddOption(OPT_REINSTALL, "Reinstall already installed version")
+	info.AddOption(OPT_UNINSTALL, "Uninstall already installed version")
+	info.AddOption(OPT_REINSTALL_UPDATED, "Reinstall all updated (rebuilt) versions")
+	info.AddOption(OPT_GEMS_UPDATE, "Update gems for some version")
 	info.AddOption(OPT_REHASH, "Rehash rbenv shims")
 	info.AddOption(OPT_GEMS_INSECURE, "Use HTTP instead of HTTPS for installing gems")
 	info.AddOption(OPT_RUBY_VERSION, "Install version defined in version file")

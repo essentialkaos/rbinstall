@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.4.3
+Version:        3.4.4
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -38,7 +38,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.2.5
+Version:  3.2.6
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -50,7 +50,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.1.5
+Version:  3.1.6
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -63,13 +63,15 @@ Utility for cloning RBInstall repository.
 %{crc_check}
 
 %setup -q
-
-%build
 if [[ ! -d "%{name}/vendor" ]] ; then
-  echo "This package requires vendored dependencies"
+  echo -e "----\nThis package requires vendored dependencies\n----"
+  exit 1
+elif [[ -f "%{name}/%{name}" || -f "%{name}/%{name}-gen" || -f "%{name}/%{name}-clone" ]] ; then
+  echo -e "----\nSources must not contain precompiled binaries\n----"
   exit 1
 fi
 
+%build
 pushd %{name}
   %{__make} %{?_smp_mflags} all
   cp LICENSE ..
@@ -118,6 +120,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sun Jun 23 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.4-0
+- [cli|gen|clone] Code refactoring
+- Dependencies update
+
 * Sun Apr 28 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.3-0
 - [cli|gen|clone] Code refactoring
 - Dependencies update

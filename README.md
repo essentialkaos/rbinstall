@@ -1,4 +1,4 @@
-<p align="center"><a href="#readme"><img src="https://gh.kaos.st/rbinstall.svg"/></a></p>
+<p align="center"><a href="#readme"><img src=".github/images/card.svg"/></a></p>
 
 <p align="center">
   <a href="https://kaos.sh/r/rbinstall"><img src="https://kaos.sh/r/rbinstall.svg" alt="GoReportCard" /></a>
@@ -6,7 +6,7 @@
   <a href="https://kaos.sh/b/rbinstall"><img src="https://kaos.sh/b/b78de32a-6867-4bd3-9135-8244d4813531.svg" alt="codebeat badge" /></a>
   <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci.svg" alt="GitHub Actions CI Status" /></a>
   <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://kaos.sh/w/rbinstall/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
-  <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
+  <a href="#license"><img src=".github/images/license.svg"/></a>
 </p>
 
 <p align="center">
@@ -32,49 +32,18 @@ sudo yum install rbinstall
 ```
 
 ### Usage
-```
-Usage: rbinstall {options} version
 
-Options
+#### `rbinstall`
 
-  --reinstall, -R            Reinstall already installed version (if allowed in configuration file)
-  --uninstall, -U            Uninstall already installed version (if allowed in configuration file)
-  --reinstall-updated, -X    Reinstall all updated (rebuilt) versions (if allowed in configuration file)
-  --gems-update, -G          Update gems for some version (if allowed in configuration file)
-  --rehash, -H               Rehash rbenv shims
-  --gems-insecure, -s        Use HTTP instead of HTTPS for installing gems
-  --ruby-version, -r         Install version defined in version file
-  --info, -i                 Print detailed info about version
-  --all, -a                  Print all available versions
-  --pager, -P                Use pager for long output
-  --no-progress, -np         Disable progress bar and spinner
-  --no-color, -nc            Disable colors in output
-  --help, -h                 Show this help message
-  --version, -v              Show version
+<p align="center"><img src=".github/images/rbinstall-usage.svg"/></p>
 
-Examples
+#### `rbinstall-clone`
 
-  rbinstall 2.0.0-p598
-  Install 2.0.0-p598
+<p align="center"><img src=".github/images/rbinstall-clone-usage.svg"/></p>
 
-  rbinstall 2.0.0
-  Install latest available release in 2.0.0
+#### `rbinstall-gen`
 
-  rbinstall 2.0.0 -i
-  Show details and available variations for 2.0.0
-
-  rbinstall 2.0.0-p598-railsexpress
-  Install 2.0.0-p598 with railsexpress patches
-
-  rbinstall 2.0.0-p598 -G
-  Update gems installed for 2.0.0-p598
-
-  rbinstall 2.0.0-p598 --reinstall
-  Reinstall 2.0.0-p598
-
-  rbinstall -r
-  Install version defined in .ruby-version file
-```
+<p align="center"><img src=".github/images/rbinstall-gen-usage.svg"/></p>
 
 ### CI Status
 
