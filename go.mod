@@ -3,7 +3,7 @@ module github.com/essentialkaos/rbinstall
 go 1.19
 
 require (
-	github.com/essentialkaos/ek/v12 v12.127.0
+	github.com/essentialkaos/ek/v12 v12.128.0
 	github.com/essentialkaos/npck v1.6.3
 )
 
