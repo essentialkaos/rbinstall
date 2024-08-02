@@ -3,8 +3,7 @@
 <p align="center">
   <a href="https://kaos.sh/r/rbinstall"><img src="https://kaos.sh/r/rbinstall.svg" alt="GoReportCard" /></a>
   <a href="https://kaos.sh/l/rbinstall"><img src="https://kaos.sh/l/5680ef76d53ea9526739.svg" alt="Code Climate Maintainability" /></a>
-  <a href="https://kaos.sh/b/rbinstall"><img src="https://kaos.sh/b/b78de32a-6867-4bd3-9135-8244d4813531.svg" alt="codebeat badge" /></a>
-  <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci.svg" alt="GitHub Actions CI Status" /></a>
+  <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci-push.svg" alt="GitHub Actions CI Status" /></a>
   <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://kaos.sh/w/rbinstall/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
   <a href="#license"><img src=".github/images/license.svg"/></a>
 </p>
@@ -27,8 +26,8 @@
 #### From [ESSENTIAL KAOS Public Repository](https://kaos.sh/kaos-repo)
 
 ```bash
-sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
-sudo yum install rbinstall
+sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
+sudo dnf install rbinstall
 ```
 
 ### Usage
@@ -49,8 +48,8 @@ sudo yum install rbinstall
 
 | Branch | Status |
 |--------|--------|
-| `master` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=master)](https://kaos.sh/w/rbinstall/ci?query=branch:master) |
-| `develop` | [![CI](https://kaos.sh/w/rbinstall/ci.svg?branch=develop)](https://kaos.sh/w/rbinstall/ci?query=branch:develop) |
+| `master` | [![CI](https://kaos.sh/w/rbinstall/ci-push.svg?branch=master)](https://kaos.sh/w/rbinstall/ci-push?query=branch:master) |
+| `develop` | [![CI](https://kaos.sh/w/rbinstall/ci-push.svg?branch=develop)](https://kaos.sh/w/rbinstall/ci-push?query=branch:develop) |
 
 ### Contributing
 
