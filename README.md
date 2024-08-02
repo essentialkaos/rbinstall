@@ -3,6 +3,7 @@
 <p align="center">
   <a href="https://kaos.sh/r/rbinstall"><img src="https://kaos.sh/r/rbinstall.svg" alt="GoReportCard" /></a>
   <a href="https://kaos.sh/l/rbinstall"><img src="https://kaos.sh/l/5680ef76d53ea9526739.svg" alt="Code Climate Maintainability" /></a>
+  <a href="https://kaos.sh/y/ek"><img src="https://kaos.sh/y/3a20b5e6b6364d7ba936fb42fd5729ed.svg" alt="Codacy badge" /></a>
   <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://kaos.sh/w/rbinstall/ci-push.svg" alt="GitHub Actions CI Status" /></a>
   <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://kaos.sh/w/rbinstall/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
   <a href="#license"><img src=".github/images/license.svg"/></a>
