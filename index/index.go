@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/sortutil"
-	"github.com/essentialkaos/ek/v12/uuid"
+	"github.com/essentialkaos/ek/v13/sortutil"
+	"github.com/essentialkaos/ek/v13/uuid"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
