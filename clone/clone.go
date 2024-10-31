@@ -162,6 +162,7 @@ func configureUI() {
 
 	input.Prompt = "› "
 	input.TitleColorTag = "{s}"
+	input.NewLine = true
 
 	req.SetUserAgent("RBInstall-Clone", VER)
 }
@@ -214,9 +215,8 @@ func cloneRepository(url, dir string) {
 
 	if !options.GetB(OPT_YES) {
 		ok, err := input.ReadAnswer("Clone this repository?", "N")
-		fmtc.NewLine()
 
-		if !ok || err != nil {
+		if err != nil || !ok {
 			os.Exit(0)
 		}
 	}
