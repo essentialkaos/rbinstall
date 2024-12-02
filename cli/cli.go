@@ -499,36 +499,36 @@ func showDetailedInfo(rubyVersion string) {
 	url := fmt.Sprintf("%s/%s/%s", knf.GetS(STORAGE_URL), info.Path, info.File)
 	added := timeutil.Format(time.Unix(info.Added, 0), "%Y/%m/%d %H:%M")
 
-	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Name", info.Name)
-	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "URL", url)
-	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Size", fmtutil.PrettySize(info.Size))
-	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "SHA-256 Checksum", info.Hash)
-	fmtc.Printf(" {*}%-16s{!} {s}|{!} %s\n", "Added", added)
+	fmtc.Printfn(" {*}%-16s{!} {s}|{!} %s", "Name", info.Name)
+	fmtc.Printfn(" {*}%-16s{!} {s}|{!} %s", "URL", url)
+	fmtc.Printfn(" {*}%-16s{!} {s}|{!} %s", "Size", fmtutil.PrettySize(info.Size))
+	fmtc.Printfn(" {*}%-16s{!} {s}|{!} %s", "SHA-256 Checksum", info.Hash)
+	fmtc.Printfn(" {*}%-16s{!} {s}|{!} %s", "Added", added)
 
 	if isVersionInstalled(info.Name) {
 		installDate, _ := fsutil.GetMTime(getVersionPath(info.Name))
 		installDateStr := timeutil.Format(installDate, "%Y/%m/%d %H:%M")
-		fmtc.Printf(" {*}%-16s{!} {s}|{!} Yes {s-}(%s){!}\n", "Installed", installDateStr)
+		fmtc.Printfn(" {*}%-16s{!} {s}|{!} Yes {s-}(%s){!}", "Installed", installDateStr)
 	} else {
-		fmtc.Printf(" {*}%-16s{!} {s}|{!} No\n", "Installed")
+		fmtc.Printfn(" {*}%-16s{!} {s}|{!} No", "Installed")
 	}
 
 	if info.EOL {
-		fmtc.Printf(" {*}%-16s{!} {s}|{!} {r}Yes{!}\n", "EOL")
+		fmtc.Printfn(" {*}%-16s{!} {s}|{!} {r}Yes{!}", "EOL")
 	} else {
-		fmtc.Printf(" {*}%-16s{!} {s}|{!} No\n", "EOL")
+		fmtc.Printfn(" {*}%-16s{!} {s}|{!} No", "EOL")
 	}
 
 	if len(info.Variations) != 0 {
 		for index, variation := range info.Variations {
 			if index == 0 {
-				fmtc.Printf(
-					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
+				fmtc.Printfn(
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}",
 					"Variations", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			} else {
-				fmtc.Printf(
-					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}\n",
+				fmtc.Printfn(
+					" {*}%-16s{!} {s}|{!} %s {s-}(%s){!}",
 					"", variation.Name, fmtutil.PrettySize(variation.Size),
 				)
 			}
@@ -596,9 +596,9 @@ func printPrettyListing(dist, arch string) {
 	headerTemplate := getCategoryHeaderStyle(index.CATEGORY_RUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_JRUBY) + " " +
 		getCategoryHeaderStyle(index.CATEGORY_TRUFFLE) + " " +
-		getCategoryHeaderStyle(index.CATEGORY_OTHER) + "\n\n"
+		getCategoryHeaderStyle(index.CATEGORY_OTHER) + "\n"
 
-	fmtc.Printf(
+	fmtc.Printfn(
 		headerTemplate,
 		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_RUBY), countVersions(ruby), rubyTotal),
 		fmt.Sprintf("%s (%d/%d)", strings.ToUpper(index.CATEGORY_JRUBY), countVersions(jruby), jrubyTotal),
@@ -627,7 +627,7 @@ func printPrettyListing(dist, arch string) {
 
 	if !options.GetB(OPT_ALL) {
 		fmtc.NewLine()
-		fmtc.Printf("{s-}For listing outdated versions use option '%s'{!}\n", options.Format(OPT_ALL))
+		fmtc.Printfn("{s-}For listing outdated versions use option '%s'{!}", options.Format(OPT_ALL))
 	}
 }
 
@@ -687,7 +687,7 @@ func installVersion(rubyVersion string, reinstall bool) {
 
 	progress.DefaultSettings.BarFgColorTag = "{" + categoryColor[category] + "}"
 	spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
-	fmtc.NameColor("category", "{"+categoryColor[category]+"}")
+	fmtc.AddColor("category", "{"+categoryColor[category]+"}")
 
 	checkRBEnv()
 	checkDependencies(info, category)
@@ -707,7 +707,7 @@ func installVersion(rubyVersion string, reinstall bool) {
 	var file string
 
 	if !noProgress {
-		fmtc.Printf("Fetching {*}{?category}%s{!} from storage…\n", info.Name)
+		fmtc.Printfn("Fetching {*}{?category}%s{!} from storage…", info.Name)
 		file, err = downloadFile(info)
 	} else {
 		spinner.Show("Fetching {*}{?category}%s{!} from storage", info.Name)
@@ -733,7 +733,7 @@ func installVersion(rubyVersion string, reinstall bool) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	if !noProgress {
-		fmtc.Printf("Unpacking {*}{?category}%s{!} data…\n", info.Name)
+		fmtc.Printfn("Unpacking {*}{?category}%s{!} data…", info.Name)
 		err = unpackFile(file, getUnpackDirPath())
 	} else {
 		spinner.Show("Unpacking {*}{?category}%s{!} data", info.Name)
@@ -792,7 +792,7 @@ func installVersion(rubyVersion string, reinstall bool) {
 		for _, gem := range strings.Split(knf.GetS(GEMS_INSTALL), " ") {
 			gemName, gemVersion := parseGemInfo(gem)
 
-			spinner.Show(fmt.Sprintf("Installing %s (%s)", gemName, formatGemVersion(gemVersion)))
+			spinner.Show("Installing %s (%s)", gemName, formatGemVersion(gemVersion))
 			_, err = installGemTaskHandler(info.Name, gemName, gemVersion)
 			spinner.Done(err == nil)
 
@@ -831,10 +831,10 @@ func installVersion(rubyVersion string, reinstall bool) {
 
 	if aliasCreated {
 		log.Info("[%s] Installed version %s as %s", currentUser.RealName, info.Name, cleanVersionName)
-		fmtc.Printf("{g}Version {*}%s{!*} successfully installed as {*}%s{!}\n", info.Name, cleanVersionName)
+		fmtc.Printfn("{g}Version {*}%s{!*} successfully installed as {*}%s{!}", info.Name, cleanVersionName)
 	} else {
 		log.Info("[%s] Installed version %s", currentUser.RealName, info.Name)
-		fmtc.Printf("{g}Version {*}%s{!*} successfully installed{!}\n", info.Name)
+		fmtc.Printfn("{g}Version {*}%s{!*} successfully installed{!}", info.Name)
 	}
 }
 
@@ -872,7 +872,7 @@ func uninstallVersion(rubyVersion string) {
 	fmtc.NewLine()
 
 	log.Info("[%s] Uninstalled version %s", currentUser.RealName, info.Name)
-	fmtc.Printf("{g}Version {*}%s{!*} successfully uninstalled{!}\n", rubyVersion)
+	fmtc.Printfn("{g}Version {*}%s{!*} successfully uninstalled{!}", rubyVersion)
 }
 
 // reinstallVersion reinstalls given version of ruby
@@ -1058,10 +1058,10 @@ func updateGems(rubyVersion string) {
 	_, category, err := getVersionInfo(rubyVersion)
 
 	if err == nil {
-		fmtc.NameColor("category", "{"+categoryColor[category]+"}")
+		fmtc.AddColor("category", "{"+categoryColor[category]+"}")
 		spinner.SpinnerColorTag = "{" + categoryColor[category] + "}"
 	} else {
-		fmtc.NameColor("category", "{"+categoryColor[index.CATEGORY_RUBY]+"}")
+		fmtc.AddColor("category", "{"+categoryColor[index.CATEGORY_RUBY]+"}")
 	}
 
 	checkRBEnv()
@@ -1069,7 +1069,7 @@ func updateGems(rubyVersion string) {
 	runDate = time.Now()
 	installed := false
 
-	fmtc.Printf("Updating gems for {?category}%s{!}…\n\n", rubyVersion)
+	fmtc.Printfn("Updating gems for {?category}%s{!}…\n", rubyVersion)
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 

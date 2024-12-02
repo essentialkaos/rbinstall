@@ -192,7 +192,7 @@ func checkArguments(url, dir string) {
 
 // cloneRepository start repository clone process
 func cloneRepository(url, dir string) {
-	fmtc.Printf("Fetching index from {*}%s{!}…\n", url)
+	fmtc.Printfn("Fetching index from {*}%s{!}…", url)
 
 	i, err := fetchIndex(url)
 
@@ -225,7 +225,7 @@ func cloneRepository(url, dir string) {
 	saveIndex(i, dir)
 
 	fmtc.NewLine()
-	fmtc.Printf("{g}Repository successfully cloned to {g*}%s{!}\n", dir)
+	fmtc.Printfn("{g}Repository successfully cloned to {g*}%s{!}", dir)
 }
 
 // printRepositoryInfo prints basic info about repository data
@@ -234,8 +234,8 @@ func printRepositoryInfo(i *index.Index) {
 
 	updated := timeutil.Format(time.Unix(i.Meta.Created, 0), "%Y/%m/%d %H:%M:%S")
 
-	fmtc.Printf("     {*}UUID{!}: %s\n", i.UUID)
-	fmtc.Printf("  {*}Updated{!}: %s\n\n", updated)
+	fmtc.Printfn("     {*}UUID{!}: %s", i.UUID)
+	fmtc.Printfn("  {*}Updated{!}: %s\n", updated)
 
 	for _, distName := range i.Data.Keys() {
 		size, items := int64(0), 0
@@ -254,16 +254,16 @@ func printRepositoryInfo(i *index.Index) {
 				}
 			}
 
-			fmtc.Printf(
-				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s\n", distName, archName,
+			fmtc.Printfn(
+				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s", distName, archName,
 				fmtutil.PrettyNum(items), fmtutil.PrettySize(size, " "),
 			)
 		}
 	}
 
 	fmtc.NewLine()
-	fmtc.Printf(
-		"  {*}Total:{!} %s {s-}|{!} %s\n",
+	fmtc.Printfn(
+		"  {*}Total:{!} %s {s-}|{!} %s",
 		fmtutil.PrettyNum(i.Meta.Items),
 		fmtutil.PrettySize(i.Meta.Size, " "),
 	)
@@ -312,8 +312,8 @@ func downloadRepositoryData(i *index.Index, url, dir string) {
 	pb.UpdateSettings(pbs)
 	pb.Start()
 
-	fmtc.Printf(
-		"Downloading %s %s from remote repository…\n",
+	fmtc.Printfn(
+		"Downloading %s %s from remote repository…",
 		fmtutil.PrettyNum(len(items)),
 		pluralize.Pluralize(len(items), "file", "files"),
 	)
@@ -354,7 +354,7 @@ func downloadRepositoryData(i *index.Index, url, dir string) {
 
 	pb.Finish()
 
-	fmtc.Printf("\n{g}Repository successfully cloned into %s{!}\n")
+	fmtc.Printfn("\n{g}Repository successfully cloned into %s{!}")
 }
 
 // getItems returns slice with info about items in repository

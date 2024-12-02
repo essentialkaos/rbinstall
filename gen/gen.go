@@ -299,14 +299,14 @@ func buildIndex(dataDir string) {
 		}
 
 		if alreadyExist {
-			fmtc.Printf(
-				"{s-}  %-24s → %s/%s %s{!}\n",
+			fmtc.Printfn(
+				"{s-}  %-24s → %s/%s %s{!}",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
 		} else {
-			fmtc.Printf(
-				"{g}+ %-24s{!} → {c}%s/%s {c*}%s{!}\n",
+			fmtc.Printfn(
+				"{g}+ %-24s{!} → {c}%s/%s {c*}%s{!}",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
@@ -324,8 +324,8 @@ func buildIndex(dataDir string) {
 
 	saveIndex(outputFile, newIndex)
 
-	fmtc.Printf(
-		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n\n",
+	fmtc.Printfn(
+		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n",
 		outputFile, timeutil.PrettyDuration(time.Since(start)),
 	)
 }
@@ -394,16 +394,16 @@ func printIndexStats(i *index.Index) {
 				}
 			}
 
-			fmtc.Printf(
-				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s\n", distName, archName,
+			fmtc.Printfn(
+				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s", distName, archName,
 				fmtutil.PrettyNum(items), fmtutil.PrettySize(size, " "),
 			)
 		}
 	}
 
 	fmtc.NewLine()
-	fmtc.Printf(
-		"  {*}Total:{!} %s {s-}|{!} %s\n",
+	fmtc.Printfn(
+		"  {*}Total:{!} %s {s-}|{!} %s",
 		fmtutil.PrettyNum(i.Meta.Items),
 		fmtutil.PrettySize(i.Meta.Size, " "),
 	)
