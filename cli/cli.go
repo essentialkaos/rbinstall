@@ -838,7 +838,7 @@ func installVersion(rubyVersion string, reinstall bool) {
 	}
 }
 
-// uninstallVersion unistall given version of ruby
+// uninstallVersion uninstall given version of ruby
 func uninstallVersion(rubyVersion string) {
 	if !knf.GetB(RBENV_ALLOW_UNINSTALL, false) {
 		printErrorAndExit("Uninstalling is not allowed")
@@ -857,7 +857,7 @@ func uninstallVersion(rubyVersion string) {
 	// //////////////////////////////////////////////////////////////////////////////// //
 
 	spinner.Show("Unistalling %s", rubyVersion)
-	err = unistallTaskHandler(info.Name)
+	err = uninstallTaskHandler(info.Name)
 	spinner.Done(err == nil)
 
 	if err != nil {
@@ -952,8 +952,8 @@ func rehashShims() {
 	}
 }
 
-// unistallTaskHandler remove data for given ruby version
-func unistallTaskHandler(versionName string) error {
+// uninstallTaskHandler remove data for given ruby version
+func uninstallTaskHandler(versionName string) error {
 	versionsDir := getRBEnvVersionsPath()
 	cleanVersionName := getNameWithoutPatchLevel(versionName)
 
