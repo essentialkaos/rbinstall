@@ -3,7 +3,7 @@ module github.com/essentialkaos/rbinstall
 go 1.23.6
 
 require (
-	github.com/essentialkaos/ek/v13 v13.18.0
+	github.com/essentialkaos/ek/v13 v13.19.0
 	github.com/essentialkaos/npck v1.7.1
 )
 
