@@ -63,8 +63,8 @@
   # Path to log file
   file: {log:dir}/rbinstall.log
 
-  # Log permissions
-  perms: 644
+  # Log file mode
+  mode: 0644
 
-  # Default log level (debug/info/warn/error/crit)
+  # Minimal log level (debug/info/warn/error/crit)
   level: info

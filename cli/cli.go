@@ -118,7 +118,7 @@ const (
 	GEMS_INSTALL          = "gems:install"
 	LOG_DIR               = "log:dir"
 	LOG_FILE              = "log:file"
-	LOG_PERMS             = "log:perms"
+	LOG_MODE              = "log:mode"
 	LOG_LEVEL             = "log:level"
 )
 
@@ -199,7 +199,7 @@ func Run(gitRev string, gomod []byte) {
 
 	if !errs.IsEmpty() {
 		terminal.Error("Options parsing errors:")
-		terminal.Error(errs.Error("- "))
+		terminal.Error(errs.Error(" - "))
 		os.Exit(1)
 	}
 
@@ -221,7 +221,7 @@ func Run(gitRev string, gomod []byte) {
 			WithPackages(pkgs.Collect(
 				"rbinstall", "rbinstall-gen", "rbinstall-clone", "rbenv",
 				"jemalloc", "openssl", "zlib", "gcc",
-				"jre8,jre11,jre17,jdk8,jdk11,jdk17,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,java-latest-openjdk",
+				"jre8,jre11,jre17,jre21,jdk8,jdk11,jdk17,jdk21,java-1.8.0-openjdk,java-11-openjdk,java-17-openjdk,,java-21-openjdk,java-latest-openjdk",
 			)).
 			WithNetwork(network.Collect("https://kaos.st/cdn-cgi/trace")).
 			WithChecks(checkRepositoryAvailability()).
@@ -305,14 +305,12 @@ func prepare() {
 	configureProxy()
 	setEnvVars()
 
-	signal.Handlers{
-		signal.INT: intSignalHandler,
-	}.TrackAsync()
+	signal.Handlers{signal.INT: intSignalHandler}.TrackAsync()
 }
 
 // configureProxy configure proxy settings
 func configureProxy() {
-	if !knf.GetB(PROXY_ENABLED, false) || !knf.HasProp(PROXY_URL) {
+	if !knf.GetB(PROXY_ENABLED, false) || !knf.Has(PROXY_URL) {
 		return
 	}
 
@@ -359,7 +357,7 @@ func checkPerms() {
 
 // setupLogger setup logging subsystem
 func setupLogger() {
-	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_PERMS))
+	err := log.Set(knf.GetS(LOG_FILE), knf.GetM(LOG_MODE))
 
 	if err != nil {
 		printErrorAndExit(err.Error())
@@ -386,6 +384,8 @@ func loadConfig() {
 	if err != nil {
 		printErrorAndExit(err.Error())
 	}
+
+	knf.Alias("log:perms", LOG_MODE)
 }
 
 // validateConfig validate knf.values
@@ -397,9 +397,7 @@ func validateConfig() {
 
 		{MAIN_TMP_DIR, knff.Perms, "DWX"},
 
-		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, []string{
-			"", "debug", "info", "warn", "error", "crit",
-		}},
+		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, log.Levels()},
 	})
 
 	if len(errs) != 0 {
@@ -1141,7 +1139,7 @@ func runGemCmd(rubyVersion, cmd, gem, gemVersion string) (string, error) {
 
 	if gemVersion != "" {
 		if strings.Count(gemVersion, ".") >= 2 {
-			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("%s", gemVersion))
+			gemCmd.Args = append(gemCmd.Args, "--version", gemVersion)
 		} else {
 			gemCmd.Args = append(gemCmd.Args, "--version", fmt.Sprintf("~>%s.0", gemVersion))
 		}
@@ -1808,11 +1806,7 @@ func isVersionSupportedByBundler(rubyVersion string) bool {
 
 	minor := strutil.ReadField(rubyVersion, 1, false, '.')
 
-	if strings.ContainsAny(minor, "012") {
-		return false
-	}
-
-	return true
+	return !strings.ContainsAny(minor, "012")
 }
 
 // getNameWithoutPatchLevel return name without -p0
@@ -1902,7 +1896,7 @@ func checkRepositoryAvailability() support.Check {
 
 	chk.Message = fmt.Sprintf(
 		"Status: %d; Updated: %s",
-		resp.StatusCode, resp.Response.Header.Get("last-modified"),
+		resp.StatusCode, resp.Header.Get("last-modified"),
 	)
 
 	return chk

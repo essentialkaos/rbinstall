@@ -103,7 +103,7 @@ func Run(gitRev string, gomod []byte) {
 
 	if !errs.IsEmpty() {
 		terminal.Error("Options parsing errors:")
-		terminal.Error(errs.Error("- "))
+		terminal.Error(errs.Error(" - "))
 		os.Exit(1)
 	}
 
