@@ -1,17 +1,16 @@
 module github.com/essentialkaos/rbinstall
 
-go 1.21
+go 1.23.6
 
 require (
-	github.com/essentialkaos/ek/v13 v13.3.1
-	github.com/essentialkaos/npck v1.6.3
+	github.com/essentialkaos/ek/v13 v13.24.1
+	github.com/essentialkaos/npck v1.7.1
 )
 
 require (
-	github.com/essentialkaos/depsy v1.3.0 // indirect
-	github.com/essentialkaos/ek/v12 v12.130.0 // indirect
-	github.com/essentialkaos/go-linenoise/v3 v3.6.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	github.com/essentialkaos/depsy v1.3.1 // indirect
+	github.com/essentialkaos/go-linenoise/v3 v3.7.0 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )

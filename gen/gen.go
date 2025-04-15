@@ -2,7 +2,7 @@ package gen
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -43,7 +43,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.3.0"
+	VER  = "3.3.1"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -119,7 +119,7 @@ func Run(gitRev string, gomod []byte) {
 
 	if !errs.IsEmpty() {
 		terminal.Error("Options parsing errors:")
-		terminal.Error(errs.String())
+		terminal.Error(errs.Error("- "))
 		os.Exit(1)
 	}
 
@@ -299,14 +299,14 @@ func buildIndex(dataDir string) {
 		}
 
 		if alreadyExist {
-			fmtc.Printf(
-				"{s-}  %-24s → %s/%s %s{!}\n",
+			fmtc.Printfn(
+				"{s-}  %-24s → %s/%s %s{!}",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
 		} else {
-			fmtc.Printf(
-				"{g}+ %-24s{!} → {c}%s/%s {c*}%s{!}\n",
+			fmtc.Printfn(
+				"{g}+ %-24s{!} → {c}%s/%s {c*}%s{!}",
 				fileName, fileInfo.OS,
 				fileInfo.Arch, fileInfo.Category,
 			)
@@ -324,8 +324,8 @@ func buildIndex(dataDir string) {
 
 	saveIndex(outputFile, newIndex)
 
-	fmtc.Printf(
-		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n\n",
+	fmtc.Printfn(
+		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n",
 		outputFile, timeutil.PrettyDuration(time.Since(start)),
 	)
 }
@@ -394,16 +394,16 @@ func printIndexStats(i *index.Index) {
 				}
 			}
 
-			fmtc.Printf(
-				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s\n", distName, archName,
+			fmtc.Printfn(
+				"  {c*}%s{!}{c}/%s:{!} %3s {s-}|{!} %s", distName, archName,
 				fmtutil.PrettyNum(items), fmtutil.PrettySize(size, " "),
 			)
 		}
 	}
 
 	fmtc.NewLine()
-	fmtc.Printf(
-		"  {*}Total:{!} %s {s-}|{!} %s\n",
+	fmtc.Printfn(
+		"  {*}Total:{!} %s {s-}|{!} %s",
 		fmtutil.PrettyNum(i.Meta.Items),
 		fmtutil.PrettySize(i.Meta.Size, " "),
 	)
