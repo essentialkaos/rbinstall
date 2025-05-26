@@ -8,6 +8,7 @@ package gen
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,7 +19,7 @@ import (
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/hash"
+	"github.com/essentialkaos/ek/v13/hashutil"
 	"github.com/essentialkaos/ek/v13/jsonutil"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/path"
@@ -281,7 +282,7 @@ func buildIndex(dataDir string) {
 
 		// Calculate hash if is not set
 		if versionInfo.Hash == "" {
-			versionInfo.Hash = hash.FileHash(filePath)
+			versionInfo.Hash = hashutil.File(filePath, sha256.New())
 		}
 
 		if isBaseRubyVariation(fileName) {

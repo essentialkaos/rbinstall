@@ -9,6 +9,7 @@ package cli
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -25,7 +26,7 @@ import (
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/hash"
+	"github.com/essentialkaos/ek/v13/hashutil"
 	"github.com/essentialkaos/ek/v13/knf"
 	"github.com/essentialkaos/ek/v13/log"
 	"github.com/essentialkaos/ek/v13/options"
@@ -980,10 +981,10 @@ func uninstallTaskHandler(versionName string) error {
 
 // checkHashTaskHandler check archive checksum
 func checkHashTaskHandler(filePath, fileHash string) error {
-	curHash := hash.FileHash(filePath)
+	curHash := hashutil.File(filePath, sha256.New())
 
 	if fileHash != curHash {
-		return fmt.Errorf("Wrong file hash %s ≠ %s", fileHash, curHash)
+		return fmt.Errorf("Wrong file hash (%s ≠ %s)", fileHash, curHash)
 	}
 
 	return nil
