@@ -282,7 +282,7 @@ func buildIndex(dataDir string) {
 
 		// Calculate hash if is not set
 		if versionInfo.Hash == "" {
-			versionInfo.Hash = hashutil.File(filePath, sha256.New())
+			versionInfo.Hash = hashutil.File(filePath, sha256.New()).String()
 		}
 
 		if isBaseRubyVariation(fileName) {

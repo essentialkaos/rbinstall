@@ -981,7 +981,7 @@ func uninstallTaskHandler(versionName string) error {
 
 // checkHashTaskHandler check archive checksum
 func checkHashTaskHandler(filePath, fileHash string) error {
-	curHash := hashutil.File(filePath, sha256.New())
+	curHash := hashutil.File(filePath, sha256.New()).String()
 
 	if fileHash != curHash {
 		return fmt.Errorf("Wrong file hash (%s ≠ %s)", fileHash, curHash)
