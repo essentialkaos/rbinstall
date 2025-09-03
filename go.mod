@@ -4,7 +4,7 @@ go 1.23.10
 
 require (
 	github.com/essentialkaos/ek/v13 v13.33.0
-	github.com/essentialkaos/npck v1.7.2
+	github.com/essentialkaos/npck v1.7.3
 )
 
 require (
