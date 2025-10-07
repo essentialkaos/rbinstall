@@ -855,7 +855,7 @@ func uninstallVersion(rubyVersion string) {
 
 	// //////////////////////////////////////////////////////////////////////////////// //
 
-	spinner.Show("Unistalling %s", rubyVersion)
+	spinner.Show("Uninstalling %s", rubyVersion)
 	err = uninstallTaskHandler(info.Name)
 	spinner.Done(err == nil)
 
