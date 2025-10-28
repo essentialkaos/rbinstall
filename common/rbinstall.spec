@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.5.1
+Version:        3.5.2
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -22,9 +22,9 @@ Source100:      checksum.sha512
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:       rbenv libyaml ca-certificates zlib >= 1.2.11
+Requires:       rbenv libyaml ca-certificates zlib
 
-BuildRequires:  golang >= 1.23
+BuildRequires:  golang >= 1.24
 
 Provides:       %{name} = %{version}-%{release}
 
@@ -38,7 +38,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.3.1
+Version:  3.3.2
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -50,7 +50,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.2.1
+Version:  3.2.2
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -120,6 +120,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Oct 28 2025 Anton Novojilov <andy@essentialkaos.com> - 3.5.2-0
+- Code refactoring
+- Dependencies update
+
 * Sun Apr 13 2025 Anton Novojilov <andy@essentialkaos.com> - 3.5.1-0
 - Code refactoring
 - Dependencies update

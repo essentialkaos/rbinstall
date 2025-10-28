@@ -44,7 +44,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.3.1"
+	VER  = "3.3.2"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -327,7 +327,7 @@ func buildIndex(dataDir string) {
 
 	fmtc.Printfn(
 		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n",
-		outputFile, timeutil.PrettyDuration(time.Since(start)),
+		outputFile, timeutil.Pretty(time.Since(start)),
 	)
 }
 
