@@ -8,6 +8,7 @@ package gen
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,7 +19,7 @@ import (
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/hash"
+	"github.com/essentialkaos/ek/v13/hashutil"
 	"github.com/essentialkaos/ek/v13/jsonutil"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/path"
@@ -43,7 +44,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Gen"
-	VER  = "3.3.1"
+	VER  = "3.3.2"
 	DESC = "Utility for generating RBInstall index"
 )
 
@@ -281,7 +282,7 @@ func buildIndex(dataDir string) {
 
 		// Calculate hash if is not set
 		if versionInfo.Hash == "" {
-			versionInfo.Hash = hash.FileHash(filePath)
+			versionInfo.Hash = hashutil.File(filePath, sha256.New()).String()
 		}
 
 		if isBaseRubyVariation(fileName) {
@@ -326,7 +327,7 @@ func buildIndex(dataDir string) {
 
 	fmtc.Printfn(
 		"{g}Index created and stored as file {*}%s{!*}. Processing took %s{!}\n",
-		outputFile, timeutil.PrettyDuration(time.Since(start)),
+		outputFile, timeutil.Pretty(time.Since(start)),
 	)
 }
 

@@ -1,12 +1,12 @@
 ## REGISTRY CONFIGURATION ######################################################
 
-ARG REGISTRY="docker.io"
+ARG REGISTRY="ghcr.io"
 
 ## INSTALLER ###################################################################
 
-FROM ${REGISTRY}/essentialkaos/rbinstall:ol8 as installer
+FROM ${REGISTRY}/essentialkaos/rbinstall:ol9 AS installer
 
-ARG RUBY_VERSION=3.2.0
+ARG RUBY_VERSION=3.4.5
 ARG WITH_STATIC=no
 
 RUN rbinstall ${RUBY_VERSION} && \
@@ -14,9 +14,9 @@ RUN rbinstall ${RUBY_VERSION} && \
 
 ## FINAL IMAGE  ################################################################
 
-FROM ${REGISTRY}/essentialkaos/oraclelinux:8
+FROM ${REGISTRY}/essentialkaos/oraclelinux:9 AS final
 
-ARG RUBY_VERSION=3.2.0
+ARG RUBY_VERSION=3.4.5
 ARG WITH_GCC=no
 
 LABEL org.opencontainers.image.title="rbinstall-ruby" \
@@ -30,15 +30,14 @@ LABEL org.opencontainers.image.title="rbinstall-ruby" \
 COPY --from=installer /usr/local/rbenv/versions/${RUBY_VERSION} \
                       /usr/local/rbenv/versions/${RUBY_VERSION}
 
-RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+RUN dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el9.noarch.rpm && \
     dnf -y -q install rbenv libyaml && \
     if [ "${WITH_GCC}" != "no" ] ; then dnf -y -q install gcc ; fi && \
-    dnf -y -q module disable "*" && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
-    source /etc/profile.d/rbenv.sh && \
+    . /etc/profile.d/rbenv.sh && \
     rbenv global ${RUBY_VERSION}
 
-ENV PATH /usr/local/rbenv/shims:$PATH
+ENV PATH=/usr/local/rbenv/shims:$PATH
 
 CMD [ "irb" ]
