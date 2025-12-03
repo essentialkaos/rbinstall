@@ -1,10 +1,10 @@
 module github.com/essentialkaos/rbinstall
 
-go 1.24.0
+go 1.24.6
 
 require (
 	github.com/essentialkaos/ek/v13 v13.37.3
-	github.com/essentialkaos/npck v1.7.3
+	github.com/essentialkaos/npck v1.7.4
 )
 
 require (
