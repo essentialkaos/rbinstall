@@ -22,44 +22,44 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v13/env"
-	"github.com/essentialkaos/ek/v13/fmtc"
-	"github.com/essentialkaos/ek/v13/fmtutil"
-	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/hashutil"
-	"github.com/essentialkaos/ek/v13/knf"
-	"github.com/essentialkaos/ek/v13/log"
-	"github.com/essentialkaos/ek/v13/options"
-	"github.com/essentialkaos/ek/v13/pager"
-	"github.com/essentialkaos/ek/v13/passwd"
-	"github.com/essentialkaos/ek/v13/path"
-	"github.com/essentialkaos/ek/v13/progress"
-	"github.com/essentialkaos/ek/v13/req"
-	"github.com/essentialkaos/ek/v13/signal"
-	"github.com/essentialkaos/ek/v13/sortutil"
-	"github.com/essentialkaos/ek/v13/spinner"
-	"github.com/essentialkaos/ek/v13/strutil"
-	"github.com/essentialkaos/ek/v13/support"
-	"github.com/essentialkaos/ek/v13/support/deps"
-	"github.com/essentialkaos/ek/v13/support/network"
-	"github.com/essentialkaos/ek/v13/support/pkgs"
-	"github.com/essentialkaos/ek/v13/system"
-	"github.com/essentialkaos/ek/v13/system/container"
-	"github.com/essentialkaos/ek/v13/terminal"
-	"github.com/essentialkaos/ek/v13/terminal/tty"
-	"github.com/essentialkaos/ek/v13/timeutil"
-	"github.com/essentialkaos/ek/v13/tmp"
-	"github.com/essentialkaos/ek/v13/usage"
-	"github.com/essentialkaos/ek/v13/usage/completion/bash"
-	"github.com/essentialkaos/ek/v13/usage/completion/fish"
-	"github.com/essentialkaos/ek/v13/usage/completion/zsh"
-	"github.com/essentialkaos/ek/v13/usage/man"
-	"github.com/essentialkaos/ek/v13/usage/update"
-	"github.com/essentialkaos/ek/v13/version"
+	"github.com/essentialkaos/ek/v14/env"
+	"github.com/essentialkaos/ek/v14/fmtc"
+	"github.com/essentialkaos/ek/v14/fmtutil"
+	"github.com/essentialkaos/ek/v14/fsutil"
+	"github.com/essentialkaos/ek/v14/hashutil"
+	"github.com/essentialkaos/ek/v14/knf"
+	"github.com/essentialkaos/ek/v14/log"
+	"github.com/essentialkaos/ek/v14/options"
+	"github.com/essentialkaos/ek/v14/pager"
+	"github.com/essentialkaos/ek/v14/passwd"
+	"github.com/essentialkaos/ek/v14/path"
+	"github.com/essentialkaos/ek/v14/progress"
+	"github.com/essentialkaos/ek/v14/req"
+	"github.com/essentialkaos/ek/v14/signal"
+	"github.com/essentialkaos/ek/v14/sortutil"
+	"github.com/essentialkaos/ek/v14/spinner"
+	"github.com/essentialkaos/ek/v14/strutil"
+	"github.com/essentialkaos/ek/v14/support"
+	"github.com/essentialkaos/ek/v14/support/deps"
+	"github.com/essentialkaos/ek/v14/support/network"
+	"github.com/essentialkaos/ek/v14/support/pkgs"
+	"github.com/essentialkaos/ek/v14/system"
+	"github.com/essentialkaos/ek/v14/system/container"
+	"github.com/essentialkaos/ek/v14/terminal"
+	"github.com/essentialkaos/ek/v14/terminal/tty"
+	"github.com/essentialkaos/ek/v14/timeutil"
+	"github.com/essentialkaos/ek/v14/tmp"
+	"github.com/essentialkaos/ek/v14/usage"
+	"github.com/essentialkaos/ek/v14/usage/completion/bash"
+	"github.com/essentialkaos/ek/v14/usage/completion/fish"
+	"github.com/essentialkaos/ek/v14/usage/completion/zsh"
+	"github.com/essentialkaos/ek/v14/usage/man"
+	"github.com/essentialkaos/ek/v14/usage/update"
+	"github.com/essentialkaos/ek/v14/version"
 
-	knfv "github.com/essentialkaos/ek/v13/knf/validators"
-	knff "github.com/essentialkaos/ek/v13/knf/validators/fs"
-	knfn "github.com/essentialkaos/ek/v13/knf/validators/network"
+	knfv "github.com/essentialkaos/ek/v14/knf/validators"
+	knff "github.com/essentialkaos/ek/v14/knf/validators/fs"
+	knfn "github.com/essentialkaos/ek/v14/knf/validators/network"
 
 	"github.com/essentialkaos/npck/tar"
 	"github.com/essentialkaos/npck/tzst"
@@ -72,7 +72,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall"
-	VER  = "3.5.3"
+	VER  = "3.6.0"
 	DESC = "Utility for installing prebuilt Ruby versions to rbenv"
 )
 
@@ -200,7 +200,7 @@ func Run(gitRev string, gomod []byte) {
 
 	if !errs.IsEmpty() {
 		terminal.Error("Options parsing errors:")
-		terminal.Error(errs.Error(" - "))
+		terminal.Error(errs.ErrorWithPrefix(" - "))
 		os.Exit(1)
 	}
 
@@ -328,14 +328,14 @@ func configureProxy() {
 func setEnvVars() {
 	ev := env.Get()
 
-	if ev.GetS("RBENV_ROOT") != "" {
+	if ev.Get("RBENV_ROOT") != "" {
 		return
 	}
 
 	rbenvDir := knf.GetS(RBENV_DIR)
 	newPath := rbenvDir + "/bin:"
 	newPath += rbenvDir + "/libexec:"
-	newPath += ev.GetS("PATH")
+	newPath += ev.Get("PATH")
 
 	os.Setenv("RBENV_ROOT", rbenvDir)
 	os.Setenv("PATH", newPath)
@@ -1509,7 +1509,7 @@ func isVersionInstalled(rubyVersion string) bool {
 
 // getVersionFromFile try to read version file and return defined version
 func getVersionFromFile() (string, error) {
-	versionFile := fsutil.ProperPath("FRS", []string{".ruby-version", ".rbenv-version"})
+	versionFile := fsutil.ProperPath("FRS", ".ruby-version", ".rbenv-version")
 
 	if versionFile == "" {
 		return "", fmtc.Errorf("Can't find proper version file")
