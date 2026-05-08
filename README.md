@@ -9,7 +9,7 @@
 >
 > #### Availability timeline
 >
-> The repository and all existing Ruby builds will remain **accessible and functional until September 1, 2026**. After this date, access to the repository and its artifacts may be disabled or the repository may be removed without additional notice.
+> The binaries repository (https://rbinstall.kaos.st) and all existing Ruby builds will remain **accessible and functional until September 1, 2026**. After this date, access to the binaries repository and its artifacts may be disabled or the binaries repository may be removed without additional notice.
 >
 > #### What this means
 >
