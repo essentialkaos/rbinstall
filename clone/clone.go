@@ -2,7 +2,7 @@ package clone
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2026 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -15,27 +15,27 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/essentialkaos/ek/v13/fmtc"
-	"github.com/essentialkaos/ek/v13/fmtutil"
-	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/httputil"
-	"github.com/essentialkaos/ek/v13/jsonutil"
-	"github.com/essentialkaos/ek/v13/options"
-	"github.com/essentialkaos/ek/v13/path"
-	"github.com/essentialkaos/ek/v13/pluralize"
-	"github.com/essentialkaos/ek/v13/progress"
-	"github.com/essentialkaos/ek/v13/req"
-	"github.com/essentialkaos/ek/v13/support"
-	"github.com/essentialkaos/ek/v13/support/deps"
-	"github.com/essentialkaos/ek/v13/terminal"
-	"github.com/essentialkaos/ek/v13/terminal/input"
-	"github.com/essentialkaos/ek/v13/terminal/tty"
-	"github.com/essentialkaos/ek/v13/timeutil"
-	"github.com/essentialkaos/ek/v13/usage"
-	"github.com/essentialkaos/ek/v13/usage/completion/bash"
-	"github.com/essentialkaos/ek/v13/usage/completion/fish"
-	"github.com/essentialkaos/ek/v13/usage/completion/zsh"
-	"github.com/essentialkaos/ek/v13/usage/man"
+	"github.com/essentialkaos/ek/v14/fmtc"
+	"github.com/essentialkaos/ek/v14/fmtutil"
+	"github.com/essentialkaos/ek/v14/fsutil"
+	"github.com/essentialkaos/ek/v14/httputil"
+	"github.com/essentialkaos/ek/v14/jsonutil"
+	"github.com/essentialkaos/ek/v14/options"
+	"github.com/essentialkaos/ek/v14/path"
+	"github.com/essentialkaos/ek/v14/pluralize"
+	"github.com/essentialkaos/ek/v14/progress"
+	"github.com/essentialkaos/ek/v14/req"
+	"github.com/essentialkaos/ek/v14/support"
+	"github.com/essentialkaos/ek/v14/support/deps"
+	"github.com/essentialkaos/ek/v14/terminal"
+	"github.com/essentialkaos/ek/v14/terminal/input"
+	"github.com/essentialkaos/ek/v14/terminal/tty"
+	"github.com/essentialkaos/ek/v14/timeutil"
+	"github.com/essentialkaos/ek/v14/usage"
+	"github.com/essentialkaos/ek/v14/usage/completion/bash"
+	"github.com/essentialkaos/ek/v14/usage/completion/fish"
+	"github.com/essentialkaos/ek/v14/usage/completion/zsh"
+	"github.com/essentialkaos/ek/v14/usage/man"
 
 	"github.com/essentialkaos/rbinstall/index"
 )
@@ -45,7 +45,7 @@ import (
 // App info
 const (
 	APP  = "RBInstall Clone"
-	VER  = "3.2.3"
+	VER  = "3.3.0"
 	DESC = "Utility for cloning RBInstall repository"
 )
 
@@ -103,7 +103,7 @@ func Run(gitRev string, gomod []byte) {
 
 	if !errs.IsEmpty() {
 		terminal.Error("Options parsing errors:")
-		terminal.Error(errs.Error(" - "))
+		terminal.Error(errs.ErrorWithPrefix(" - "))
 		os.Exit(1)
 	}
 
