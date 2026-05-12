@@ -10,7 +10,7 @@
 
 Summary:        Utility for installing prebuilt Ruby to rbenv
 Name:           rbinstall
-Version:        3.6.0
+Version:        3.6.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -38,7 +38,7 @@ Utility for installing different prebuilt versions of Ruby to rbenv.
 %package gen
 
 Summary:  Utility for generating RBInstall index
-Version:  3.4.0
+Version:  3.4.1
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -50,7 +50,7 @@ Utility for generating RBInstall index.
 %package clone
 
 Summary:  Utility for cloning RBInstall repository
-Version:  3.3.0
+Version:  3.3.1
 Release:  0%{?dist}
 Group:    Development/Tools
 
@@ -120,6 +120,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue May 12 2026 Anton Novojilov <andy@essentialkaos.com> - 3.6.1-0
+- Dependencies update
+
 * Thu May 07 2026 Anton Novojilov <andy@essentialkaos.com> - 3.6.0-0
 - Migrated to ek.v14
 - Dependencies update
