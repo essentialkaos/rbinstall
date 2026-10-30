@@ -44,14 +44,6 @@
 <p align="center"><a href="#readme"><img src=".github/images/card.svg"/></a></p>
 
 <p align="center">
-  <a href="https://kaos.sh/r/rbinstall"><img src="https://goreportcard.com/badge/github.com/essentialkaos/rbinstall" alt="GoReportCard" /></a>
-  <a href="https://kaos.sh/y/ek"><img src="https://app.codacy.com/project/badge/Grade/3a20b5e6b6364d7ba936fb42fd5729ed" alt="Codacy badge" /></a>
-  <a href="https://kaos.sh/w/rbinstall/ci"><img src="https://github.com/essentialkaos/rbinstall/actions/workflows/ci-push.yml/badge.svg" alt="GitHub Actions CI Status" /></a>
-  <a href="https://kaos.sh/w/rbinstall/codeql"><img src="https://github.com/essentialkaos/rbinstall/actions/workflows/codeql.yml/badge.svg" alt="GitHub Actions CodeQL Status" /></a>
-  <a href="#license"><img src=".github/images/license.svg"/></a>
-</p>
-
-<p align="center">
   <a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#ci-status">CI Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a>
 </p>
 
